@@ -21,4 +21,6 @@ class SuturePlacer():
         self.initial_reward = self.Reward.rewardX() # TODO Julia/Yashish
 
         # Then, we can use the initial placement to warm-start the optimization process.
-        self.Optimizer.optimize_placement() # TODO Viraj/Yashish
+        self.Optimizer.optimize_placement() # TODO Viraj/Yashish: the variables to optimize
+        # [TODO] are the wound_points. These are parametric values for locations on the wound.
+        #  [TODO] Wound should already be passed in by main.py:place_sutures.

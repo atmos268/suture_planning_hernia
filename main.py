@@ -2,7 +2,7 @@
 import generate_sample_spline
 import SuturePlacer
 
-def place_sutures(SuturePlacer):
+def suture_placing_pipeline(SuturePlacer):
     # TODO Varun: will rope in Sam's code that has the interface for the surgeon to click
     #  points along the wound. That'll return a spline.
 
@@ -26,4 +26,4 @@ def place_sutures(SuturePlacer):
 
 if __name__ == "__main__":
     SuturePlacer = SuturePlacer()
-    place_sutures(SuturePlacer)
+    suture_placing_pipeline(SuturePlacer)
