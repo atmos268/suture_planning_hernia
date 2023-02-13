@@ -32,6 +32,7 @@ c2e = curve2.evaluate(0.5)
 
 # First Derivative
 hodograph1 = curve1.evaluate_hodograph(0.55)
+print(hodograph1)
 # derivate =  np.array([hodograph[1], hodograph[0]]) / 10 # hodograph is normal for some reason
 point_on_curve1 = curve1.evaluate(0.55)
 slope_point_c1_1 = point_on_curve1 + hodograph1 / 3
