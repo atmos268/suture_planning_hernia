@@ -1,14 +1,13 @@
 import DistanceCalculator
-import Optimizer
 import RewardFunction
 
 class SuturePlacer():
     def __init__(self):
         # This object should contain the optimizer, the spline curve, the image, etc., i.e. all of the relevant objects involved, as attributes.
         self.wound_width = 0.2 # TODO Varun: this is a random #, lookup
-        self.DistanceCalculator = DistanceCalculator(wound_width)
+        self.DistanceCalculator = DistanceCalculator(self.wound_width)
         self.RewardFunction = RewardFunction
-        self.Optimizer = None # cvxpy? Feel free to make your own file with a class if you want one for the optimizer.
+        self.Optimizer = None # cvxpy? Feel free to make your own file with a class for Optimizer if you want one.
 
     def place_sutures(self):
         # I want it to have an initial placement and then a forward pass thru to the reward so we can test our code.
