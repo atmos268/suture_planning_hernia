@@ -48,29 +48,40 @@ class DistanceCalculator():
 
         center_pts = [[wound_points[i], wound_curve[i]] for i in range(num_pts)]
 
-        """
+
         # verify works by plotting
         plt.scatter([insert_pts[i][0] for i in range(num_pts)], [insert_pts[i][1] for i in range(num_pts)], c="red")
         plt.scatter([extract_pts[i][0] for i in range(num_pts)], [extract_pts[i][1] for i in range(num_pts)], c="blue")
         plt.scatter([center_pts[i][0] for i in range(num_pts)], [center_pts[i][1] for i in range(num_pts)], c="green")
 
         plt.show()
-        """
+
+        def euclidean_distance(point1, point2):
+            x1, y1, x2, y2 = point1[0], point1[1], point2[0], point2[1]
+            return math.sqrt((x2-x1)**2+(y2-y1)**2)
 
         def dist_insert(i):
-            pass
+            return euclidean_distance(insert_pts[i], insert_pts[i+1])
 
         def dist_center(i):
-            pass
+            return euclidean_distance(center_pts[i], center_pts[i+1])
 
         def dist_extract(i):
-            pass
+            return euclidean_distance(extract_pts[i], extract_pts[i+1])
 
         
         #for all i:
             # calculate insert, center, extract distances
-
         # return 3 lists: insert dists, center dists, extract dists
 
-        return [], [], []
+        
+        insert_distances = []
+        center_distances = []
+        extract_distances = []
+        
+        for i in range(num_pts - 1):
+            insert_distances.append(dist_insert(i))
+            center_distances.append(dist_center(i))
+            extract_distances.append(dist_extract(i))
 
+        return insert_distances, center_distances, extract_distances
