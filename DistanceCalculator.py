@@ -54,8 +54,6 @@ class DistanceCalculator():
         plt.scatter([extract_pts[i][0] for i in range(num_pts)], [extract_pts[i][1] for i in range(num_pts)], c="blue")
         plt.scatter([center_pts[i][0] for i in range(num_pts)], [center_pts[i][1] for i in range(num_pts)], c="green")
 
-        plt.show()
-
         def euclidean_distance(point1, point2):
             x1, y1, x2, y2 = point1[0], point1[1], point2[0], point2[1]
             return math.sqrt((x2-x1)**2+(y2-y1)**2)
@@ -83,5 +81,11 @@ class DistanceCalculator():
             insert_distances.append(dist_insert(i))
             center_distances.append(dist_center(i))
             extract_distances.append(dist_extract(i))
+
+        print('insert distances\n', insert_distances, '\ncenter_distances\n', center_distances, '\nextract_distances\n', extract_distances)
+        for i, txt in enumerate(insert_distances):
+            plt.annotate(txt.format(), (insert_pts[i][0], insert_pts[i][1]))
+
+        plt.show()
 
         return insert_distances, center_distances, extract_distances
