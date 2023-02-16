@@ -84,7 +84,14 @@ class DistanceCalculator():
 
         print('insert distances\n', insert_distances, '\ncenter_distances\n', center_distances, '\nextract_distances\n', extract_distances)
         for i, txt in enumerate(insert_distances):
-            plt.annotate(txt.format(), (insert_pts[i][0], insert_pts[i][1]))
+            print('type text', type(txt))
+            plt.annotate("{:.4f}".format(txt), (insert_pts[i][0], insert_pts[i][1]))
+        for i, txt in enumerate(center_distances):
+            print('type text', type(txt))
+            plt.annotate("{:.4f}".format(txt), (center_pts[i][0], center_pts[i][1]))
+        for i, txt in enumerate(extract_distances):
+            print('type text', type(txt))
+            plt.annotate("{:.4f}".format(txt), (extract_pts[i][0], extract_pts[i][1]))
 
         plt.show()
 
