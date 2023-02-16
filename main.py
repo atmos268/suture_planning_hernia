@@ -1,5 +1,6 @@
 
 import scipy_generate_sample_spline
+import scipy.interpolate as inter
 import SuturePlacer
 
 def suture_placing_pipeline(SuturePlacer):
@@ -13,7 +14,15 @@ def suture_placing_pipeline(SuturePlacer):
     #  but I don't think it has a function to fit points to a bezier curve. SciPy's bezier module can fit points to a curve, but it is in the format [x -> y] which is more limiting
     #  for the types of curves we can handle. Goal is to fit points to a parametric bezier curve.
     """
-    wound = scipy_generate_sample_spline.generate_sample_spline()
+
+    x = [0.0, 0.7, 1.0, 1.5, 2.1, 2.5, 3.0]
+    y = [0.0, -0.5, 0.5, 3.5, 1.8, 0.7, 1.3]
+    deg = 3
+
+    # couldn't find reference to this in the codebase? I'm using make_interp_spline for now
+    # wound = scipy_generate_sample_spline.generate_sample_spline()
+
+    wound = inter.make_interp_spline(x=x, y=y, k=deg, bc_type="clamped" if deg == 3 else None)
 
     # Put the wound into all the relevant objects
     SuturePlacer.wound = wound
@@ -24,5 +33,5 @@ def suture_placing_pipeline(SuturePlacer):
     SuturePlacer.place_sutures()
 
 if __name__ == "__main__":
-    SuturePlacer = SuturePlacer()
+    SuturePlacer = SuturePlacer.SuturePlacer()
     suture_placing_pipeline(SuturePlacer)

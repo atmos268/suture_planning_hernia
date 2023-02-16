@@ -7,7 +7,7 @@ matplotlib.use('TkAgg')
 
 plt.clf()
 
-def generate_sample_spline(savefig):
+def generate_sample_spline():
     # Sample Points [Will come from surgeon]
     x = [0.0, 0.7, 1.0, 1.5, 2.1, 2.5, 3.0]
     y = [0.0, -0.5, 0.5, 3.5, 1.8, 0.7, 1.3]
