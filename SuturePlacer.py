@@ -23,7 +23,10 @@ class SuturePlacer:
         self.RewardFunction.insert_dists = insert_dists
         self.RewardFunction.center_dists = center_dists
         self.RewardFunction.extract_dists = extract_dists
+
+        # Varun: Eventually,  we'll have an overall reward that is the linear combination. [these two lines merge-conflicted, don't know which is right for now]
         self.initial_reward = self.RewardFunction.rewardA(self.RewardFunction) # TODO Julia/Yashish
+        # self.initial_reward = self.RewardFunction.rewardX() # TODO Julia/Yashish
 
         # Then, we can use the initial placement to warm-start the optimization process.
         self.Optimizer.optimize_placement() # TODO Viraj/Yashish: the variables to optimize
