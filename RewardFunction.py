@@ -43,8 +43,26 @@ class RewardFunction():
         return loss
 
     def reward_gradient(self):
-        return self.gradients
+        return self.gradients # returns dR/d(dists) as numbers
 
 
     # ... and so forth: refer to slide 14 from the presentation for details on how to design this.
     # It may be influenced by the optimizer as well.
+
+
+"""
+x = initial_x
+rv = [0, 0, 0] #c, e, i
+y = f(x)
+y = torch.tensor(y, requires_grad=True)
+g = torch.tensor(f'(x), requires_grad=True)
+dc = h(y)
+dc.backwards()
+rv[0] = y.grad * f'(x)
+temp = q(g) # temp = 2wsin(theta)
+temp.backwards()
+rv[1] = rv[0] + g.grad * f''(x)
+rv[2] = rv[0] - g.grad * f''(x)
+return rv
+#d(dists)/dx
+"""
