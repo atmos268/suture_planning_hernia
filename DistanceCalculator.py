@@ -50,6 +50,7 @@ class DistanceCalculator():
         extract_pts = [[wound_points[i] - normal_vecs[i][0], wound_curve[i] - normal_vecs[i][1]] for i in range(num_pts)]
 
         center_pts = [[wound_points[i], wound_curve[i]] for i in range(num_pts)]
+        center_pts_torch = torch.hstack(wound_points_torch, wound_curve_torch)
 
 
         # verify works by plotting
@@ -64,8 +65,11 @@ class DistanceCalculator():
         def dist_insert(i):
             return euclidean_distance(insert_pts[i], insert_pts[i+1])
 
-        def dist_center():
-            return torch.norm(center_pts)
+        def dist_center(i):
+            return euclidean_distance(center_pts[i], center_pts[i+1])
+        
+        def dist_center_torch(i):
+            return torch.dist(center_pts_torch[i], center_pts_torch[i+1])
 
         def dist_extract(i):
             return euclidean_distance(extract_pts[i], extract_pts[i+1])
@@ -84,6 +88,13 @@ class DistanceCalculator():
             insert_distances.append(dist_insert(i))
             center_distances.append(dist_center(i))
             extract_distances.append(dist_extract(i))
+            dc = dist_center_torch(i)
+            dc.backward()
+
+        self.gradients['center'] = wound_points_torch.grad + torch.mul(wound_curve_torch.grad, wound_derivatives_torch)
+        self.gradients['insert'] = 0
+        self.gradients['extract'] = 0
+
 
         print('insert distances\n', insert_distances, '\ncenter_distances\n', center_distances, '\nextract_distances\n', extract_distances)
         for i, txt in enumerate(insert_distances):

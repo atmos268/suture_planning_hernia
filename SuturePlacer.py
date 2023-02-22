@@ -19,16 +19,24 @@ class SuturePlacer:
         # choosing 11 equally spaced points along curve as placeholder
         wound_points = [0.1*i for i in range(11)] # TODO Harshika/Viraj: Initial Placement, can put some placeholder here
 
-        insert_dists, center_dists, extract_dists = self.DistanceCalculator.calculate_distances(wound_points) # TODO Harshika/Viraj
-        self.RewardFunction.insert_dists = insert_dists
-        self.RewardFunction.center_dists = center_dists
-        self.RewardFunction.extract_dists = extract_dists
+        num_iters = 1000
+        lr = 0.1
 
-        # Varun: Eventually,  we'll have an overall reward that is the linear combination. [these two lines merge-conflicted, don't know which is right for now]
-        self.initial_reward = self.RewardFunction.rewardA(self.RewardFunction) # TODO Julia/Yashish
-        # self.initial_reward = self.RewardFunction.rewardX() # TODO Julia/Yashish
+        for i in range(num_iters):
+            insert_dists, center_dists, extract_dists = self.DistanceCalculator.calculate_distances(wound_points) # TODO Harshika/Viraj
+            self.RewardFunction.insert_dists = insert_dists
+            self.RewardFunction.center_dists = center_dists
+            self.RewardFunction.extract_dists = extract_dists
+
+            # Varun: Eventually,  we'll have an overall reward that is the linear combination. [these two lines merge-conflicted, don't know which is right for now]
+            self.initial_reward = self.RewardFunction.rewardA(self.RewardFunction) # TODO Julia/Yashish
+            # self.initial_reward = self.RewardFunction.rewardX() # TODO Julia/Yashish
+            grads1, grads2 = self.RewardFunction.loss_gradient(), self.DistanceCalculator.gradients()
+            final_grad = (grads1["center"] * grads2["center"]) + (grads1["insert"] * grads2["insert"]) + (grads1["extract"] * grads2["extract"])
+            wound_points = [wound_points[i] - lr * final_grad[i] for i in range(len(wound_points))]
+
 
         # Then, we can use the initial placement to warm-start the optimization process.
-        self.Optimizer.optimize_placement() # TODO Viraj/Yashish: the variables to optimize
+        # self.Optimizer.optimize_placement(grads1, grads2) # TODO Viraj/Yashish: the variables to optimize
         # [TODO] are the wound_points. These are parametric values for locations on the wound.
         #  [TODO] Wound should already be passed in by main.py:place_sutures.
