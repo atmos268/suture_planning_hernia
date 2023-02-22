@@ -36,7 +36,7 @@ class RewardFunction():
         loss = (torch.var(insert_dists) + torch.var(center_dists) + torch.var(extract_dists))
         loss.backward()
 
-        self.gradients["center"] = center_dists.grad
+        self.gradients["center"] = center_dists.grad.cpu().detach().numpy()
         self.gradients["extract"] = extract_dists.grad
         self.gradients["insert"] = insert_dists.grad
 

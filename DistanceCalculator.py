@@ -1,6 +1,7 @@
 import math
 import matplotlib.pyplot as plt
 import torch as torch
+import numpy as np
 
 class DistanceCalculator():
 
@@ -50,13 +51,11 @@ class DistanceCalculator():
         extract_pts = [[wound_points[i] - normal_vecs[i][0], wound_curve[i] - normal_vecs[i][1]] for i in range(num_pts)]
 
         center_pts = [[wound_points[i], wound_curve[i]] for i in range(num_pts)]
-        center_pts_torch = torch.hstack((wound_points_torch, wound_curve_torch))
-
 
         # verify works by plotting
-        plt.scatter([insert_pts[i][0] for i in range(num_pts)], [insert_pts[i][1] for i in range(num_pts)], c="red")
-        plt.scatter([extract_pts[i][0] for i in range(num_pts)], [extract_pts[i][1] for i in range(num_pts)], c="blue")
-        plt.scatter([center_pts[i][0] for i in range(num_pts)], [center_pts[i][1] for i in range(num_pts)], c="green")
+        #plt.scatter([insert_pts[i][0] for i in range(num_pts)], [insert_pts[i][1] for i in range(num_pts)], c="red")
+        #plt.scatter([extract_pts[i][0] for i in range(num_pts)], [extract_pts[i][1] for i in range(num_pts)], c="blue")
+        #plt.scatter([center_pts[i][0] for i in range(num_pts)], [center_pts[i][1] for i in range(num_pts)], c="green")
 
         def euclidean_distance(point1, point2):
             x1, y1, x2, y2 = point1[0], point1[1], point2[0], point2[1]
@@ -67,9 +66,6 @@ class DistanceCalculator():
 
         def dist_center(i):
             return euclidean_distance(center_pts[i], center_pts[i+1])
-        
-        def dist_center_torch(i):
-            return torch.dist(center_pts_torch[i], center_pts_torch[i+1])
 
         def dist_extract(i):
             return euclidean_distance(extract_pts[i], extract_pts[i+1])
@@ -84,14 +80,19 @@ class DistanceCalculator():
         center_distances = []
         extract_distances = []
         
+        center_grads = np.zeros((len(wound_points) - 1, len(wound_points)))
+
         for i in range(num_pts - 1):
             insert_distances.append(dist_insert(i))
             center_distances.append(dist_center(i))
             extract_distances.append(dist_extract(i))
-            dc = dist_center_torch(i)
+            dc = torch.sqrt(torch.square(wound_points_torch[i+1] - wound_points_torch[i]) + torch.square(wound_curve_torch[i+1] - wound_curve_torch[i]))
             dc.backward()
+            center_grads[i][:] = (wound_points_torch.grad + torch.mul(wound_curve_torch.grad, wound_derivatives_torch)).cpu().detach().numpy()
+            wound_points_torch.grad.zero_()
+            wound_curve_torch.grad.zero_()
 
-        self.gradients['center'] = wound_points_torch.grad + torch.mul(wound_curve_torch.grad, wound_derivatives_torch)
+        self.gradients['center'] = center_grads.T
         self.gradients['insert'] = 0
         self.gradients['extract'] = 0
 
@@ -113,6 +114,41 @@ class DistanceCalculator():
     
     def grads(self, wound_points):
         return self.gradients
+    
+    def plot(self, wound_points):
+        num_pts = len(wound_points)
+
+        def get_norm(gradient):
+            return math.sqrt(1 + gradient**2)
+
+        # might be worth vecotrizing in the future
+            
+        # get the curve and gradient for each point (the second argument allows you to on the fly take the derivative)
+        wound_curve = self.wound(wound_points, 0)
+        wound_derivatives = self.wound(wound_points, 1)
+
+        # extract the norms of the vectors
+        norms = [get_norm(wound_derivative) for wound_derivative in wound_derivatives]
+
+        # get the normal vectors as norm = 1
+        normal_vecs = [[wound_derivatives[i]/norms[i], -1/norms[i]] for i in range(num_pts)]
+        
+        # make norm width wound_width
+        normal_vecs = [[normal_vec[0] * self.wound_width, normal_vec[1] * self.wound_width] for normal_vec in normal_vecs]
+
+        # add and subtract for insertion and exit
+        insert_pts = [[wound_points[i] + normal_vecs[i][0], wound_curve[i] + normal_vecs[i][1]] for i in range(num_pts)]
+
+        extract_pts = [[wound_points[i] - normal_vecs[i][0], wound_curve[i] - normal_vecs[i][1]] for i in range(num_pts)]
+
+        center_pts = [[wound_points[i], wound_curve[i]] for i in range(num_pts)]
+
+        # verify works by plotting
+        plt.scatter([insert_pts[i][0] for i in range(num_pts)], [insert_pts[i][1] for i in range(num_pts)], c="red")
+        plt.scatter([extract_pts[i][0] for i in range(num_pts)], [extract_pts[i][1] for i in range(num_pts)], c="blue")
+        plt.scatter([center_pts[i][0] for i in range(num_pts)], [center_pts[i][1] for i in range(num_pts)], c="green")
+        plt.show()
+
 
 
 """
