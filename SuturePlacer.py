@@ -20,7 +20,7 @@ class SuturePlacer:
         wound_points = [0.1*i for i in range(11)] # TODO Harshika/Viraj: Initial Placement, can put some placeholder here
         print("Initial wound points", wound_points)
 
-        num_iters = 1000
+        num_iters = 10
         lr = 0.1
 
         for i in range(num_iters):
@@ -31,9 +31,12 @@ class SuturePlacer:
 
             # Varun: Eventually,  we'll have an overall reward that is the linear combination. [these two lines merge-conflicted, don't know which is right for now]
             #self.initial_reward = self.RewardFunction.rewardA() # TODO Julia/Yashish
-            self.initial_reward = self.RewardFunction.rewardX() # TODO Julia/Yashish
+            self.initial_reward = self.RewardFunction.lossX_torch() # TODO Julia/Yashish
             grads1, grads2 = self.RewardFunction.loss_gradient(), self.DistanceCalculator.grads(wound_points)
+            print(grads1)
+            print(grads2)
             final_grad = (grads1["center"] * grads2["center"]) + (grads1["insert"] * grads2["insert"]) + (grads1["extract"] * grads2["extract"])
+            #print(final_grad)
             wound_points = [wound_points[i] - lr * final_grad[i] for i in range(len(wound_points))]
             wound_points = [wound_points[i].cpu().detach().numpy() for i in range(len(wound_points))]
             wound_points = [float(wound_points[i]) for i in range(len(wound_points))]
