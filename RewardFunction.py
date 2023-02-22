@@ -14,13 +14,13 @@ class RewardFunction():
     # variance
     def rewardX(self):
         mean_insert = sum(self.insert_dists) / len(self.insert_dists)
-        var_insert = sum([(i - mean_insert)**2] for i in self.insert_dists)
+        var_insert = sum([(i - mean_insert)**2 for i in self.insert_dists])
         
         mean_center = sum(self.center_dists) / len(self.center_dists)
-        var_center = sum([(i - mean_center)**2] for i in self.center_dists)
+        var_center = sum([(i - mean_center)**2 for i in self.center_dists])
         
         mean_extract = sum(self.extract_dists) / len(self.extract_dists)
-        var_extract = sum([(i - mean_extract)**2] for i in self.extract_dists)
+        var_extract = sum([(i - mean_extract)**2 for i in self.extract_dists])
         
         return -(var_insert + var_center + var_extract)
 

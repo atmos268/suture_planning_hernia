@@ -50,7 +50,7 @@ class DistanceCalculator():
         extract_pts = [[wound_points[i] - normal_vecs[i][0], wound_curve[i] - normal_vecs[i][1]] for i in range(num_pts)]
 
         center_pts = [[wound_points[i], wound_curve[i]] for i in range(num_pts)]
-        center_pts_torch = torch.hstack(wound_points_torch, wound_curve_torch)
+        center_pts_torch = torch.hstack((wound_points_torch, wound_curve_torch))
 
 
         # verify works by plotting
@@ -96,18 +96,18 @@ class DistanceCalculator():
         self.gradients['extract'] = 0
 
 
-        print('insert distances\n', insert_distances, '\ncenter_distances\n', center_distances, '\nextract_distances\n', extract_distances)
-        for i, txt in enumerate(insert_distances):
-            print('type text', type(txt))
-            plt.annotate("{:.4f}".format(txt), (insert_pts[i][0], insert_pts[i][1]))
-        for i, txt in enumerate(center_distances):
-            print('type text', type(txt))
-            plt.annotate("{:.4f}".format(txt), (center_pts[i][0], center_pts[i][1]))
-        for i, txt in enumerate(extract_distances):
-            print('type text', type(txt))
-            plt.annotate("{:.4f}".format(txt), (extract_pts[i][0], extract_pts[i][1]))
+        # print('insert distances\n', insert_distances, '\ncenter_distances\n', center_distances, '\nextract_distances\n', extract_distances)
+        # for i, txt in enumerate(insert_distances):
+        #     print('type text', type(txt))
+        #     plt.annotate("{:.4f}".format(txt), (insert_pts[i][0], insert_pts[i][1]))
+        # for i, txt in enumerate(center_distances):
+        #     print('type text', type(txt))
+        #     plt.annotate("{:.4f}".format(txt), (center_pts[i][0], center_pts[i][1]))
+        # for i, txt in enumerate(extract_distances):
+        #     print('type text', type(txt))
+        #     plt.annotate("{:.4f}".format(txt), (extract_pts[i][0], extract_pts[i][1]))
 
-        plt.show()
+        # plt.show()
 
         return insert_distances, center_distances, extract_distances
     
