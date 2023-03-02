@@ -5,7 +5,7 @@ import Optimizer
 class SuturePlacer:
     def __init__(self):
         # This object should contain the optimizer, the spline curve, the image, etc., i.e. all of the relevant objects involved, as attributes.
-        self.wound_width = 0.2 # TODO Varun: this is a random #, lookup
+        self.wound_width = 1 # TODO Varun: this is a random #, lookup
         self.DistanceCalculator = DistanceCalculator.DistanceCalculator(self.wound_width)
         self.RewardFunction = RewardFunction.RewardFunction()
 

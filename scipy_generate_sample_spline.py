@@ -38,7 +38,7 @@ def generate_sample_spline():
 
     plt.show()
 
-    return curve
+    return lambda x: inter.splprep(x, tck)
 
 def generate_parametric_bezier():
     import numpy as np

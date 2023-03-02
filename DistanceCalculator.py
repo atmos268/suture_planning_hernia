@@ -2,15 +2,18 @@ import math
 import matplotlib.pyplot as plt
 import torch as torch
 import numpy as np
+import scipy.interpolate as inter
 
 class DistanceCalculator():
 
     def __init__(self, wound_width):
         self.wound_width = wound_width
         self.gradients = {}
+        self.pixels_per_mm = 20
         pass
 
     def calculate_distances(self, wound_points):
+        print('wound_points\n', wound_points)
         # wound points is the set of time-steps along the wound that correspond to wound points
 
         # Step 1: Calculate insertion and extraction points. Use the wound's
@@ -27,11 +30,16 @@ class DistanceCalculator():
         def get_norm(gradient):
             return math.sqrt(1 + gradient**2)
 
-        # might be worth vecotrizing in the future
-            
+        # might be worth vectorizing in the future
+
         # get the curve and gradient for each point (the second argument allows you to on the fly take the derivative)
-        wound_curve = self.wound(wound_points, 0)
-        wound_derivatives = self.wound(wound_points, 1)
+        wound_xy = np.array(self.wound(wound_points)) / self.pixels_per_mm
+        wound_x, wound_y = wound_xy
+        wound_curve = list(zip(wound_x, wound_y))
+
+        wound_derivates_xy = inter.splev(wound_points, self.tck, der=1)
+        wound_derivatives_x, wound_derivatives_y = wound_derivates_xy
+        wound_derivatives = wound_derivatives_y / wound_derivatives_x
         wound_curve_torch = torch.tensor(wound_curve, requires_grad=True)
         wound_derivatives_torch = torch.tensor(wound_derivatives, requires_grad=True)
         wound_points_torch = torch.tensor(wound_points, requires_grad=True)
@@ -46,17 +54,21 @@ class DistanceCalculator():
         normal_vecs = [[normal_vec[0] * self.wound_width, normal_vec[1] * self.wound_width] for normal_vec in normal_vecs]
 
         # add and subtract for insertion and exit
-        insert_pts = [[wound_points[i] + normal_vecs[i][0], wound_curve[i] + normal_vecs[i][1]] for i in range(num_pts)]
+        insert_pts = [[wound_x[i] + normal_vecs[i][0], wound_y[i] + normal_vecs[i][1]] for i in range(num_pts)]
 
-        extract_pts = [[wound_points[i] - normal_vecs[i][0], wound_curve[i] - normal_vecs[i][1]] for i in range(num_pts)]
+        extract_pts = [[wound_x[i] - normal_vecs[i][0], wound_y[i] - normal_vecs[i][1]] for i in range(num_pts)]
 
-        center_pts = [[wound_points[i], wound_curve[i]] for i in range(num_pts)]
+        center_pts = [[wound_x[i], wound_y[i]] for i in range(num_pts)]
 
         # verify works by plotting
-        #plt.scatter([insert_pts[i][0] for i in range(num_pts)], [insert_pts[i][1] for i in range(num_pts)], c="red")
-        #plt.scatter([extract_pts[i][0] for i in range(num_pts)], [extract_pts[i][1] for i in range(num_pts)], c="blue")
-        #plt.scatter([center_pts[i][0] for i in range(num_pts)], [center_pts[i][1] for i in range(num_pts)], c="green")
-
+        wound_sample_x, wound_sample_y = self.wound(np.linspace(0, 1, 5000))
+        wound_sample_x *= 1/20
+        wound_sample_y *= 1/20
+        plt.plot(wound_sample_x, wound_sample_y, c='k')
+        plt.scatter([insert_pts[i][0] for i in range(num_pts)], [insert_pts[i][1] for i in range(num_pts)], c="red")
+        plt.scatter([extract_pts[i][0] for i in range(num_pts)], [extract_pts[i][1] for i in range(num_pts)], c="blue")
+        plt.scatter([center_pts[i][0] for i in range(num_pts)], [center_pts[i][1] for i in range(num_pts)], c="green")
+        plt.show()
         def euclidean_distance(point1, point2):
             x1, y1, x2, y2 = point1[0], point1[1], point2[0], point2[1]
             return math.sqrt((x2-x1)**2+(y2-y1)**2)
