@@ -15,7 +15,7 @@ def suture_placing_pipeline(SuturePlacer):
 
     img_color = cv2.imread('hand_image.png')
     img_point = np.load("record/img_point_inclined.npy")
-    sample_spline = True
+    sample_spline = False
     if not sample_spline:
         pnts = IPG.get_insertion_points_from_selection(img_color, img_point)
     else:

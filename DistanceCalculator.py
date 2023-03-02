@@ -60,15 +60,19 @@ class DistanceCalculator():
 
         center_pts = [[wound_x[i], wound_y[i]] for i in range(num_pts)]
 
+        # Flip y points cause pixel to real transform!
+        insert_pts = [[insert_pts[i][0], -insert_pts[i][1]] for i in range(len(insert_pts))]
+        center_pts = [[center_pts[i][0], -center_pts[i][1]] for i in range(len(center_pts))]
+        extract_pts = [[extract_pts[i][0], -extract_pts[i][1]] for i in range(len(extract_pts))]
+
         # verify works by plotting
         wound_sample_x, wound_sample_y = self.wound(np.linspace(0, 1, 5000))
         wound_sample_x *= 1/20
-        wound_sample_y *= 1/20
+        wound_sample_y *= -1/20 # Flip y points cause pixel to real transform!
         plt.plot(wound_sample_x, wound_sample_y, c='k')
         plt.scatter([insert_pts[i][0] for i in range(num_pts)], [insert_pts[i][1] for i in range(num_pts)], c="red")
         plt.scatter([extract_pts[i][0] for i in range(num_pts)], [extract_pts[i][1] for i in range(num_pts)], c="blue")
         plt.scatter([center_pts[i][0] for i in range(num_pts)], [center_pts[i][1] for i in range(num_pts)], c="green")
-        plt.show()
         def euclidean_distance(point1, point2):
             x1, y1, x2, y2 = point1[0], point1[1], point2[0], point2[1]
             return math.sqrt((x2-x1)**2+(y2-y1)**2)
@@ -98,29 +102,29 @@ class DistanceCalculator():
             insert_distances.append(dist_insert(i))
             center_distances.append(dist_center(i))
             extract_distances.append(dist_extract(i))
-            dc = torch.sqrt(torch.square(wound_points_torch[i+1] - wound_points_torch[i]) + torch.square(wound_curve_torch[i+1] - wound_curve_torch[i]))
-            dc.backward()
-            center_grads[i][:] = (wound_points_torch.grad + torch.mul(wound_curve_torch.grad, wound_derivatives_torch)).cpu().detach().numpy()
-            wound_points_torch.grad.zero_()
-            wound_curve_torch.grad.zero_()
+            # dc = torch.sqrt(torch.square(wound_points_torch[i+1] - wound_points_torch[i]) + torch.square(wound_curve_torch[i+1] - wound_curve_torch[i]))
+            # dc.backward()
+            # center_grads[i][:] = (wound_points_torch.grad + torch.mul(wound_curve_torch.grad, wound_derivatives_torch)).cpu().detach().numpy()
+            # wound_points_torch.grad.zero_()
+            # wound_curve_torch.grad.zero_()
 
         self.gradients['center'] = center_grads.T
         self.gradients['insert'] = 0
         self.gradients['extract'] = 0
 
 
-        # print('insert distances\n', insert_distances, '\ncenter_distances\n', center_distances, '\nextract_distances\n', extract_distances)
-        # for i, txt in enumerate(insert_distances):
-        #     print('type text', type(txt))
-        #     plt.annotate("{:.4f}".format(txt), (insert_pts[i][0], insert_pts[i][1]))
-        # for i, txt in enumerate(center_distances):
-        #     print('type text', type(txt))
-        #     plt.annotate("{:.4f}".format(txt), (center_pts[i][0], center_pts[i][1]))
-        # for i, txt in enumerate(extract_distances):
-        #     print('type text', type(txt))
-        #     plt.annotate("{:.4f}".format(txt), (extract_pts[i][0], extract_pts[i][1]))
+        print('insert distances\n', insert_distances, '\ncenter_distances\n', center_distances, '\nextract_distances\n', extract_distances)
+        for i, txt in enumerate(insert_distances):
+            print('type text', type(txt))
+            plt.annotate("{:.4f}".format(txt), (insert_pts[i][0], insert_pts[i][1]))
+        for i, txt in enumerate(center_distances):
+            print('type text', type(txt))
+            plt.annotate("{:.4f}".format(txt), (center_pts[i][0], center_pts[i][1]))
+        for i, txt in enumerate(extract_distances):
+            print('type text', type(txt))
+            plt.annotate("{:.4f}".format(txt), (extract_pts[i][0], extract_pts[i][1]))
 
-        # plt.show()
+        plt.show()
 
         return insert_distances, center_distances, extract_distances
     
