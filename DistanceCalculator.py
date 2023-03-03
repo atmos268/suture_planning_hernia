@@ -89,6 +89,7 @@ class DistanceCalculator():
             dc = torch.sqrt(torch.square(wound_points_torch[i+1] - wound_points_torch[i]) + torch.square(wound_curve_torch[i+1] - wound_curve_torch[i]))
             dc.backward()
             center_grads[i][:] = (wound_points_torch.grad + torch.mul(wound_curve_torch.grad, wound_derivatives_torch)).cpu().detach().numpy()
+            # dc/dx = dc/dx + dc/dy * dy/dx
             wound_points_torch.grad.zero_()
             wound_curve_torch.grad.zero_()
 

@@ -5,7 +5,7 @@ import Optimizer
 class SuturePlacer:
     def __init__(self):
         # This object should contain the optimizer, the spline curve, the image, etc., i.e. all of the relevant objects involved, as attributes.
-        self.wound_width = 0.2 # TODO Varun: this is a random #, lookup
+        self.wound_width = 0.1 # TODO Varun: this is a random #, lookup
         self.DistanceCalculator = DistanceCalculator.DistanceCalculator(self.wound_width)
         self.RewardFunction = RewardFunction.RewardFunction()
 
@@ -17,9 +17,9 @@ class SuturePlacer:
         # Maybe this initial placement could be based on some smart heuristic to make optimization faster...
        
         # choosing 11 equally spaced points along curve as placeholder
-        wound_points = [0.1*i for i in range(11)] # TODO Harshika/Viraj: Initial Placement, can put some placeholder here
-        print("Initial wound points", wound_points)
-
+        wound_points = [0.0, 0.05, 0.25, 0.45, 0.65, 0.75, 0.85, 0.87, 0.9] # TODO Harshika/Viraj: Initial Placement, can put some placeholder here
+        # print("Initial wound points", wound_points)
+        # self.DistanceCalculator.plot(wound_points)
         num_iters = 100
         lr = 0.1
 
