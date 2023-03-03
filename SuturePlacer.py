@@ -5,7 +5,7 @@ import Optimizer
 class SuturePlacer:
     def __init__(self):
         # This object should contain the optimizer, the spline curve, the image, etc., i.e. all of the relevant objects involved, as attributes.
-        self.wound_width = 0.1 # TODO Varun: this is a random #, lookup
+        self.wound_width = 0.2 # TODO Varun: this is a random #, lookup
         self.DistanceCalculator = DistanceCalculator.DistanceCalculator(self.wound_width)
         self.RewardFunction = RewardFunction.RewardFunction()
 
@@ -19,26 +19,7 @@ class SuturePlacer:
         # choosing 11 equally spaced points along curve as placeholder
         wound_points = [0.0, 0.05, 0.25, 0.45, 0.65, 0.75, 0.85, 0.87, 0.9] # TODO Harshika/Viraj: Initial Placement, can put some placeholder here
         # print("Initial wound points", wound_points)
-        # self.DistanceCalculator.plot(wound_points)
-        num_iters = 100
-        lr = 0.1
-
-        for i in range(num_iters):
-            insert_dists, center_dists, extract_dists = self.DistanceCalculator.calculate_distances(wound_points) # TODO Harshika/Viraj
-            self.RewardFunction.insert_dists = insert_dists
-            self.RewardFunction.center_dists = center_dists
-            self.RewardFunction.extract_dists = extract_dists
-
-            # Varun: Eventually,  we'll have an overall reward that is the linear combination. [these two lines merge-conflicted, don't know which is right for now]
-            #self.initial_reward = self.RewardFunction.rewardA() # TODO Julia/Yashish
-            self.initial_reward = self.RewardFunction.lossX_torch() # TODO Julia/Yashish
-            grads1, grads2 = self.RewardFunction.loss_gradient(), self.DistanceCalculator.grads(wound_points)
-            final_grad = (grads2["center"] @ grads1["center"]) #+ (grads1["insert"] * grads2["insert"]) + (grads1["extract"] * grads2["extract"])
-            wound_points = [wound_points[i] - lr * final_grad[i] for i in range(len(wound_points))]
-            wound_points = [float(wound_points[i]) for i in range(len(wound_points))]
-        print("Final wound points", wound_points)
-        self.DistanceCalculator.plot(wound_points)
-            
+        print(self.DistanceCalculator.calculate_distances(wound_points))
 
 
         # Then, we can use the initial placement to warm-start the optimization process.

@@ -21,16 +21,16 @@ def suture_placing_pipeline(SuturePlacer):
 
     # couldn't find reference to this in the codebase? I'm using make_interp_spline for now
     # wound = scipy_generate_sample_spline.generate_sample_spline()
-
-    wound = inter.make_interp_spline(x=x, y=y, k=deg, bc_type="clamped" if deg == 3 else None)
+    tck, u = inter.splprep([x, y], k=deg)
+    wound_parametric = lambda t, d: inter.splev(t, tck, der = d)
 
     # Put the wound into all the relevant objects
-    SuturePlacer.wound = wound
-    SuturePlacer.DistanceCalculator.wound = wound
-    SuturePlacer.Optimizer.wound = wound
+    SuturePlacer.wound_parametric = wound_parametric
+    SuturePlacer.DistanceCalculator.wound_parametric = wound_parametric
+    SuturePlacer.Optimizer.wound_parametric = wound_parametric
 
     # The main algorithm
-    SuturePlacer.place_sutures()
+    print(SuturePlacer.place_sutures())
 
 if __name__ == "__main__":
     SuturePlacer = SuturePlacer.SuturePlacer()
