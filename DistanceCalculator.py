@@ -93,7 +93,7 @@ class DistanceCalculator():
         plt.scatter([center_pts[i][0] for i in range(num_pts)], [center_pts[i][1] for i in range(num_pts)], c="green")
         plt.show()
 
-        return insert_distances, center_distances, extract_distances
+        return insert_distances, center_distances, extract_distances, insert_pts, center_pts, extract_pts
 
 
 

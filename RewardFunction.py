@@ -5,10 +5,6 @@ class RewardFunction():
         self.insert_dists = []
         self.center_dists = []
         self.extract_dists = []
-        self.gradients = {}
-        self.gradients["center"] = 0
-        self.gradients["extract"] = 0
-        self.gradients["insert"] = 0
     
     # distance lists added to this object by SuturePlacer.
     # variance
@@ -28,22 +24,6 @@ class RewardFunction():
     def rewardA(self):
         return - (max(self.insert_dists) + max(self.center_dists) + max(self.extract_dists))
     
-    def lossX_torch(self):
-        insert_dists = torch.tensor(self.insert_dists, requires_grad=True)
-        center_dists = torch.tensor(self.center_dists, requires_grad=True)
-        extract_dists = torch.tensor(self.extract_dists, requires_grad=True)
-        
-        loss = (torch.var(insert_dists) + torch.var(center_dists) + torch.var(extract_dists))
-        loss.backward()
-
-        self.gradients["center"] = center_dists.grad.cpu().detach().numpy()
-        self.gradients["extract"] = extract_dists.grad
-        self.gradients["insert"] = insert_dists.grad
-
-        return loss
-
-    def loss_gradient(self):
-        return self.gradients # returns dR/d(dists) as numbers
 
 
     # ... and so forth: refer to slide 14 from the presentation for details on how to design this.

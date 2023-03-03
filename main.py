@@ -30,7 +30,7 @@ def suture_placing_pipeline(SuturePlacer):
     SuturePlacer.Optimizer.wound_parametric = wound_parametric
 
     # The main algorithm
-    print(SuturePlacer.place_sutures())
+    SuturePlacer.place_sutures()
 
 if __name__ == "__main__":
     SuturePlacer = SuturePlacer.SuturePlacer()
