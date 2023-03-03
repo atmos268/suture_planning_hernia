@@ -8,7 +8,7 @@ class RewardFunction():
     
     # distance lists added to this object by SuturePlacer.
     # variance
-    def rewardX(self):
+    def lossX(self):
         mean_insert = sum(self.insert_dists) / len(self.insert_dists)
         var_insert = sum([(i - mean_insert)**2 for i in self.insert_dists])
         
@@ -18,7 +18,7 @@ class RewardFunction():
         mean_extract = sum(self.extract_dists) / len(self.extract_dists)
         var_extract = sum([(i - mean_extract)**2 for i in self.extract_dists])
         
-        return -(var_insert + var_center + var_extract)
+        return var_insert + var_center + var_extract
 
     #min - max
     def rewardA(self):

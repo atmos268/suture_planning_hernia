@@ -1,6 +1,7 @@
 import DistanceCalculator
 import RewardFunction
 import Optimizer
+import scipy.optimize as optim
 
 class SuturePlacer:
     def __init__(self):
@@ -19,7 +20,18 @@ class SuturePlacer:
         # choosing 11 equally spaced points along curve as placeholder
         wound_points = [0.0, 0.05, 0.25, 0.45, 0.65, 0.75, 0.85, 0.87, 0.9] # TODO Harshika/Viraj: Initial Placement, can put some placeholder here
         # print("Initial wound points", wound_points)
-        print(self.DistanceCalculator.calculate_distances(wound_points))
+        
+        def final_loss(t):
+            self.RewardFunction.insert_dists, self.RewardFunction.center_dists, self.RewardFunction.extract_dists, insert_pts, center_pts, extract_pts = self.DistanceCalculator.calculate_distances(t)    
+            return self.RewardFunction.lossX()
+        print(final_loss(wound_points))
+        result = optim.minimize(final_loss, wound_points)
+        print(final_loss(result.x))
+        self.DistanceCalculator.plot(result.x)
+        return result.x
+        
+
+
 
 
         # Then, we can use the initial placement to warm-start the optimization process.
