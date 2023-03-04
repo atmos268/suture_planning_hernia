@@ -21,7 +21,7 @@ class SuturePlacer:
         # Maybe this initial placement could be based on some smart heuristic to make optimization faster...
        
         # choosing 11 equally spaced points along curve as placeholder
-        wound_points = [0.0, 0.05, 0.25, 0.45, 0.65, 0.75, 0.85, 0.9] # TODO Harshika/Viraj: Initial Placement, can put some placeholder here
+        wound_points = [0.0, 0.05, 0.25, 0.45, 0.65, 0.75, 1.05, 1.1] # TODO Harshika/Viraj: Initial Placement, can put some placeholder here
         self.Constraints.wound_points = wound_points
         self.DistanceCalculator.plot(wound_points)
         # print("Initial wound points", wound_points)
@@ -30,7 +30,7 @@ class SuturePlacer:
         
         def final_loss(t):
             self.RewardFunction.insert_dists, self.RewardFunction.center_dists, self.RewardFunction.extract_dists, insert_pts, center_pts, extract_pts = self.DistanceCalculator.calculate_distances(t)    
-            return self.RewardFunction.lossX()
+            return self.RewardFunction.final_loss()
 
         print(final_loss(wound_points))
         result = optim.minimize(final_loss, wound_points, constraints = self.Constraints.constraints())
