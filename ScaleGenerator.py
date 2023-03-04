@@ -12,18 +12,13 @@ from math import factorial
 cnt = 0
 
 
-class InsertionPointGenerator:
-    def __init__(self, cut_width=.0075, desired_compute_time=3., space_between_sutures=-1., num_insertion_points=-1):
-        assert (num_insertion_points > 0) ^ (
-                    space_between_sutures > 0), "specify space_between_sutures OR num_insertion_points"
-        self.cut_width = cut_width
-        self.space_between_sutures = space_between_sutures
-        self.num_insertion_points = num_insertion_points
-        self.calculate_num_insertion_points = space_between_sutures > 0
+class ScaleGenerator:
+    def __init__(self, desired_compute_time=3.):
 
         # self.ZU = ZU('inclined')
         self.which_camera = 'inclined'
         self.which_arm = 'PSM1'
+        self.scale_found = False
         # self.Trc1 = np.load(
         #     root + f'SurgicalSuturing/calibration_files/Trc_{self.which_camera}_{self.which_arm}.npy')  # robot to camera
         # self.Tcr1 = np.linalg.inv(self.Trc1)
@@ -39,7 +34,7 @@ class InsertionPointGenerator:
         self.use_multiprocessing = False  # super super buggy on dvrk, not sure why
 
     def __on_mouse_event(self, event, x, y, flags, param):
-        print('click registered')
+        # print('click registered')
         blue, red, green = (255, 0, 0), (0, 0, 255), (0, 255, 0)
         if event == cv2.EVENT_LBUTTONDOWN:
             self.is_dragging = True
@@ -52,17 +47,35 @@ class InsertionPointGenerator:
         elif event == cv2.EVENT_LBUTTONUP:
             if self.is_dragging:
                 self.pnts.append([self.px, self.py])
+                if len(self.pnts) > 2:
+                    self.pnts = self.pnts[-2:]
                 self.px, self.py = -1, -1
                 self.is_dragging = False
         else:
             return
-        print('l59')
+        # print('l59')
         img_draw = self.img_color.copy()
-        cv2.circle(img_draw, (self.px, self.py), 3, green, -1)
-        for i, pnt in enumerate(self.pnts):
-            cv2.circle(img_draw, (pnt[0], pnt[1]), 3, green, -1)
+
+        if not self.scale_found:
+            cv2.circle(img_draw, (self.px, self.py), 3, red, -1)
+            for i, pnt in enumerate(self.pnts):
+                cv2.circle(img_draw, (pnt[0], pnt[1]), 3, red, -1)
             # cv2.putText(img_draw, str(i), (pnt[0]+10, pnt[1]+10), cv2.FONT_HERSHEY_SIMPLEX , 1, (0, 255, 255), 2, cv2.LINE_AA)
-        cv2.imshow("IPG Visualizer", img_draw)
+            cv2.imshow("Scale Visualizer", img_draw)
+
+    def get_scale_pts(self, img_color, img_point):
+
+        print("getting scale pts")
+        # TODO actually do the thing
+
+        self.img_color = img_color
+        self.img_point = img_point
+        np.save("./record/img_color_inclined.npy", self.img_color)
+        np.save("./record/img_point_inclined.npy", self.img_point)
+
+        self.__user_select_pnts()  # fills self.pnts with user selected points
+        # print('self.pnts after __user_select_pnts')
+        return self.pnts
 
     def __user_select_pnts(self):
         # user specify points on the image
@@ -71,13 +84,15 @@ class InsertionPointGenerator:
         self.px, self.py = -1, -1
         # print('self.pnts before imshow', self.pnts)
         print('before create window')
-        cv2.imshow("IPG Visualizer", self.img_color)
+        cv2.imshow("Scale Visualizer", self.img_color)
         # print('self.pnts before mousecallback', self.pnts)
-        cv2.setMouseCallback('IPG Visualizer', self.__on_mouse_event)  # fills pnts array
+        cv2.setMouseCallback('Scale Visualizer', self.__on_mouse_event)  # fills pnts array
         print('before waitkey')
         cv2.waitKey(0)
         print('after waitkey')
-        print('after create window')
+        self.scale_found = True
+        cv2.destroyAllWindows()
+        # print('after create window')
         # print('self.pnts before waitkey', self.pnts)
         # cv2.waitKey(0)
         # print('self.pnts before destory', self.pnts)
@@ -145,7 +160,7 @@ class InsertionPointGenerator:
             self.draw_points = draw_points
             for point in draw_points:
                 draw_on_img = cv2.circle(draw_on_img, (point[0], point[1]), 4, (0, 150, 0), -1)
-            cv2.imshow("IPG Visualizer", draw_on_img)
+            cv2.imshow("Scale Visualizer", draw_on_img)
             key = cv2.waitKey(0)
             if key == 13:
                 break
@@ -282,7 +297,7 @@ class InsertionPointGenerator:
             for point in self.draw_points:
                 draw_on_img = cv2.circle(draw_on_img, (point[0], point[1]), 4, (255, 255, 255), -1)
         '''
-        cv2.imshow("IPG Visualizer", draw_on_img)
+        cv2.imshow("Scale Visualizer", draw_on_img)
         cv2.waitKey(0)
 
     def get_insertion_points_from_selection(self, img_color, img_point):

@@ -2,12 +2,18 @@ import scipy_generate_sample_spline
 import scipy.interpolate as inter
 import SuturePlacer
 from InsertionPointGenerator import InsertionPointGenerator
+from ScaleGenerator import ScaleGenerator
 import numpy as np
 import cv2
+import math
 
 def suture_placing_pipeline(SuturePlacer):
     # TODO Varun: will rope in Sam's code that has the interface for the surgeon to click
     #  points along the wound. That'll return a spline.
+
+    # make a new scale object to get the scale
+    newScale = ScaleGenerator()
+
     space_between_sutures = 0.010  # 1 cm
     desired_compute_time = 1
     IPG = InsertionPointGenerator(cut_width=.0075, desired_compute_time=desired_compute_time,
@@ -15,6 +21,22 @@ def suture_placing_pipeline(SuturePlacer):
 
     img_color = cv2.imread('hand_image.png')
     img_point = np.load("record/img_point_inclined.npy")
+
+    # get the scale measurement from surgeon
+    scale_pts = newScale.get_scale_pts(img_color, img_point)
+    
+    print("scale pts: " + str(scale_pts))
+
+    # request the surgeon for a distance
+    real_dist = input('Please enter the distance in mm that you measured: ')
+    cv2.destroyAllWindows()
+
+    float_real_dist = float(real_dist)
+    print(float_real_dist)
+
+    pixel_dist = math.sqrt((scale_pts[0][0] - scale_pts[1][0])**2 + (scale_pts[0][1] - scale_pts[1][1])**2)
+    mm_per_pixel = float_real_dist/pixel_dist
+
     sample_spline = False
     if not sample_spline:
         pnts = IPG.get_insertion_points_from_selection(img_color, img_point)
@@ -33,6 +55,11 @@ def suture_placing_pipeline(SuturePlacer):
     """
     x = [a[0] for a in pnts]
     y = [a[1] for a in pnts]
+
+    # now, use our conversion factor to scale points appropriately
+    x = [float(elem) * mm_per_pixel for elem in x]
+    y = [float(elem) * mm_per_pixel for elem in y]
+
 
     # x = [0.0, 0.7, 1.0, 1.5, 2.1, 2.5, 3.0] # OLD manually-chosen example
     # y = [0.0, -0.5, 0.5, 3.5, 1.8, 0.7, 1.3] # OLD manually-chosen example
