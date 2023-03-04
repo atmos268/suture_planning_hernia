@@ -6,7 +6,7 @@ import scipy.optimize as optim
 class SuturePlacer:
     def __init__(self):
         # This object should contain the optimizer, the spline curve, the image, etc., i.e. all of the relevant objects involved, as attributes.
-        self.wound_width = 0.2 # TODO Varun: this is a random #, lookup
+        self.wound_width = 0.3 # TODO Varun: this is a random #, lookup
         self.DistanceCalculator = DistanceCalculator.DistanceCalculator(self.wound_width)
         self.RewardFunction = RewardFunction.RewardFunction()
 
@@ -18,14 +18,27 @@ class SuturePlacer:
         # Maybe this initial placement could be based on some smart heuristic to make optimization faster...
        
         # choosing 11 equally spaced points along curve as placeholder
-        wound_points = [0.0, 0.05, 0.25, 0.45, 0.65, 0.75, 0.85, 0.87, 0.9] # TODO Harshika/Viraj: Initial Placement, can put some placeholder here
+        wound_points = [0.0, 0.05, 0.25, 0.45, 0.65, 0.75, 0.85, 0.9] # TODO Harshika/Viraj: Initial Placement, can put some placeholder here
+        self.DistanceCalculator.plot(wound_points)
         # print("Initial wound points", wound_points)
+        start = wound_points[0]
+        end = wound_points[-1]
         
         def final_loss(t):
             self.RewardFunction.insert_dists, self.RewardFunction.center_dists, self.RewardFunction.extract_dists, insert_pts, center_pts, extract_pts = self.DistanceCalculator.calculate_distances(t)    
             return self.RewardFunction.lossX()
+        
+        def con2(t):
+            insert_dists, center_dists, extract_dists, insert_pts, center_pts, extract_pts = self.DistanceCalculator.calculate_distances(t)   
+            h = 0.3
+            return [i - h for i in insert_dists] + [i - h for i in center_dists] + [i - h for i in extract_dists]
+
         print(final_loss(wound_points))
-        result = optim.minimize(final_loss, wound_points)
+        con = ({'type': 'eq', 'fun': lambda t: t[0] - start}, {'type': 'eq', 'fun': lambda t: t[-1] - end}, 
+               {'type': 'ineq', 'fun': con2}
+               )
+        result = optim.minimize(final_loss, wound_points, constraints = con)
+        print(self.DistanceCalculator.calculate_distances(result.x))
         print(final_loss(result.x))
         self.DistanceCalculator.plot(result.x)
         return result.x
