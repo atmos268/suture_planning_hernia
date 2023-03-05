@@ -2,6 +2,7 @@ import math
 import matplotlib.pyplot as plt
 import torch as torch
 import numpy as np
+from scipy.interpolate import make_interp_spline
 
 class DistanceCalculator():
 
@@ -125,7 +126,15 @@ class DistanceCalculator():
 
         center_pts = [[wound_points[i], wound_curve[i]] for i in range(num_pts)]
 
+        spline = make_interp_spline(wound_points, wound_curve)
+    
+        # Returns evenly spaced numbers
+        # over a specified interval.
+        X_ = np.linspace(wound_points.min(), wound_points.max(), 500)
+        Y_ = spline(X_)
         
+        # Plotting the Graph
+        plt.plot(X_, Y_)
         plt.scatter([insert_pts[i][0] for i in range(num_pts)], [insert_pts[i][1] for i in range(num_pts)], c="red")
         plt.scatter([extract_pts[i][0] for i in range(num_pts)], [extract_pts[i][1] for i in range(num_pts)], c="blue")
         plt.scatter([center_pts[i][0] for i in range(num_pts)], [center_pts[i][1] for i in range(num_pts)], c="green")

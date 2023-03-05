@@ -32,23 +32,22 @@ class Constraints:
         d3 = self.direction(p1, p2, p3)
         d4 = self.direction(p1, p2, p4)
         if ((d1 > 0 and d2 < 0) or (d1 < 0 and d2 > 0)) and ((d3 > 0 and d4 < 0) or (d3 < 0 and d4 > 0)):
-            return -1000
+            return -1
         elif d1 == 0 and self.on_segment(p3, p4, p1):
-            return -1000
+            return -1
         elif d2 == 0 and self.on_segment(p3, p4, p2):
-            return -1000
+            return -1
         elif d3 == 0 and self.on_segment(p1, p2, p3):
-            return -1000
+            return -1
         elif d4 == 0 and self.on_segment(p1, p2, p4):
-            return -1000
+            return -1
         else:
             return 1
         
     def con4(self, t): #to avoid crossings
         insert_dists, center_dists, extract_dists, insert_pts, center_pts, extract_pts = self.DistanceCalculator.calculate_distances(t)  
         lst = [self.intersect(insert_pts[i], extract_pts[i], insert_pts[i+1], extract_pts[i+1]) for i in range(len(insert_pts)-1)] 
-        print(lst)
-        return sum(lst)
+        return lst
 
     def constraints(self):
         start = self.wound_points[0]
