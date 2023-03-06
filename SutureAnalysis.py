@@ -77,4 +77,3 @@ if __name__ == "__main__":
     SuturePlacer = SuturePlacer.SuturePlacer()
     suture_analysis_pipeline(SuturePlacer)
     cv2.destroyAllWindows()
-

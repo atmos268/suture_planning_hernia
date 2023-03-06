@@ -1,13 +1,15 @@
 import scipy_generate_sample_spline
 import scipy.interpolate as inter
-import SuturePlacer
+from SuturePlacer import SuturePlacer
 from InsertionPointGenerator import InsertionPointGenerator
 from ScaleGenerator import ScaleGenerator
 import numpy as np
 import cv2
 import math
+import tkinter as tk
+from tkinter import simpledialog
 
-def suture_placing_pipeline(SuturePlacer):
+def suture_placing_pipeline():
     # TODO Varun: will rope in Sam's code that has the interface for the surgeon to click
     #  points along the wound. That'll return a spline.
 
@@ -28,14 +30,19 @@ def suture_placing_pipeline(SuturePlacer):
     print("scale pts: " + str(scale_pts))
 
     # request the surgeon for a distance
-    real_dist = input('Please enter the distance in mm that you measured: ')
+
+    # make into GUI, and also request wound width, space between sutures 
+    # real_dist = input('Please enter the distance in mm that you measured: ')
+    real_dist = simpledialog.askfloat(title="dist prompt", prompt="Please enter the distance in mm that you measured")
+
+    wound_width = simpledialog.askfloat(title="width prompt", prompt="Please enter the width of suture in mm")
+    
     cv2.destroyAllWindows()
 
-    float_real_dist = float(real_dist)
-    print(float_real_dist)
+    print(real_dist)
 
     pixel_dist = math.sqrt((scale_pts[0][0] - scale_pts[1][0])**2 + (scale_pts[0][1] - scale_pts[1][1])**2)
-    mm_per_pixel = float_real_dist/pixel_dist
+    mm_per_pixel = real_dist/pixel_dist
 
     sample_spline = False
     if not sample_spline:
@@ -60,7 +67,6 @@ def suture_placing_pipeline(SuturePlacer):
     x = [float(elem) * mm_per_pixel for elem in x]
     y = [float(elem) * mm_per_pixel for elem in y]
 
-
     # x = [0.0, 0.7, 1.0, 1.5, 2.1, 2.5, 3.0] # OLD manually-chosen example
     # y = [0.0, -0.5, 0.5, 3.5, 1.8, 0.7, 1.3] # OLD manually-chosen example
     deg = 3
@@ -79,17 +85,21 @@ def suture_placing_pipeline(SuturePlacer):
 
     wound(3)
     # Put the wound into all the relevant objects
-    SuturePlacer.wound = wound
-    SuturePlacer.tck = tck
-    SuturePlacer.DistanceCalculator.wound = wound
-    SuturePlacer.DistanceCalculator.tck = tck
-    SuturePlacer.Optimizer.wound = wound
-    SuturePlacer.Optimizer.tck = tck
+    newSuturePlacer = SuturePlacer(wound_width)
+    newSuturePlacer.wound = wound
+    newSuturePlacer.tck = tck
+    newSuturePlacer.DistanceCalculator.wound = wound
+    newSuturePlacer.DistanceCalculator.tck = tck
+    newSuturePlacer.Optimizer.wound = wound
+    newSuturePlacer.Optimizer.tck = tck
+    
 
     # The main algorithm
-    SuturePlacer.place_sutures()
+    newSuturePlacer.place_sutures()
 
 if __name__ == "__main__":
-    SuturePlacer = SuturePlacer.SuturePlacer()
-    suture_placing_pipeline(SuturePlacer)
+    ROOT = tk.Tk()
+    ROOT.withdraw()
+
+    suture_placing_pipeline()
     cv2.destroyAllWindows()
