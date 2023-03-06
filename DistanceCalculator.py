@@ -138,6 +138,18 @@ class DistanceCalculator():
         plt.scatter([insert_pts[i][0] for i in range(num_pts)], [insert_pts[i][1] for i in range(num_pts)], c="red")
         plt.scatter([extract_pts[i][0] for i in range(num_pts)], [extract_pts[i][1] for i in range(num_pts)], c="blue")
         plt.scatter([center_pts[i][0] for i in range(num_pts)], [center_pts[i][1] for i in range(num_pts)], c="green")
+
+        insert_distances, center_distances, extract_distances, insert_pts, center_pts, extract_pts = self.calculate_distances(wound_point_t)
+
+        for i, txt in enumerate(insert_distances):
+            print('type text', type(txt))
+            plt.annotate("{:.4f}".format(txt), (insert_pts[i][0], insert_pts[i][1]))
+        for i, txt in enumerate(center_distances):
+            print('type text', type(txt))
+            plt.annotate("{:.4f}".format(txt), (center_pts[i][0], center_pts[i][1]))
+        for i, txt in enumerate(extract_distances):
+            print('type text', type(txt))
+            plt.annotate("{:.4f}".format(txt), (extract_pts[i][0], extract_pts[i][1]))
         plt.show()
 
 
