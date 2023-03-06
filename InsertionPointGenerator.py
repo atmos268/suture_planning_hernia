@@ -11,7 +11,6 @@ from math import factorial
 
 cnt = 0
 
-
 class InsertionPointGenerator:
     def __init__(self, cut_width=.0075, desired_compute_time=3., space_between_sutures=-1., num_insertion_points=-1):
         assert (num_insertion_points > 0) ^ (

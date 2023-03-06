@@ -6,10 +6,11 @@ import scipy.interpolate as inter
 
 class DistanceCalculator():
 
-    def __init__(self, wound_width):
+    def __init__(self, suturePlacer, wound_width, mm_per_pixel):
+        self.suturePlacer = suturePlacer
         self.wound_width = wound_width
         self.gradients = {}
-        self.pixels_per_mm = 20
+        self.pixels_per_mm = 1 / mm_per_pixel
         pass
 
     def calculate_distances(self, wound_points):
@@ -67,12 +68,13 @@ class DistanceCalculator():
 
         # verify works by plotting
         wound_sample_x, wound_sample_y = self.wound(np.linspace(0, 1, 5000))
-        wound_sample_x *= 1/20
-        wound_sample_y *= -1/20 # Flip y points cause pixel to real transform!
+        wound_sample_x *= 1 / self.pixels_per_mm
+        wound_sample_y *= -1 / self.pixels_per_mm # Flip y points cause pixel to real transform!
         plt.plot(wound_sample_x, wound_sample_y, c='k')
         plt.scatter([insert_pts[i][0] for i in range(num_pts)], [insert_pts[i][1] for i in range(num_pts)], c="red")
         plt.scatter([extract_pts[i][0] for i in range(num_pts)], [extract_pts[i][1] for i in range(num_pts)], c="blue")
         plt.scatter([center_pts[i][0] for i in range(num_pts)], [center_pts[i][1] for i in range(num_pts)], c="green")
+        
         def euclidean_distance(point1, point2):
             x1, y1, x2, y2 = point1[0], point1[1], point2[0], point2[1]
             return math.sqrt((x2-x1)**2+(y2-y1)**2)
@@ -126,6 +128,11 @@ class DistanceCalculator():
 
         plt.axis('square')
         plt.show()
+
+        # save the points
+        self.suturePlacer.insert_pts = insert_pts
+        self.suturePlacer.center_pts = center_pts
+        self.suturePlacer.extract_pts = extract_pts
 
         return insert_distances, center_distances, extract_distances
     

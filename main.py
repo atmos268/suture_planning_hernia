@@ -73,7 +73,6 @@ def suture_placing_pipeline():
 
     # couldn't find reference to this in the codebase? I'm using make_interp_spline for now
     # wound = scipy_generate_sample_spline.generate_sample_spline()
-
     # wound = inter.make_interp_spline(x=x, y=y, k=deg, bc_type="clamped" if deg == 3 else None)
 
     tck, u = inter.splprep([x, y], s=0)
@@ -85,7 +84,7 @@ def suture_placing_pipeline():
 
     wound(3)
     # Put the wound into all the relevant objects
-    newSuturePlacer = SuturePlacer(wound_width)
+    newSuturePlacer = SuturePlacer(wound_width, mm_per_pixel)
     newSuturePlacer.wound = wound
     newSuturePlacer.tck = tck
     newSuturePlacer.DistanceCalculator.wound = wound
@@ -93,13 +92,29 @@ def suture_placing_pipeline():
     newSuturePlacer.Optimizer.wound = wound
     newSuturePlacer.Optimizer.tck = tck
     
-
     # The main algorithm
     newSuturePlacer.place_sutures()
+    return newSuturePlacer
+
+def suture_display_adj_pipeline(newSuturePlacer):
+    
+    insert_pts = newSuturePlacer.insert_pts
+    center_pts = newSuturePlacer.center_pts
+    extract_pts = newSuturePlacer.extract_pts
+    # display and allow for edit
+    # (cv2)
+    
+    # pull up image using cv2
+
+    # plot points from optimization (need to source from somewhere)
+    return
 
 if __name__ == "__main__":
     ROOT = tk.Tk()
     ROOT.withdraw()
 
-    suture_placing_pipeline()
+    suturePlacer = suture_placing_pipeline()
+
+    suture_display_adj_pipeline(suturePlacer)
+
     cv2.destroyAllWindows()

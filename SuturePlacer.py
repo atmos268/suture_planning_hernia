@@ -3,10 +3,11 @@ import RewardFunction
 import Optimizer
 
 class SuturePlacer:
-    def __init__(self, wound_width):
+    def __init__(self, wound_width, mm_per_pixel):
         # This object should contain the optimizer, the spline curve, the image, etc., i.e. all of the relevant objects involved, as attributes.
         self.wound_width = wound_width
-        self.DistanceCalculator = DistanceCalculator.DistanceCalculator(self.wound_width)
+        self.mm_per_pixel = mm_per_pixel
+        self.DistanceCalculator = DistanceCalculator.DistanceCalculator(self, self.wound_width, self.mm_per_pixel)
         self.RewardFunction = RewardFunction.RewardFunction
 
         # NB: Viraj: added a class in order to allow code to run
@@ -32,3 +33,5 @@ class SuturePlacer:
         self.Optimizer.optimize_placement() # TODO Viraj/Yashish: the variables to optimize
         # [TODO] are the wound_points. These are parametric values for locations on the wound.
         #  [TODO] Wound should already be passed in by main.py:place_sutures.
+
+        # we will feed optimized values in after merging with optimize code
