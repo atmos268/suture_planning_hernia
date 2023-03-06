@@ -119,8 +119,6 @@ def suture_display_adj_pipeline(newSuturePlacer):
     # pull up image using cv2
 
     # plot points from optimization (need to source from somewhere)
-
-
     
     return
 

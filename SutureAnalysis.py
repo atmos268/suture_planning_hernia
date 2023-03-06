@@ -16,7 +16,7 @@ import math
 # NB: most of the logic here is adapted directly from the main function, but we are using this for understanding existing sutures
 # rather than optimizing new ones
 
-def suture_analysis_pipeline(SuturePlacer):
+def suture_analysis_pipeline():
     #  points along the wound. That'll return a spline.
 
     # make a new scale object to get the scale
@@ -27,7 +27,7 @@ def suture_analysis_pipeline(SuturePlacer):
     IPG = InsertionPointGenerator(cut_width=.0075, desired_compute_time=desired_compute_time,
                                   space_between_sutures=space_between_sutures)
 
-    img_color = cv2.imread('hand_image.png')
+    img_color = cv2.imread('short_vertical_suture.jpeg')
     img_point = np.load("record/img_point_inclined.npy")
 
     # get the scale measurement from surgeon
@@ -73,7 +73,8 @@ def suture_analysis_pipeline(SuturePlacer):
     print(insertion_pts)
     print(extraction_pts)
 
+    # feed pts into reward fn
+
 if __name__ == "__main__":
-    SuturePlacer = SuturePlacer.SuturePlacer()
-    suture_analysis_pipeline(SuturePlacer)
+    suturePlacer = suture_analysis_pipeline()
     cv2.destroyAllWindows()
