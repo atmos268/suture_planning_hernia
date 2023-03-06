@@ -37,7 +37,10 @@ class SuturePlacer:
         #print(self.DistanceCalculator.calculate_distances(result.x))
         print(final_loss(result.x))
         self.DistanceCalculator.plot(result.x)
-        return result.x
+        result_x, result_y = self.DistanceCalculator.wound_parametric(result.x, 0)
+        print(result_x)
+        print(result_y)
+        return result_x, result_y
         
 
 
