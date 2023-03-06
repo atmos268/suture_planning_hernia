@@ -3,6 +3,7 @@ import scipy.interpolate as inter
 from SuturePlacer import SuturePlacer
 from InsertionPointGenerator import InsertionPointGenerator
 from ScaleGenerator import ScaleGenerator
+from SutureDisplayAdjust import SutureDisplayAdjust
 import numpy as np
 import cv2
 import math
@@ -47,6 +48,7 @@ def suture_placing_pipeline():
     sample_spline = False
     if not sample_spline:
         pnts = IPG.get_insertion_points_from_selection(img_color, img_point)
+        print("pts directly after getting them: " + str(pnts))
     else:
         pnts = [[46, 233], [50, 213], [57, 195], [67, 175], [77, 160], [91, 136], [107, 114], [121, 111], [137, 111],
          [144, 120], [158, 136], [166, 166], [175, 208], [193, 233], [227, 218], [251, 183], [275, 128]]
@@ -101,12 +103,25 @@ def suture_display_adj_pipeline(newSuturePlacer):
     insert_pts = newSuturePlacer.insert_pts
     center_pts = newSuturePlacer.center_pts
     extract_pts = newSuturePlacer.extract_pts
+    mm_per_pixel = newSuturePlacer.mm_per_pixel
+
+    newSutureDisAdj = SutureDisplayAdjust(insert_pts, center_pts, extract_pts, mm_per_pixel)
+
+    # convert back to pixel values
+    
     # display and allow for edit
     # (cv2)
+    img_color = cv2.imread('hand_image.png')
+    img_point = np.load("record/img_point_inclined.npy")
+
+    newSutureDisAdj.adjust_points(img_color, img_point)
     
     # pull up image using cv2
 
     # plot points from optimization (need to source from somewhere)
+
+
+    
     return
 
 if __name__ == "__main__":

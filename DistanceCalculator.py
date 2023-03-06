@@ -34,7 +34,7 @@ class DistanceCalculator():
         # might be worth vectorizing in the future
 
         # get the curve and gradient for each point (the second argument allows you to on the fly take the derivative)
-        wound_xy = np.array(self.wound(wound_points)) / self.pixels_per_mm
+        wound_xy = np.array(self.wound(wound_points))
         wound_x, wound_y = wound_xy
         wound_curve = list(zip(wound_x, wound_y))
 
@@ -68,8 +68,8 @@ class DistanceCalculator():
 
         # verify works by plotting
         wound_sample_x, wound_sample_y = self.wound(np.linspace(0, 1, 5000))
-        wound_sample_x *= 1 / self.pixels_per_mm
-        wound_sample_y *= -1 / self.pixels_per_mm # Flip y points cause pixel to real transform!
+        wound_sample_x *= 1 
+        wound_sample_y *= -1 # Flip y points cause pixel to real transform!
         plt.plot(wound_sample_x, wound_sample_y, c='k')
         plt.scatter([insert_pts[i][0] for i in range(num_pts)], [insert_pts[i][1] for i in range(num_pts)], c="red")
         plt.scatter([extract_pts[i][0] for i in range(num_pts)], [extract_pts[i][1] for i in range(num_pts)], c="blue")
