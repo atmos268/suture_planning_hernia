@@ -157,12 +157,18 @@ class DistanceCalculator():
 
         center_pts = [[wound_points[i], wound_curve[i]] for i in range(num_pts)]
 
-        spline = make_interp_spline(wound_points, wound_curve)
+        print(wound_point_t)
     
         # Returns evenly spaced numbers
         # over a specified interval.
-        X_ = np.linspace(wound_points.min(), wound_points.max(), 500)
-        Y_ = spline(X_)
+        X_, Y_ = [], []
+        for i in range(500):
+            t = min(wound_point_t) + (max(wound_point_t) - min(wound_point_t))*i/500
+            temp = self.wound_parametric(t, 0)
+            X_.append(temp[0])
+            Y_.append(temp[1])
+        # X_ = np.linspace(wound_points.min(), wound_points.max(), 500)
+        # Y_ = spline(X_)
         
         # Plotting the Graph
         plt.plot(X_, Y_)

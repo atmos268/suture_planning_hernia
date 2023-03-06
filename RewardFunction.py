@@ -25,8 +25,28 @@ class RewardFunction():
     
     def lossIdeal(self):
         ideal = 0.4
-        [(i - ideal) ** 2 for i in self.insert_dists]
-        return sum([(i - ideal) ** 2 for i in self.insert_dists] + [(i - ideal) ** 2 for i in self.center_dists] + [(i - ideal) ** 2 for i in self.extract_dists])
+        power = 2
+        extra_pen = 100
+        insertion = []
+        extraction = []
+        center = []
+        for i in range(len(self.insert_dists)):
+            ins = self.insert_dists[i]
+            if ins < ideal:
+                insertion.append((ins-ideal) ** power * extra_pen)
+            else:
+                insertion.append((ins-ideal) ** power)
+            ext = self.extract_dists[i]
+            if ext < ideal:
+                extraction.append((ext-ideal) ** power * extra_pen)
+            else:
+                extraction.append((ext-ideal) ** power)
+            cen = self.insert_dists[i]
+            if cen < ideal:
+                center.append((cen-ideal) ** power * extra_pen)
+            else:
+                center.append((cen-ideal) ** power)
+        return sum(insertion + center + extraction)
 
     #min - max
     def lossMinMax(self):
