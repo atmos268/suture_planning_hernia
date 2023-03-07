@@ -59,7 +59,6 @@ class SutureDisplayAdjust:
         def find_closest_suture(x, y):
             minDistance = 5 # won't detect suture if farther than 5 pixels
             for pair in self.insertion_pts_pxl:
-                print(len(pair), 'pair')
                 x_sut, y_sut = pair[0], pair[1]
                 if abs(x - x_sut) <= minDistance and abs(y - y_sut) <= minDistance:
                     return 'insert', x_sut, y_sut
@@ -73,31 +72,19 @@ class SutureDisplayAdjust:
                     return 'extract', x_sut, y_sut
             return None, None, None
         
-
-        self.pts = self.insertion_pts_pxl + self.center_pts_pxl + self.extraction_pts_pxl
         if event == cv2.EVENT_LBUTTONDOWN:
             if not self.is_dragging:
-                print('button down!')
                 self.suture_type, self.x_sut, self.y_sut = find_closest_suture(x, y)
-                print('found closest suture', [self.x_sut, self.y_sut])
                 if self.suture_type:
                     self.is_dragging = True
-                    self.pts.remove([self.x_sut, self.y_sut])
                     if self.suture_type == 'insert':
-                        print('before', self.insertion_pts_pxl)
                         self.insertion_pts_pxl.remove([self.x_sut, self.y_sut])
-                        print([self.x_sut, self.y_sut] in self.insertion_pts_pxl , 'DJWANAW')
-                        print('after', self.insertion_pts_pxl)
-                        print('removed from insertion')
                     elif self.suture_type == 'center':
-                        print('removed from center')
                         self.center_pts_pxl.remove([self.x_sut, self.y_sut])
                     elif self.suture_type == 'extract':
-                        print('removed from extract')
                         self.extraction_pts_pxl.remove([self.x_sut, self.y_sut])
         elif event == cv2.EVENT_MOUSEMOVE:
             if self.is_dragging:
-                print(self.insertion_pts_pxl)
                 self.x_sut, self.y_sut = x, y
                 color = None
                 if self.suture_type == 'insert':
@@ -106,41 +93,27 @@ class SutureDisplayAdjust:
                     color = green
                 elif self.suture_type == 'extract':
                     color = blue
-                print('drawing')
                 cv2.circle(img_draw, (self.x_sut, self.y_sut), 3, color, -1)
         elif event == cv2.EVENT_LBUTTONUP:
-            print(self.insertion_pts_pxl)
             if self.is_dragging:
-                # self.pnts.append([self.px, self.py])
-                # self.px, self.py = -1, -1
+                self.x_sut, self.y_sut = x, y
                 if self.suture_type == 'insert':
                     self.insertion_pts_pxl.append([self.x_sut, self.y_sut])
                 elif self.suture_type == 'center':
                     self.center_pts_pxl.append([self.x_sut, self.y_sut])
                 elif self.suture_type == 'extract':
                     self.extraction_pts_pxl.append([self.x_sut, self.y_sut])
-                self.x_sut, self.y_sut = x, y
-                print('appending changed suture', [self.x_sut, self.y_sut])
-                self.pnts.append([self.x_sut, self.y_sut])
-                # self.x_sut, self.y_sut = -1, -1
+                self.x_sut, self.y_sut = -1, -1
                 self.is_dragging = False
         else:
             return
         
-        # for pnt in self.pnts:
-        #     print(pnt, 'dwawda')
-        #     cv2.circle(img_draw, (pnt[0], pnt[1]), 3, red, -1)
-        # print('insert distances\n', insert_distances, '\ncenter_distances\n', center_distances, '\nextract_distances\n', extract_distances)
         for i, txt in enumerate(self.insertion_pts_pxl[::-1]):
-                # print('insert', txt)
-                cv2.circle(img_draw, (self.insertion_pts_pxl[i][0], self.insertion_pts_pxl[i][1]), 3, red, -1)
+            cv2.circle(img_draw, (self.insertion_pts_pxl[i][0], self.insertion_pts_pxl[i][1]), 3, red, -1)
         for i, txt in enumerate(self.center_pts_pxl[::-1]):
-            # print('center', txt)
             cv2.circle(img_draw, (self.center_pts_pxl[i][0], self.center_pts_pxl[i][1]), 3, green, -1)
         for i, txt in enumerate(self.extraction_pts_pxl[::-1]):
-            # print('extract', txt)
             cv2.circle(img_draw, (self.extraction_pts_pxl[i][0], self.extraction_pts_pxl[i][1]), 3, blue, -1)
-        # cv2.putText(img_draw, str(i), (pnt[0]+10, pnt[1]+10), cv2.FONT_HERSHEY_SIMPLEX , 1, (0, 255, 255), 2, cv2.LINE_AA)
         cv2.imshow("Scale Visualizer", img_draw)
 
     def adjust_points(self, img_color, img_point):
