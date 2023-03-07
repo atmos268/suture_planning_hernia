@@ -11,6 +11,8 @@ class DistanceCalculator():
         self.wound_width = wound_width
         self.gradients = {}
         self.pixels_per_mm = 1 / mm_per_pixel
+
+        print("Distcalc init wound width: " + str(wound_width))
         pass
 
     def calculate_distances(self, wound_point_t):
@@ -100,24 +102,24 @@ class DistanceCalculator():
             # wound_points_torch.grad.zero_()
             # wound_curve_torch.grad.zero_()
 
-        self.gradients['center'] = center_grads.T
-        self.gradients['insert'] = 0
-        self.gradients['extract'] = 0
+        # self.gradients['center'] = center_grads.T
+        # self.gradients['insert'] = 0
+        # self.gradients['extract'] = 0
 
 
-        print('insert distances\n', insert_distances, '\ncenter_distances\n', center_distances, '\nextract_distances\n', extract_distances)
-        for i, txt in enumerate(insert_distances):
-            print('type text', type(txt))
-            plt.annotate("{:.4f}".format(txt), (insert_pts[i][0], insert_pts[i][1]))
-        for i, txt in enumerate(center_distances):
-            print('type text', type(txt))
-            plt.annotate("{:.4f}".format(txt), (center_pts[i][0], center_pts[i][1]))
-        for i, txt in enumerate(extract_distances):
-            print('type text', type(txt))
-            plt.annotate("{:.4f}".format(txt), (extract_pts[i][0], extract_pts[i][1]))
+        # print('insert distances\n', insert_distances, '\ncenter_distances\n', center_distances, '\nextract_distances\n', extract_distances)
+        # for i, txt in enumerate(insert_distances):
+        #     print('type text', type(txt))
+        #     plt.annotate("{:.4f}".format(txt), (insert_pts[i][0], insert_pts[i][1]))
+        # for i, txt in enumerate(center_distances):
+        #     print('type text', type(txt))
+        #     plt.annotate("{:.4f}".format(txt), (center_pts[i][0], center_pts[i][1]))
+        # for i, txt in enumerate(extract_distances):
+        #     print('type text', type(txt))
+        #     plt.annotate("{:.4f}".format(txt), (extract_pts[i][0], extract_pts[i][1]))
 
-        plt.axis('square')
-        plt.show()
+        # plt.axis('square')
+        # plt.show()
 
         # save the points
         self.suturePlacer.insert_pts = insert_pts
@@ -160,6 +162,7 @@ class DistanceCalculator():
     
 
     def plot(self, wound_point_t):
+        plt.clf()
         # wound points is the set of time-steps along the wound that correspond to wound points
 
         # Step 1: Calculate insertion and extraction points. Use the wound's
@@ -172,6 +175,7 @@ class DistanceCalculator():
 
         # gets the norm of the vector (1, gradient)
         num_pts = len(wound_point_t)
+        print("num pts: ", num_pts)
 
         def get_norm(gradient):
             return math.sqrt(1 + gradient**2)
@@ -207,18 +211,17 @@ class DistanceCalculator():
             t = min(wound_point_t) + (max(wound_point_t) - min(wound_point_t))*i/500
             temp = self.wound_parametric(t, 0)
             X_.append(temp[0])
-            Y_.append(temp[1])
+            Y_.append(-temp[1])
         # X_ = np.linspace(wound_points.min(), wound_points.max(), 500)
         # Y_ = spline(X_)
         
         # Plotting the Graph
         plt.plot(X_, Y_)
-        plt.scatter([insert_pts[i][0] for i in range(num_pts)], [insert_pts[i][1] for i in range(num_pts)], c="red")
-        plt.scatter([extract_pts[i][0] for i in range(num_pts)], [extract_pts[i][1] for i in range(num_pts)], c="blue")
-        plt.scatter([center_pts[i][0] for i in range(num_pts)], [center_pts[i][1] for i in range(num_pts)], c="green")
+        plt.scatter([insert_pts[i][0] for i in range(num_pts)], [-insert_pts[i][1] for i in range(num_pts)], c="red")
+        plt.scatter([extract_pts[i][0] for i in range(num_pts)], [-extract_pts[i][1] for i in range(num_pts)], c="blue")
+        plt.scatter([center_pts[i][0] for i in range(num_pts)], [-center_pts[i][1] for i in range(num_pts)], c="green")
         plt.axis('square')
         plt.show()
 
-
-
+        return(insert_pts, center_pts, extract_pts)
 

@@ -73,7 +73,7 @@ def suture_analysis_pipeline():
     print(insertion_pts)
     print(extraction_pts)
 
-    # feed pts into reward fn
+    # feed pts into reward fn, output number
 
 if __name__ == "__main__":
     suturePlacer = suture_analysis_pipeline()

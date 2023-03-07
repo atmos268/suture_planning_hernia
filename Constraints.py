@@ -1,18 +1,18 @@
 import DistanceCalculator
 
 class Constraints:
-    def __init__(self):
+    def __init__(self, wound_width):
         # This object should contain the optimizer, the spline curve, the image, etc., i.e. all of the relevant objects involved, as attributes.
-        self.wound_width = 0.3 # TODO Varun: this is a random #, lookup
+        self.wound_width = wound_width # TODO Varun: this is a random #, lookup
 
     def con2(self, t):
         insert_dists, center_dists, extract_dists, insert_pts, center_pts, extract_pts = self.DistanceCalculator.calculate_distances(t)   
-        h = 0.3
+        h = self.wound_width * 0.5
         return [i - h for i in insert_dists] + [i - h for i in center_dists] + [i - h for i in extract_dists]
     
     def con3(self, t): # max distance b/w 2 sutures
         insert_dists, center_dists, extract_dists, insert_pts, center_pts, extract_pts = self.DistanceCalculator.calculate_distances(t)   
-        h = 1
+        h = self.wound_width * 4
         return [h - i for i in insert_dists] + [h - i for i in center_dists] + [h - i for i in extract_dists]
 
     def con4(self, t):

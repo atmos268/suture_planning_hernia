@@ -11,7 +11,7 @@ class SuturePlacer:
         self.mm_per_pixel = mm_per_pixel
         self.DistanceCalculator = DistanceCalculator.DistanceCalculator(self, self.wound_width, self.mm_per_pixel)
         self.RewardFunction = RewardFunction.RewardFunction()
-        self.Constraints = Constraints.Constraints()
+        self.Constraints = Constraints.Constraints(wound_width)
         self.Constraints.DistanceCalculator = self.DistanceCalculator
 
         # NB: Viraj: added a class in order to allow code to run
@@ -22,15 +22,16 @@ class SuturePlacer:
         # Maybe this initial placement could be based on some smart heuristic to make optimization faster...
        
         # choosing 11 equally spaced points along curve as placeholder
-<<<<<<< HEAD
-        wound_points = [0.1*i for i in range(11)] # TODO Harshika/Viraj: Initial Placement, can put some placeholder here
+        wound_points = [0, 0.05, 0.06, 0.2, 0.5, 0.9, 0.95, 1] # TODO Harshika/Viraj: Initial Placement, can put some placeholder here
 
-        insert_dists, center_dists, extract_dists = self.DistanceCalculator.calculate_distances(wound_points) # TODO Harshika/Viraj
+        insert_dists, center_dists, extract_dists, insert_pts, center_pts, extract_pts = self.DistanceCalculator.calculate_distances(wound_points) # TODO Harshika/Viraj
         self.RewardFunction.insert_dists = insert_dists
         self.RewardFunction.center_dists = center_dists
         self.RewardFunction.extract_dists = extract_dists
-=======
-        wound_points = [0.0, 0.05, 0.25, 0.45, 0.65, 0.75, 1.05, 1.1] # TODO Harshika/Viraj: Initial Placement, can put some placeholder here
+
+        print("insert_dists len: ", len(insert_dists))
+
+        # wound_points = [0.0, 0.05, 0.25, 0.45, 0.65, 0.75, 1.05, 1.1] # TODO Harshika/Viraj: Initial Placement, can put some placeholder here
         self.Constraints.wound_points = wound_points
         self.DistanceCalculator.plot(wound_points)
         # print("Initial wound points", wound_points)
@@ -45,22 +46,28 @@ class SuturePlacer:
         result = optim.minimize(final_loss, wound_points, constraints = self.Constraints.constraints())
         #print(self.DistanceCalculator.calculate_distances(result.x))
         print(final_loss(result.x))
-        self.DistanceCalculator.plot(result.x)
-        result_x, result_y = self.DistanceCalculator.wound_parametric(result.x, 0)
-        print(result_x)
-        print(result_y)
-        return result_x, result_y
+        print("result_x ", len(result.x))
+        insert_pts, center_pts, extract_pts = self.DistanceCalculator.plot(result.x)
+
+        # result_x, result_y = self.DistanceCalculator.wound_parametric(result.x, 0)
+        # print(result_x)
+        # print(result_y)
+        self.insert_pts = insert_pts
+        self.center_pts = center_pts
+        self.extract_pts = extract_pts
+
+        print("insert_dists len after: ", len(insert_dists))
+
+        return insert_pts, center_pts, extract_pts
+    
+        # will need to be fixed
         
-
-
->>>>>>> optimization
-
         # Varun: Eventually,  we'll have an overall reward that is the linear combination. [these two lines merge-conflicted, don't know which is right for now]
-        self.initial_reward = self.RewardFunction.rewardA(self.RewardFunction) # TODO Julia/Yashish
+        # self.initial_reward = self.RewardFunction.rewardA(self.RewardFunction) # TODO Julia/Yashish
         # self.initial_reward = self.RewardFunction.rewardX() # TODO Julia/Yashish
 
         # Then, we can use the initial placement to warm-start the optimization process.
-        self.Optimizer.optimize_placement() # TODO Viraj/Yashish: the variables to optimize
+        # self.Optimizer.optimize_placement() # TODO Viraj/Yashish: the variables to optimize
         # [TODO] are the wound_points. These are parametric values for locations on the wound.
         #  [TODO] Wound should already be passed in by main.py:place_sutures.
 

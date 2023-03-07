@@ -37,6 +37,8 @@ def suture_placing_pipeline():
     real_dist = simpledialog.askfloat(title="dist prompt", prompt="Please enter the distance in mm that you measured")
 
     wound_width = simpledialog.askfloat(title="width prompt", prompt="Please enter the width of suture in mm")
+
+    print("original woudn width: " + str(wound_width))
     
     cv2.destroyAllWindows()
 
@@ -65,29 +67,18 @@ def suture_placing_pipeline():
     x = [a[0] for a in pnts]
     y = [a[1] for a in pnts]
 
-<<<<<<< HEAD
     # now, use our conversion factor to scale points appropriately
     x = [float(elem) * mm_per_pixel for elem in x]
     y = [float(elem) * mm_per_pixel for elem in y]
 
     # x = [0.0, 0.7, 1.0, 1.5, 2.1, 2.5, 3.0] # OLD manually-chosen example
     # y = [0.0, -0.5, 0.5, 3.5, 1.8, 0.7, 1.3] # OLD manually-chosen example
-=======
-    x = [0.0, 0.7, 1.0, 1.1, 1.6, 1.8, 2]
-    y = [0.0, 0.5, 1.8, 0.9, 0.4, 0.8, 1.2]
->>>>>>> optimization
     deg = 3
 
     # couldn't find reference to this in the codebase? I'm using make_interp_spline for now
     # wound = scipy_generate_sample_spline.generate_sample_spline()
-<<<<<<< HEAD
-    # wound = inter.make_interp_spline(x=x, y=y, k=deg, bc_type="clamped" if deg == 3 else None)
-
-    tck, u = inter.splprep([x, y], s=0)
-=======
     tck, u = inter.splprep([x, y], k=deg)
     wound_parametric = lambda t, d: inter.splev(t, tck, der = d)
->>>>>>> optimization
 
     def wound(x):
         pnts = inter.splev(x, tck)
@@ -96,7 +87,6 @@ def suture_placing_pipeline():
 
     wound(3)
     # Put the wound into all the relevant objects
-<<<<<<< HEAD
     newSuturePlacer = SuturePlacer(wound_width, mm_per_pixel)
     newSuturePlacer.wound = wound
     newSuturePlacer.tck = tck
@@ -105,12 +95,10 @@ def suture_placing_pipeline():
     newSuturePlacer.Optimizer.wound = wound
     newSuturePlacer.Optimizer.tck = tck
     
-=======
-    SuturePlacer.wound_parametric = wound_parametric
-    SuturePlacer.DistanceCalculator.wound_parametric = wound_parametric
-    SuturePlacer.Optimizer.wound_parametric = wound_parametric
+    newSuturePlacer.wound_parametric = wound_parametric
+    newSuturePlacer.DistanceCalculator.wound_parametric = wound_parametric
+    newSuturePlacer.Optimizer.wound_parametric = wound_parametric
 
->>>>>>> optimization
     # The main algorithm
     newSuturePlacer.place_sutures()
     return newSuturePlacer
