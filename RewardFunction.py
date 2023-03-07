@@ -5,7 +5,9 @@ class RewardFunction():
         self.insert_dists = []
         self.center_dists = []
         self.extract_dists = []
-    
+        self.wound_parametric = None
+        self.t = None
+
     # distance lists added to this object by SuturePlacer.
     # variance
     def final_loss(self, a = 1, b = 1):
@@ -47,6 +49,12 @@ class RewardFunction():
             else:
                 center.append((cen-ideal) ** power)
         return sum(insertion + center + extraction)
+
+    def distance_along(self, wound, a, b):
+        def dx2(t):
+
+    def lossClosureForce(self):
+        pass
 
     #min - max
     def lossMinMax(self):
