@@ -9,7 +9,7 @@ class SuturePlacer:
         # This object should contain the optimizer, the spline curve, the image, etc., i.e. all of the relevant objects involved, as attributes.
         self.wound_width = 0.3 # TODO Varun: this is a random #, lookup
         self.DistanceCalculator = DistanceCalculator.DistanceCalculator(self.wound_width)
-        self.RewardFunction = RewardFunction.RewardFunction()
+        self.RewardFunction = RewardFunction.RewardFunction(self.wound_width)
         self.Constraints = Constraints.Constraints()
         self.Constraints.DistanceCalculator = self.DistanceCalculator
 
@@ -30,8 +30,8 @@ class SuturePlacer:
         
         def final_loss(t):
             self.RewardFunction.insert_dists, self.RewardFunction.center_dists, self.RewardFunction.extract_dists, insert_pts, center_pts, extract_pts = self.DistanceCalculator.calculate_distances(t)    
-            self.RewardFunction.t = t
-            return self.RewardFunction.final_loss(a = 1, b = 1)
+            self.RewardFunction.wound_points = t
+            return self.RewardFunction.final_loss(a = 1, b = 1, c = 1)
 
         print(final_loss(wound_points))
 
