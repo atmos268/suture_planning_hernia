@@ -124,9 +124,18 @@ class DistanceCalculator():
         self.suturePlacer.center_pts = center_pts
         self.suturePlacer.extract_pts = extract_pts
 
-        #making insert_dist negative if there are crossings
-        insert_distances = [self.intersect(insert_pts[i], extract_pts[i], insert_pts[i+1], extract_pts[i+1])*insert_distances[i] for i in range(len(insert_pts)-1)] 
-        
+        #making insert_dist/extract dist negative if there are crossings
+        for i in range(len(insert_pts)-1):
+            center_orientation, insert_orientation_extract_orientation = 0, 0, 0
+            if self.intersect(insert_pts[i], extract_pts[i], insert_pts[i+1], extract_pts[i+1]):
+                center_orientation = self.get_orientation(center_pts[i], center_pts[i+1])
+                insert_orientation = self.get_orientation(insert_pts[i], insert_pts[i+1])
+                extract_orientation = self.get_orientation(extract_pts[i], extract_pts[i+1])
+            if insert_orientation != center_orientation:
+                insert_distances[i] = insert_distances[i]*-1
+            elif extract_orientation != center_orientation:
+                extract_distances[i] = extract_distances[i]*-1
+
         return insert_distances, center_distances, extract_distances, insert_pts, center_pts, extract_pts
     
     #check for intersections
@@ -138,6 +147,12 @@ class DistanceCalculator():
     
     def direction(self, p1, p2, p3):
         return self.cross_product((p3[0]-p1[0], p3[1] - p1[1]), (p2[0]-p1[0], p2[1] - p1[1]))
+    
+    def get_orientation(self, p1, p2):
+        if p1[0] < p2[0]:
+            return 1
+        else:
+            return -1
     
     # checks if line segment p1p2 and p3p4 intersect and returns -1 if True and 1 when False
     def intersect(self, p1, p2, p3, p4):
