@@ -126,7 +126,7 @@ class DistanceCalculator():
 
         #making insert_dist/extract dist negative if there are crossings
         for i in range(len(insert_pts)-1):
-            center_orientation, insert_orientation_extract_orientation = 0, 0, 0
+            center_orientation, insert_orientation, extract_orientation = 0, 0, 0
             if self.intersect(insert_pts[i], extract_pts[i], insert_pts[i+1], extract_pts[i+1]):
                 center_orientation = self.get_orientation(center_pts[i], center_pts[i+1])
                 insert_orientation = self.get_orientation(insert_pts[i], insert_pts[i+1])
