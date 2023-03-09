@@ -69,14 +69,10 @@ class InsertionPointGenerator:
         self.is_dragging = False
         self.px, self.py = -1, -1
         # print('self.pnts before imshow', self.pnts)
-        print('before create window')
         cv2.imshow("IPG Visualizer", self.img_color)
         # print('self.pnts before mousecallback', self.pnts)
         cv2.setMouseCallback('IPG Visualizer', self.__on_mouse_event)  # fills pnts array
-        print('before waitkey')
         cv2.waitKey(0)
-        print('after waitkey')
-        print('after create window')
         # print('self.pnts before waitkey', self.pnts)
         # cv2.waitKey(0)
         # print('self.pnts before destory', self.pnts)

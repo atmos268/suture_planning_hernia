@@ -29,8 +29,6 @@ class SuturePlacer:
         self.RewardFunction.center_dists = center_dists
         self.RewardFunction.extract_dists = extract_dists
 
-        print("insert_dists len: ", len(insert_dists))
-
         # wound_points = [0.0, 0.05, 0.25, 0.45, 0.65, 0.75, 1.05, 1.1] # TODO Harshika/Viraj: Initial Placement, can put some placeholder here
         self.Constraints.wound_points = wound_points
         self.DistanceCalculator.plot(wound_points)
@@ -46,7 +44,6 @@ class SuturePlacer:
         result = optim.minimize(final_loss, wound_points, constraints = self.Constraints.constraints())
         #print(self.DistanceCalculator.calculate_distances(result.x))
         print(final_loss(result.x))
-        print("result_x ", len(result.x))
         insert_pts, center_pts, extract_pts = self.DistanceCalculator.plot(result.x)
 
         # result_x, result_y = self.DistanceCalculator.wound_parametric(result.x, 0)
@@ -55,8 +52,6 @@ class SuturePlacer:
         self.insert_pts = insert_pts
         self.center_pts = center_pts
         self.extract_pts = extract_pts
-
-        print("insert_dists len after: ", len(insert_dists))
 
         return insert_pts, center_pts, extract_pts
     

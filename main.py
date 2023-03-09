@@ -27,8 +27,6 @@ def suture_placing_pipeline():
 
     # get the scale measurement from surgeon
     scale_pts = newScale.get_scale_pts(img_color, img_point)
-    
-    print("scale pts: " + str(scale_pts))
 
     # request the surgeon for a distance
 
@@ -37,8 +35,6 @@ def suture_placing_pipeline():
     real_dist = simpledialog.askfloat(title="dist prompt", prompt="Please enter the distance in mm that you measured")
 
     wound_width = simpledialog.askfloat(title="width prompt", prompt="Please enter the width of suture in mm")
-
-    print("original woudn width: " + str(wound_width))
     
     cv2.destroyAllWindows()
 
@@ -50,12 +46,9 @@ def suture_placing_pipeline():
     sample_spline = False
     if not sample_spline:
         pnts = IPG.get_insertion_points_from_selection(img_color, img_point)
-        print("pts directly after getting them: " + str(pnts))
     else:
         pnts = [[46, 233], [50, 213], [57, 195], [67, 175], [77, 160], [91, 136], [107, 114], [121, 111], [137, 111],
          [144, 120], [158, 136], [166, 166], [175, 208], [193, 233], [227, 218], [251, 183], [275, 128]]
-
-    print('pnts\n', pnts)
 
     # But for now, just use this sample spline. It's a Bezier spline
 

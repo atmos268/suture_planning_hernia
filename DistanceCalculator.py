@@ -11,8 +11,6 @@ class DistanceCalculator():
         self.wound_width = wound_width
         self.gradients = {}
         self.pixels_per_mm = 1 / mm_per_pixel
-
-        print("Distcalc init wound width: " + str(wound_width))
         pass
 
     def calculate_distances(self, wound_point_t):
@@ -175,7 +173,6 @@ class DistanceCalculator():
 
         # gets the norm of the vector (1, gradient)
         num_pts = len(wound_point_t)
-        print("num pts: ", num_pts)
 
         def get_norm(gradient):
             return math.sqrt(1 + gradient**2)
@@ -202,7 +199,6 @@ class DistanceCalculator():
 
         center_pts = [[wound_points[i], wound_curve[i]] for i in range(num_pts)]
 
-        print(wound_point_t)
     
         # Returns evenly spaced numbers
         # over a specified interval.

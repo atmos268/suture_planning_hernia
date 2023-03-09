@@ -18,7 +18,6 @@ class SutureDisplayAdjust:
         self.insert_pts = insert_pts
         self.center_pts = center_pts
         self.extract_pts = extract_pts
-
         self.mm_per_pixel = mm_per_pixel
         
         # convert back to pixel, and round
@@ -27,12 +26,12 @@ class SutureDisplayAdjust:
         self.which_camera = 'inclined'
         self.which_arm = 'PSM1'
         self.scale_found = False
+        
         # self.Trc1 = np.load(
         #     root + f'SurgicalSuturing/calibration_files/Trc_{self.which_camera}_{self.which_arm}.npy')  # robot to camera
         # self.Tcr1 = np.linalg.inv(self.Trc1)
-
-        # W can run optimization for any amount of time. More time is better results.
         # Setting to tiny number (<<1) is undefined behavior.
+
         self.desired_compute_time = desired_compute_time
 
         # needed to set above value. printed after any run.
@@ -62,26 +61,23 @@ class SutureDisplayAdjust:
         # print('l59')
         img_draw = self.img_color.copy()
 
-        center_pts_pxl = [[int(float(pt[0]) / self.mm_per_pixel), int(-1 * float(pt[1]) / self.mm_per_pixel)] for pt in self.center_pts]
-        insertion_pts_pxl = [[int(float(pt[0]) / self.mm_per_pixel), int(-1 * float(pt[1]) / self.mm_per_pixel)] for pt in self.insert_pts]
-        extraction_pts_pxl = [[int(float(pt[0]) / self.mm_per_pixel), int(-1 * float(pt[1]) / self.mm_per_pixel)] for pt in self.extract_pts]
+        center_pts_pxl = [[int(float(pt[0]) / self.mm_per_pixel), int(float(pt[1]) / self.mm_per_pixel)] for pt in self.center_pts]
+        insertion_pts_pxl = [[int(float(pt[0]) / self.mm_per_pixel), int(float(pt[1]) / self.mm_per_pixel)] for pt in self.insert_pts]
+        extraction_pts_pxl = [[int(float(pt[0]) / self.mm_per_pixel), int(float(pt[1]) / self.mm_per_pixel)] for pt in self.extract_pts]
 
         # print('insert distances\n', insert_distances, '\ncenter_distances\n', center_distances, '\nextract_distances\n', extract_distances)
         for i, txt in enumerate(insertion_pts_pxl):
-            print('insert', txt)
             cv2.circle(img_draw, (insertion_pts_pxl[i][0], insertion_pts_pxl[i][1]), 3, red, -1)
         for i, txt in enumerate(center_pts_pxl):
-            print('center', txt)
             cv2.circle(img_draw, (center_pts_pxl[i][0], center_pts_pxl[i][1]), 3, green, -1)
         for i, txt in enumerate(extraction_pts_pxl):
-            print('extract', txt)
             cv2.circle(img_draw, (extraction_pts_pxl[i][0], extraction_pts_pxl[i][1]), 3, blue, -1)
 
         cv2.circle(img_draw, (self.px, self.py), 3, red, -1)
         for i, pnt in enumerate(self.pnts):
             cv2.circle(img_draw, (pnt[0], pnt[1]), 3, red, -1)
         # cv2.putText(img_draw, str(i), (pnt[0]+10, pnt[1]+10), cv2.FONT_HERSHEY_SIMPLEX , 1, (0, 255, 255), 2, cv2.LINE_AA)
-        cv2.imshow("Scale Visualizer", img_draw)
+        cv2.imshow("Adjustment Visualizer", img_draw)
 
     def adjust_points(self, img_color, img_point):
 
@@ -101,14 +97,10 @@ class SutureDisplayAdjust:
         self.pnts = []
         self.is_dragging = False
         self.px, self.py = -1, -1
-        # print('self.pnts before imshow', self.pnts)
-        print('before create window')
-        cv2.imshow("Scale Visualizer", self.img_color)
+        cv2.imshow("Adjustment Visualizer", self.img_color)
         # print('self.pnts before mousecallback', self.pnts)
-        cv2.setMouseCallback('Scale Visualizer', self.__on_mouse_event)  # fills pnts array
-        print('before waitkey')
+        cv2.setMouseCallback('Adjustment Visualizer', self.__on_mouse_event)  # fills pnts array
         cv2.waitKey(0)
-        print('after waitkey')
         self.scale_found = True
         cv2.destroyAllWindows()
         # print('after create window')

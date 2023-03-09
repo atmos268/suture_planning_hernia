@@ -65,7 +65,6 @@ class ScaleGenerator:
 
     def get_scale_pts(self, img_color, img_point):
 
-        print("getting scale pts")
         # TODO actually do the thing
 
         self.img_color = img_color
@@ -83,13 +82,10 @@ class ScaleGenerator:
         self.is_dragging = False
         self.px, self.py = -1, -1
         # print('self.pnts before imshow', self.pnts)
-        print('before create window')
         cv2.imshow("Scale Visualizer", self.img_color)
         # print('self.pnts before mousecallback', self.pnts)
         cv2.setMouseCallback('Scale Visualizer', self.__on_mouse_event)  # fills pnts array
-        print('before waitkey')
         cv2.waitKey(0)
-        print('after waitkey')
         self.scale_found = True
         cv2.destroyAllWindows()
         # print('after create window')
