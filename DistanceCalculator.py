@@ -214,7 +214,12 @@ class DistanceCalculator():
 
         center_pts = [[wound_points[i], wound_curve[i]] for i in range(num_pts)]
 
-    
+        #if wound_derivative_x and wound_derivative_y is negative then switch insertion and extraction point to ensure that extraction points are on convex side of the curve
+        for i in range(num_pts):
+            if wound_derivatives_x[i] < 0 and wound_derivatives_y[i]<0:
+                insert_pts[i], extract_pts[i] = extract_pts[i], insert_pts[i]
+
+
         # Returns evenly spaced numbers
         # over a specified interval.
         X_, Y_ = [], []
