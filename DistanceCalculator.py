@@ -6,9 +6,10 @@ from scipy.interpolate import make_interp_spline
 
 class DistanceCalculator():
 
-    def __init__(self, wound_width):
+    def __init__(self, wound_width, SuturePlacer):
         self.wound_width = wound_width
         self.gradients = {}
+        self.SuturePlacer = SuturePlacer
         pass
 
     def calculate_distances(self, wound_point_t):
@@ -32,6 +33,11 @@ class DistanceCalculator():
             
         # get the curve and gradient for each point (the second argument allows you to on the fly take the derivative)
         wound_points, wound_curve = self.wound_parametric(wound_point_t, 0)
+        # print('wound_points', wound_points)
+        # print('parametric 0', self.wound_parametric(0, 0))
+        # orig_x = [0.0, 0.7, 1.0, 1.1, 1.6, 1.8, 2]
+        # orig_y = [0.0, 0.5, 1.8, 0.9, 0.4, 0.8, 1.2]
+        # plt.scatter(orig_x, orig_y, color='orange')
         wound_derivatives_x, wound_derivatives_y = self.wound_parametric(wound_point_t, 1)
         wound_derivatives = np.divide(wound_derivatives_y, wound_derivatives_x)
         # extract the norms of the vectors
@@ -118,7 +124,7 @@ class DistanceCalculator():
             return 1
     
 
-    def plot(self, wound_point_t):
+    def plot(self, wound_point_t, plot_closure=False, plot_shear=False):
         # wound points is the set of time-steps along the wound that correspond to wound points
 
         # Step 1: Calculate insertion and extraction points. Use the wound's
@@ -171,7 +177,8 @@ class DistanceCalculator():
         # Y_ = spline(X_)
         
         # Plotting the Graph
-        plt.plot(X_, Y_)
+        if not (plot_shear or plot_closure):
+            plt.plot(X_, Y_)
         plt.scatter([insert_pts[i][0] for i in range(num_pts)], [insert_pts[i][1] for i in range(num_pts)], c="red")
         plt.scatter([extract_pts[i][0] for i in range(num_pts)], [extract_pts[i][1] for i in range(num_pts)], c="blue")
         plt.scatter([center_pts[i][0] for i in range(num_pts)], [center_pts[i][1] for i in range(num_pts)], c="green")
@@ -187,8 +194,26 @@ class DistanceCalculator():
         # for i, txt in enumerate(extract_distances):
         #     print('type text', type(txt))
         #     plt.annotate("{:.4f}".format(txt), (extract_pts[i][0], extract_pts[i][1]))
+
+
+        if plot_closure or plot_shear:
+            if plot_closure:
+                if plot_shear:
+                    print('NOTE: Just plotting closure, not both that and shear!')
+                force_to_plot = self.SuturePlacer.RewardFunction.closure_forces
+            else:
+                force_to_plot = self.SuturePlacer.RewardFunction.shear_forces
+
+            wcp_xs = self.SuturePlacer.RewardFunction.wcp_xs
+            wcp_ys = self.SuturePlacer.RewardFunction.wcp_ys
+
+            ax = plt.gca()
+            # m = ax.pcolormesh(, y, data, cmap=cmap, levels=np.linspace(0, scale, 11))
+
+            plt.scatter(wcp_xs, wcp_ys, c=force_to_plot, cmap='viridis', marker='o')
+
+            for i, txt in enumerate(force_to_plot):
+                if i % 8 == 0 or True:
+                    plt.annotate("{:.4f}".format(txt), (wcp_xs[i], wcp_ys[i]))
+
         plt.show()
-
-
-
-

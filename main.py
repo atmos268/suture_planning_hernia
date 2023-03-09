@@ -15,13 +15,13 @@ def suture_placing_pipeline(SuturePlacer):
     #  for the types of curves we can handle. Goal is to fit points to a parametric bezier curve.
     """
 
-    x = [0.0, 0.7, 1.0, 1.1, 1.6, 1.8, 2]
-    y = [0.0, 0.5, 1.8, 0.9, 0.4, 0.8, 1.2]
+    x = [0.0, 0.7, 1.0, 1.1, 1.6, 1.8, 2, 2.5]
+    y = [0.0, 0.5, 1.8, 0.9, 0.4, 0.8, 1.2, 1.5]
     deg = 3
 
     # couldn't find reference to this in the codebase? I'm using make_interp_spline for now
     # wound = scipy_generate_sample_spline.generate_sample_spline()
-    tck, u = inter.splprep([x, y], k=deg)
+    tck, u = inter.splprep([x, y], k=3)
     wound_parametric = lambda t, d: inter.splev(t, tck, der = d)
 
     # Put the wound into all the relevant objects

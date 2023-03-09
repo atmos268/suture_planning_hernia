@@ -1,22 +1,27 @@
 import torch as torch
 import math
 import numpy as np
+import numpy.linalg as LA
 
 class RewardFunction():
-    def __init__(self, wound_width):
+    def __init__(self, wound_width, SuturePlacer):
         self.insert_dists = []
         self.center_dists = []
         self.extract_dists = []
         self.wound_parametric = None
         self.wound_points = None
+        self.SuturePlacer = SuturePlacer
 
         # Closure Force
+        self.closure_forces = None
         self.influence_region = wound_width
         self.suture_force = 1 # The maximum force a suture exerts. So, in this code, we essentially scale to the force of 1 suture.
         self.ideal_suture_force = 1 # I don't know what this is exactly! 1 makes sense though, if a single suture is locally optimal
         # ...if you have too many sutures nearby this will amount to more than 1, and its also consistent with the wound_width
         # being double the distance, because with a straight wound, the closure force would be 1 everywhere if you space at the
         # ideal distance!
+        self.wcp_xs = None
+        self.wcp_ys = None
 
     # distance lists added to this object by SuturePlacer.
     # variance
@@ -60,65 +65,106 @@ class RewardFunction():
                 center.append((cen-ideal) ** power)
         return sum(insertion + center + extraction)
 
-    def distance_along(self, wound, a, b):
+    def distance_along(self, wound, a, b, num_samples_per_suture):
         'Note: Signed distance, and a can be greater than b'
-        derivative = wound.derivative
+        # return b - a # placeholder simple thing
+        # return b - a
+        sign = 1
+        if a > b:
+            old_a = a
+            a = b
+            b = old_a
+            sign = -1
+        steps = np.arange(a, b, self.influence_region / num_samples_per_suture)
+        wound_points = [np.array(wound(s, 0)) for s in steps]
+        cuml_dist = 0
+        wound_vectors = [wound_points[i+1] - wound_points[i] for i in range(len(wound_points) - 1)]
+        for v in wound_vectors:
+            cuml_dist += math.sqrt(np.sum(v ** 2))
+        return sign * cuml_dist
+        # derivative = wound.derivative
+        #
+        # def get_norm(gradient):
+        #     return math.sqrt(1 + gradient ** 2)
+        #
+        # # might be worth vecotrizing in the future
+        #
+        # # get the curve and gradient for each point (the second argument allows you to on the fly take the derivative)
+        # wound_points, wound_curve = self.wound_parametric(wound_point_t, 0)
+        # wound_derivatives_x, wound_derivatives_y = self.wound_parametric(wound_point_t, 1)
+        # wound_derivatives = np.divide(wound_derivatives_y, wound_derivatives_x)
+        # # extract the norms of the vectors
+        # norms = [get_norm(wound_derivative) for wound_derivative in wound_derivatives]
+        #
+        # # get the normal vectors as norm = 1
+        # normal_vecs = [[wound_derivatives[i] / norms[i], -1 / norms[i]] for i in range(num_pts)]
+        #
+        # # make norm width wound_width
+        # normal_vecs = [[normal_vec[0] * self.wound_width, normal_vec[1] * self.wound_width] for normal_vec in
+        #                normal_vecs]
+        #
+        # # add and subtract for insertion and exit
+        # insert_pts = [[wound_points[i] + normal_vecs[i][0], wound_curve[i] + normal_vecs[i][1]] for i in range(num_pts)]
+        #
+        # extract_pts = [[wound_points[i] - normal_vecs[i][0], wound_curve[i] - normal_vecs[i][1]] for i in
+        #                range(num_pts)]
+        #
+        # center_pts = [[wound_points[i], wound_curve[i]] for i in range(num_pts)]
 
-        def get_norm(gradient):
-            return math.sqrt(1 + gradient ** 2)
+    def lossClosureForce(self, num_samples_per_suture=20):
 
-        # might be worth vecotrizing in the future
-
-        # get the curve and gradient for each point (the second argument allows you to on the fly take the derivative)
-        wound_points, wound_curve = self.wound_parametric(wound_point_t, 0)
-        wound_derivatives_x, wound_derivatives_y = self.wound_parametric(wound_point_t, 1)
-        wound_derivatives = np.divide(wound_derivatives_y, wound_derivatives_x)
-        # extract the norms of the vectors
-        norms = [get_norm(wound_derivative) for wound_derivative in wound_derivatives]
-
-        # get the normal vectors as norm = 1
-        normal_vecs = [[wound_derivatives[i] / norms[i], -1 / norms[i]] for i in range(num_pts)]
-
-        # make norm width wound_width
-        normal_vecs = [[normal_vec[0] * self.wound_width, normal_vec[1] * self.wound_width] for normal_vec in
-                       normal_vecs]
-
-        # add and subtract for insertion and exit
-        insert_pts = [[wound_points[i] + normal_vecs[i][0], wound_curve[i] + normal_vecs[i][1]] for i in range(num_pts)]
-
-        extract_pts = [[wound_points[i] - normal_vecs[i][0], wound_curve[i] - normal_vecs[i][1]] for i in
-                       range(num_pts)]
-
-        center_pts = [[wound_points[i], wound_curve[i]] for i in range(num_pts)]
-
-    def lossClosureForce(self):
-
-        def all_wounds_closure_force(t):
-            suture_forces_running_sum = 0
+        def all_wounds_closure_and_shear_force(t):
+            suture_closure_forces_running_sum = 0
+            suture_shear_forces_running_sum = 0
             for c in self.wound_points:
-                suture_forces_running_sum += single_wound_closure_force(c, t)
-            return suture_forces_running_sum
+                closure_force, shear = single_wound_closure_and_shear_force(c, t)
+                suture_closure_forces_running_sum += closure_force
+                suture_shear_forces_running_sum += shear
+            return suture_closure_forces_running_sum, suture_shear_forces_running_sum
 
-        def single_wound_closure_force(c, t):
-            dist_along = abs(self.distance_along(self.wound_parametric, c, t))
+        def single_wound_closure_and_shear_force(c, t):
+            if abs(c - t) > 4 * self.influence_region:
+                return 0, 0
+            dist_along = abs(self.distance_along(self.wound_parametric, c, t, num_samples_per_suture))
             if dist_along > self.influence_region:
-                return 0
+                return 0, 0
             else:
-                distance_discount = dist_along / self.influence_region
+                distance_discount = 1 - (dist_along / self.influence_region)
 
                 c_dx, c_dy = self.wound_parametric(c, 1)
                 t_dx, t_dy = self.wound_parametric(t, 1)
-                suture_vec_norm = math.dist([0,c_dx],[c_dy, 0])
-                t_vec_norm = math.dist([0,t_dx],[t_dy, 0])
-                suture_vec = np.array([c_dx, c_dy]) / suture_vec_norm
-                t_vec = np.array([t_dx, t_dy]) / suture_vec_norm
-                force_discount = np.dot(t_vec_norm, suture_vec)
+                suture_vec = np.array([c_dx, c_dy])
+                suture_vec = suture_vec / LA.norm(suture_vec)
+                t_vec = np.array([t_dx, t_dy])
+                t_vec = t_vec / LA.norm(t_vec)
 
-                return self.suture_force * distance_discount * force_discount
+                ortho_to_t_vec = np.array([-t_vec[1], t_vec[0]])
 
-        sample_points = np.linspace(0, 1, 100)
-        closure_forces = [all_wounds_closure_force(i) for i in sample_points]
-        return (closure_forces - 1) ** 2 # Squared error
+                force_discount = abs(np.dot(t_vec, suture_vec))
+
+                shear_amount = abs(np.dot(ortho_to_t_vec, suture_vec))
+
+                closure_force = self.suture_force * distance_discount * force_discount
+                shear_amount = self.suture_force * distance_discount * shear_amount
+                return closure_force, shear_amount
+
+        sample_points = np.linspace(0, 1, 2 * int(num_samples_per_suture / self.influence_region))
+        closure_forces = []
+        shear_forces = []
+        for p in sample_points:
+            closure_force, shear = all_wounds_closure_and_shear_force(p)
+            closure_forces.append(closure_force)
+            shear_forces.append(shear)
+        self.closure_forces = closure_forces
+        self.shear_forces = shear_forces
+        # print('closure forces!', closure_forces)
+        wound_closure_points = [self.wound_parametric(t, 0) for t in sample_points]
+        xs = [a[0] for a in wound_closure_points]
+        ys = [a[1] for a in wound_closure_points]
+        self.wcp_xs = xs
+        self.wcp_ys = ys
+        return 0 # right now, I don't want to change the final result
+        # return (closure_forces - 1) ** 2 # Squared error
 
 
 

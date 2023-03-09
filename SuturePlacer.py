@@ -8,9 +8,9 @@ class SuturePlacer:
     def __init__(self):
         # This object should contain the optimizer, the spline curve, the image, etc., i.e. all of the relevant objects involved, as attributes.
         self.wound_width = 0.3 # TODO Varun: this is a random #, lookup
-        self.DistanceCalculator = DistanceCalculator.DistanceCalculator(self.wound_width)
-        self.RewardFunction = RewardFunction.RewardFunction(self.wound_width)
-        self.Constraints = Constraints.Constraints()
+        self.DistanceCalculator = DistanceCalculator.DistanceCalculator(self.wound_width, self)
+        self.RewardFunction = RewardFunction.RewardFunction(self.wound_width, self)
+        self.Constraints = Constraints.Constraints(self)
         self.Constraints.DistanceCalculator = self.DistanceCalculator
 
         # NB: Viraj: added a class in order to allow code to run
@@ -21,10 +21,10 @@ class SuturePlacer:
         # Maybe this initial placement could be based on some smart heuristic to make optimization faster...
        
         # choosing 11 equally spaced points along curve as placeholder
-        wound_points = [0.0, 0.05, 0.25, 0.45, 0.65, 0.75, 1.05, 1.1] # TODO Harshika/Viraj: Initial Placement, can put some placeholder here
+        wound_points = [0.0, 0.05, 0.25, 0.45, 0.65, 0.75, 0.95, 1.] # TODO Harshika/Viraj: Initial Placement, can put some placeholder here
         self.Constraints.wound_points = wound_points
         self.DistanceCalculator.plot(wound_points)
-        # print("Initial wound points", wound_points)
+        print("Initial wound points", wound_points)
         start = wound_points[0]
         end = wound_points[-1]
         
@@ -38,7 +38,10 @@ class SuturePlacer:
         result = optim.minimize(final_loss, wound_points, constraints = self.Constraints.constraints())
         #print(self.DistanceCalculator.calculate_distances(result.x))
         print(final_loss(result.x))
-        self.DistanceCalculator.plot(result.x)
+        print('final wound points', result.x)
+        self.DistanceCalculator.plot(result.x, plot_closure=True)
+        self.DistanceCalculator.plot(result.x, plot_shear=True)
+
 
         result_x, result_y = self.DistanceCalculator.wound_parametric(result.x, 0)
         print(result_x)
