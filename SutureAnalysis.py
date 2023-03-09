@@ -6,6 +6,7 @@ from ScaleGenerator import ScaleGenerator
 import numpy as np
 import cv2
 import math
+from tkinter import simpledialog
 
 # Viraj: this is the framework for out analysis of existing surgeon suturing jobs
 
@@ -36,10 +37,9 @@ def suture_analysis_pipeline():
     print("scale pts: " + str(scale_pts))
 
     # request the surgeon for a distance
-    real_dist = input('Please enter the distance in mm that you measured: ')
+    float_real_dist = simpledialog.askfloat(title="dist prompt", prompt="Please enter the distance in mm that you measured")
     cv2.destroyAllWindows()
 
-    float_real_dist = float(real_dist)
     print(float_real_dist)
 
     pixel_dist = math.sqrt((scale_pts[0][0] - scale_pts[1][0])**2 + (scale_pts[0][1] - scale_pts[1][1])**2)
@@ -63,17 +63,25 @@ def suture_analysis_pipeline():
     print(insertion_pts)
     print(extraction_pts)
 
-    center_pts = [[float(pt[0]) * mm_per_pixel, float(pt[1]) * mm_per_pixel] for pt in center_pts]
-    insertion_pts = [[float(pt[0]) * mm_per_pixel, float(pt[1]) * mm_per_pixel] for pt in insertion_pts]
-    extraction_pts = [[float(pt[0]) * mm_per_pixel, float(pt[1]) * mm_per_pixel] for pt in extraction_pts]
+    real_center_pts = [[float(pt[0]) * mm_per_pixel, float(pt[1]) * mm_per_pixel] for pt in center_pts]
+    real_insertion_pts = [[float(pt[0]) * mm_per_pixel, float(pt[1]) * mm_per_pixel] for pt in insertion_pts]
+    real_extraction_pts = [[float(pt[0]) * mm_per_pixel, float(pt[1]) * mm_per_pixel] for pt in extraction_pts]
 
     print("After rescaling: ")
 
-    print(center_pts)
-    print(insertion_pts)
-    print(extraction_pts)
+    print(real_center_pts)
+    print(real_insertion_pts)
+    print(real_extraction_pts)
 
-    # feed pts into reward fn, output number
+    # to do this, start an instance of a SuturePlacer
+    testSuturePlacer = SuturePlacer(5, mm_per_pixel)
+
+    # no need to worry about suture-width, as they have already been made
+
+    # we then manually set the insertion pts and other pertinent varibles.
+    
+
+    # then, we feed pts into reward fn and output loss
 
 if __name__ == "__main__":
     suturePlacer = suture_analysis_pipeline()

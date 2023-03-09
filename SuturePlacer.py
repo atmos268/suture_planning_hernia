@@ -21,18 +21,19 @@ class SuturePlacer:
         # I want it to have an initial placement and then a forward pass thru to the reward so we can test our code.
         # Maybe this initial placement could be based on some smart heuristic to make optimization faster...
        
-        # choosing 11 equally spaced points along curve as placeholder
-        wound_points = [0, 0.05, 0.06, 0.2, 0.5, 0.9, 0.95, 1] # TODO Harshika/Viraj: Initial Placement, can put some placeholder here
+        # choosing 8 points along curve as placeholder
+        # currently, we have chosen a set of unequal points to demostrate visually what the optimization is doing
+        # in reality, we would likely warm-start with equally spaced points.
+        wound_points = [0, 0.05, 0.06, 0.2, 0.5, 0.9, 0.95, 1]
 
-        insert_dists, center_dists, extract_dists, insert_pts, center_pts, extract_pts = self.DistanceCalculator.calculate_distances(wound_points) # TODO Harshika/Viraj
+
+        insert_dists, center_dists, extract_dists, insert_pts, center_pts, extract_pts = self.DistanceCalculator.calculate_distances(wound_points)
         self.RewardFunction.insert_dists = insert_dists
         self.RewardFunction.center_dists = center_dists
         self.RewardFunction.extract_dists = extract_dists
 
-        # wound_points = [0.0, 0.05, 0.25, 0.45, 0.65, 0.75, 1.05, 1.1] # TODO Harshika/Viraj: Initial Placement, can put some placeholder here
         self.Constraints.wound_points = wound_points
         self.DistanceCalculator.plot(wound_points)
-        # print("Initial wound points", wound_points)
         start = wound_points[0]
         end = wound_points[-1]
         
@@ -40,10 +41,10 @@ class SuturePlacer:
             self.RewardFunction.insert_dists, self.RewardFunction.center_dists, self.RewardFunction.extract_dists, insert_pts, center_pts, extract_pts = self.DistanceCalculator.calculate_distances(t)    
             return self.RewardFunction.final_loss(a = 1, b = 1)
 
-        print(final_loss(wound_points))
+        # print(final_loss(wound_points))
         result = optim.minimize(final_loss, wound_points, constraints = self.Constraints.constraints())
-        #print(self.DistanceCalculator.calculate_distances(result.x))
-        print(final_loss(result.x))
+        # print(self.DistanceCalculator.calculate_distances(result.x))
+        # print(final_loss(result.x))
         insert_pts, center_pts, extract_pts = self.DistanceCalculator.plot(result.x)
 
         # result_x, result_y = self.DistanceCalculator.wound_parametric(result.x, 0)

@@ -34,7 +34,6 @@ class ScaleGenerator:
         self.use_multiprocessing = False  # super super buggy on dvrk, not sure why
 
     def __on_mouse_event(self, event, x, y, flags, param):
-        # print('click registered')
         blue, red, green = (255, 0, 0), (0, 0, 255), (0, 255, 0)
         if event == cv2.EVENT_LBUTTONDOWN:
             self.is_dragging = True
@@ -53,7 +52,6 @@ class ScaleGenerator:
                 self.is_dragging = False
         else:
             return
-        # print('l59')
         img_draw = self.img_color.copy()
 
         if not self.scale_found:

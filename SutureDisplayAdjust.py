@@ -51,9 +51,7 @@ class SutureDisplayAdjust:
         self.use_multiprocessing = False  # super super buggy on dvrk, not sure why
 
     def __on_mouse_event(self, event, x, y, flags, param):
-        # print('click registered')
         blue, red, green = (255, 0, 0), (0, 0, 255), (0, 255, 0)
-        # print('l59')
         img_draw = self.img_color.copy()
 
         def find_closest_suture(x, y):
@@ -75,7 +73,6 @@ class SutureDisplayAdjust:
         if event == cv2.EVENT_LBUTTONDOWN:
             if not self.is_dragging:
                 self.suture_type, self.x_sut, self.y_sut = find_closest_suture(x, y)
-                print("located near suture: ", self.suture_type, self.x_sut, self.y_sut)
                 if self.suture_type:
                     self.is_dragging = True
                     if self.suture_type == 'insert':

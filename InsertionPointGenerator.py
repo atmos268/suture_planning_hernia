@@ -38,7 +38,6 @@ class InsertionPointGenerator:
         self.use_multiprocessing = False  # super super buggy on dvrk, not sure why
 
     def __on_mouse_event(self, event, x, y, flags, param):
-        print('click registered')
         blue, red, green = (255, 0, 0), (0, 0, 255), (0, 255, 0)
         if event == cv2.EVENT_LBUTTONDOWN:
             self.is_dragging = True
@@ -55,7 +54,6 @@ class InsertionPointGenerator:
                 self.is_dragging = False
         else:
             return
-        print('l59')
         img_draw = self.img_color.copy()
         cv2.circle(img_draw, (self.px, self.py), 3, green, -1)
         for i, pnt in enumerate(self.pnts):

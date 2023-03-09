@@ -38,8 +38,6 @@ def suture_placing_pipeline():
     
     cv2.destroyAllWindows()
 
-    print(real_dist)
-
     pixel_dist = math.sqrt((scale_pts[0][0] - scale_pts[1][0])**2 + (scale_pts[0][1] - scale_pts[1][1])**2)
     mm_per_pixel = real_dist/pixel_dist
 
