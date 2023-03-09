@@ -74,12 +74,16 @@ def suture_analysis_pipeline():
     print(real_extraction_pts)
 
     # to do this, start an instance of a SuturePlacer
-    testSuturePlacer = SuturePlacer(5, mm_per_pixel)
+    # testSuturePlacer = SuturePlacer(5, mm_per_pixel)
 
     # no need to worry about suture-width, as they have already been made
 
     # we then manually set the insertion pts and other pertinent varibles.
-    
+
+
+    # testSuturePlacer.RewardFunction.insert_dists = insert_dists
+    # testSuturePlacer.RewardFunction.center_dists = center_dists
+    # testSuturePlacer.RewardFunction.extract_dists = extract_dists
 
     # then, we feed pts into reward fn and output loss
 
