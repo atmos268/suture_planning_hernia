@@ -111,7 +111,7 @@ class RewardFunction():
         #
         # center_pts = [[wound_points[i], wound_curve[i]] for i in range(num_pts)]
 
-    def lossClosureForce(self, num_samples_per_suture=20):
+    def lossClosureForce(self, num_samples_per_suture=10):
 
         def all_wounds_closure_and_shear_force(t):
             suture_closure_forces_running_sum = 0
