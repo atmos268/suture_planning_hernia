@@ -164,7 +164,7 @@ class DistanceCalculator():
             return 1
     
 
-    def plot(self, wound_point_t):
+    def plot(self, wound_point_t, title_plot):
         plt.clf()
         # wound points is the set of time-steps along the wound that correspond to wound points
 
@@ -227,6 +227,7 @@ class DistanceCalculator():
         plt.scatter([extract_pts[i][0] for i in range(num_pts)], [-extract_pts[i][1] for i in range(num_pts)], c="blue")
         plt.scatter([center_pts[i][0] for i in range(num_pts)], [-center_pts[i][1] for i in range(num_pts)], c="green")
         plt.axis('square')
+        plt.title(title_plot)
         plt.show()
 
         return(insert_pts, center_pts, extract_pts)
