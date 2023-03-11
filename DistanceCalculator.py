@@ -13,6 +13,25 @@ class DistanceCalculator():
         self.pixels_per_mm = 1 / mm_per_pixel
         pass
 
+    def distance_along(self, a, b, num_waypoints = 100):
+        'Note: Signed distance, and a can be greater than b'
+        # return b - a # placeholder simple thing
+        # return b - a
+        sign = 1
+        assert(a < b)
+        if a > b:
+            old_a = a
+            a = b
+            b = old_a
+            sign = -1
+        steps = np.linspace(a, b, num_waypoints)# must define your num_waypoints!
+        wound_points = [np.array(self.wound_parametric(s, 0)) for s in steps]
+        cuml_dist = 0
+        wound_vectors = [wound_points[i+1] - wound_points[i] for i in range(len(wound_points) - 1)]
+        for v in wound_vectors:
+            cuml_dist += math.sqrt(np.sum(v ** 2))
+        return sign * cuml_dist
+
     def calculate_distances(self, wound_point_t):
         # wound points is the set of time-steps along the wound that correspond to wound points
 
@@ -80,11 +99,6 @@ class DistanceCalculator():
             return euclidean_distance(extract_pts[i], extract_pts[i+1])
 
         
-        #for all i:
-            # calculate insert, center, extract distances
-        # return 3 lists: insert dists, center dists, extract dists
-
-        
         insert_distances = []
         center_distances = []
         extract_distances = []
@@ -94,30 +108,6 @@ class DistanceCalculator():
             insert_distances.append(dist_insert(i))
             center_distances.append(dist_center(i))
             extract_distances.append(dist_extract(i))
-            # dc = torch.sqrt(torch.square(wound_points_torch[i+1] - wound_points_torch[i]) + torch.square(wound_curve_torch[i+1] - wound_curve_torch[i]))
-            # dc.backward()
-            # center_grads[i][:] = (wound_points_torch.grad + torch.mul(wound_curve_torch.grad, wound_derivatives_torch)).cpu().detach().numpy()
-            # wound_points_torch.grad.zero_()
-            # wound_curve_torch.grad.zero_()
-
-        # self.gradients['center'] = center_grads.T
-        # self.gradients['insert'] = 0
-        # self.gradients['extract'] = 0
-
-
-        # print('insert distances\n', insert_distances, '\ncenter_distances\n', center_distances, '\nextract_distances\n', extract_distances)
-        # for i, txt in enumerate(insert_distances):
-        #     print('type text', type(txt))
-        #     plt.annotate("{:.4f}".format(txt), (insert_pts[i][0], insert_pts[i][1]))
-        # for i, txt in enumerate(center_distances):
-        #     print('type text', type(txt))
-        #     plt.annotate("{:.4f}".format(txt), (center_pts[i][0], center_pts[i][1]))
-        # for i, txt in enumerate(extract_distances):
-        #     print('type text', type(txt))
-        #     plt.annotate("{:.4f}".format(txt), (extract_pts[i][0], extract_pts[i][1]))
-
-        # plt.axis('square')
-        # plt.show()
 
         # save the points
         self.suturePlacer.insert_pts = insert_pts
@@ -241,3 +231,7 @@ class DistanceCalculator():
 
         return(insert_pts, center_pts, extract_pts)
 
+    def initial_number_of_sutures(self, start, end):
+        dist_along_spline = self.distance_along(start, end, 100)
+        print(dist_along_spline)
+        return dist_along_spline/5
