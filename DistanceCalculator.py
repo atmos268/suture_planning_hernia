@@ -185,15 +185,12 @@ class DistanceCalculator():
 
         insert_distances, center_distances, extract_distances, insert_pts, center_pts, extract_pts = self.calculate_distances(wound_point_t)
 
-        # for i, txt in enumerate(insert_distances):
-        #     print('type text', type(txt))
-        #     plt.annotate("{:.4f}".format(txt), (insert_pts[i][0], insert_pts[i][1]))
-        # for i, txt in enumerate(center_distances):
-        #     print('type text', type(txt))
-        #     plt.annotate("{:.4f}".format(txt), (center_pts[i][0], center_pts[i][1]))
-        # for i, txt in enumerate(extract_distances):
-        #     print('type text', type(txt))
-        #     plt.annotate("{:.4f}".format(txt), (extract_pts[i][0], extract_pts[i][1]))
+        for i, txt in enumerate(insert_distances):
+            plt.annotate("{:.4f}".format(txt), (insert_pts[i][0], insert_pts[i][1]))
+        for i, txt in enumerate(center_distances):
+            plt.annotate("{:.4f}".format(txt), (center_pts[i][0], center_pts[i][1]-0.2), color='red')
+        for i, txt in enumerate(extract_distances):
+            plt.annotate("{:.4f}".format(txt), (extract_pts[i][0], extract_pts[i][1]))
 
 
         if plot_closure or plot_shear:
@@ -213,7 +210,9 @@ class DistanceCalculator():
             plt.scatter(wcp_xs, wcp_ys, c=force_to_plot, cmap='viridis', marker='o')
 
             for i, txt in enumerate(force_to_plot):
-                if i % 8 == 0 or True:
+                if i % 2 == 0:
                     plt.annotate("{:.4f}".format(txt), (wcp_xs[i], wcp_ys[i]))
+
+
 
         plt.show()
