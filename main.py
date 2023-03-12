@@ -88,6 +88,7 @@ def suture_placing_pipeline():
     newSuturePlacer.wound_parametric = wound_parametric
     newSuturePlacer.DistanceCalculator.wound_parametric = wound_parametric
     newSuturePlacer.Optimizer.wound_parametric = wound_parametric
+    newSuturePlacer.RewardFunction.wound_parametric = wound_parametric
 
 
     # The main algorithm

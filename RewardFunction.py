@@ -187,7 +187,9 @@ class RewardFunction():
             shear_amount = self.suture_force * (insert_shear_distance_discount + extract_shear_distance_discount) * shear_direction_discount
             return closure_force, shear_amount
 
-        sample_points = np.linspace(0, 1, 2 * int(num_samples_per_suture / self.influence_region))
+        sample_points = np.linspace(0, 1, 100)
+        print(num_samples_per_suture)
+        print(self.influence_region)
         closure_forces = []
         shear_forces = []
         for p in sample_points:

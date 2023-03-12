@@ -4,6 +4,7 @@ import Optimizer
 import Constraints
 import scipy.optimize as optim
 import numpy as np
+import matplotlib.pyplot as plt
 
 class SuturePlacer:
     def __init__(self, wound_width, mm_per_pixel):
@@ -11,7 +12,7 @@ class SuturePlacer:
         self.wound_width = wound_width
         self.mm_per_pixel = mm_per_pixel
         self.DistanceCalculator = DistanceCalculator.DistanceCalculator(self, self.wound_width, self.mm_per_pixel)
-        self.RewardFunction = RewardFunction.RewardFunction()
+        self.RewardFunction = RewardFunction.RewardFunction(wound_width, self)
         self.Constraints = Constraints.Constraints(wound_width)
         self.Constraints.DistanceCalculator = self.DistanceCalculator
 
@@ -43,28 +44,28 @@ class SuturePlacer:
 
 
         # varun's printing code for shear/closure
-        # print(final_loss(wound_points))
+        print(final_loss(wound_points))
 
-        # result = optim.minimize(final_loss, wound_points, constraints = self.Constraints.constraints())
-        # #print(self.DistanceCalculator.calculate_distances(result.x))
-        # print(final_loss(result.x))
-        # print('final wound points', result.x)
+        result = optim.minimize(final_loss, wound_points, constraints = self.Constraints.constraints())
+        #print(self.DistanceCalculator.calculate_distances(result.x))
+        print(final_loss(result.x))
+        print('final wound points', result.x)
+        plt.clf()
+        self.DistanceCalculator.plot(result.x, "closure plot", plot_closure=True)
+        self.DistanceCalculator.plot(result.x, "shear plot", plot_shear=True)
+
         # plt.clf()
-        # self.DistanceCalculator.plot(result.x, plot_closure=True)
-        # self.DistanceCalculator.plot(result.x, plot_shear=True)
+        # plt.plot(np.arange(len(self.RewardFunction.closure_forces)), (self.RewardFunction.closure_forces - 1) ** 2, c='blue')
+        # plt.plot(np.arange(len(self.RewardFunction.shear_forces)), (self.RewardFunction.shear_forces ** 2), c='orange')
 
-        # # plt.clf()
-        # # plt.plot(np.arange(len(self.RewardFunction.closure_forces)), (self.RewardFunction.closure_forces - 1) ** 2, c='blue')
-        # # plt.plot(np.arange(len(self.RewardFunction.shear_forces)), (self.RewardFunction.shear_forces ** 2), c='orange')
+        # plt.show()
+        # closure = (closure_forces - 1) ** 2
+        # shear = shear_forces ** 2
 
-        # # plt.show()
-        # # closure = (closure_forces - 1) ** 2
-        # # shear = shear_forces ** 2
-
-        # result_x, result_y = self.DistanceCalculator.wound_parametric(result.x, 0)
-        # print(result_x)
-        # print(result_y)
-        # return result_x, result_y
+        result_x, result_y = self.DistanceCalculator.wound_parametric(result.x, 0)
+        print(result_x)
+        print(result_y)
+        return result_x, result_y
 
         return insert_dists, center_dists, extract_dists, insert_pts, center_pts, extract_pts, result.x
     
@@ -120,7 +121,7 @@ class SuturePlacer:
         self.center_pts = b_center_pts
         self.extract_pts = b_extract_pts
         print(losses)
-        # insert_pts, center_pts, extract_pts = self.DistanceCalculator.plot(b_ts, "Plotting after optimization")
+        self.DistanceCalculator.plot(b_ts, "Plotting after optimization")
         print("plotting")
         return b_insert_pts, b_center_pts, b_extract_pts
 

@@ -235,9 +235,6 @@ class DistanceCalculator():
         plt.scatter([center_pts[i][0] for i in range(num_pts)], [-center_pts[i][1] for i in range(num_pts)], c="green")
         
 
-
-
-
         # insert_distances, center_distances, extract_distances, insert_pts, center_pts, extract_pts = self.calculate_distances(wound_point_t)
 
         # for i, txt in enumerate(insert_distances):
@@ -252,12 +249,14 @@ class DistanceCalculator():
             if plot_closure:
                 if plot_shear:
                     print('NOTE: Just plotting closure, not both that and shear!')
-                force_to_plot = self.SuturePlacer.RewardFunction.closure_forces
+                force_to_plot = self.suturePlacer.RewardFunction.closure_forces
             else:
-                force_to_plot = self.SuturePlacer.RewardFunction.shear_forces
+                force_to_plot = self.suturePlacer.RewardFunction.shear_forces
 
-            wcp_xs = self.SuturePlacer.RewardFunction.wcp_xs
-            wcp_ys = self.SuturePlacer.RewardFunction.wcp_ys
+            wcp_xs = self.suturePlacer.RewardFunction.wcp_xs
+            wcp_ys = self.suturePlacer.RewardFunction.wcp_ys
+            
+            print("closure_pts: ", wcp_ys)
 
             ax = plt.gca()
             # m = ax.pcolormesh(, y, data, cmap=cmap, levels=np.linspace(0, scale, 11))
