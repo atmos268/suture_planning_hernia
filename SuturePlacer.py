@@ -93,7 +93,8 @@ class SuturePlacer:
         self.center_pts = b_center_pts
         self.extract_pts = b_extract_pts
         print(losses)
-        insert_pts, center_pts, extract_pts = self.DistanceCalculator.plot(b_ts, "Plotting after optimization")
+        # insert_pts, center_pts, extract_pts = self.DistanceCalculator.plot(b_ts, "Plotting after optimization")
+        print("plotting")
         return b_insert_pts, b_center_pts, b_extract_pts
 
         

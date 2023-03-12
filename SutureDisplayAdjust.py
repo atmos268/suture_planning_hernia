@@ -25,11 +25,11 @@ class SutureDisplayAdjust:
         self.mm_per_pixel = mm_per_pixel
 
 
-        self.center_pts_pxl = [[int(float(pt[0]) / self.mm_per_pixel), int(float(pt[1]) / self.mm_per_pixel)] for pt in self.center_pts]
-        self.insertion_pts_pxl = [[int(float(pt[0]) / self.mm_per_pixel), int(float(pt[1]) / self.mm_per_pixel)] for pt in self.insert_pts]
-        self.extraction_pts_pxl = [[int(float(pt[0]) / self.mm_per_pixel), int(float(pt[1]) / self.mm_per_pixel)] for pt in self.extract_pts]
+        self.center_pts_pxl = [[int(float(pt[0]) / self.mm_per_pixel), -1 * int(float(pt[1]) / self.mm_per_pixel)] for pt in self.center_pts]
+        self.insertion_pts_pxl = [[int(float(pt[0]) / self.mm_per_pixel), -1 * int(float(pt[1]) / self.mm_per_pixel)] for pt in self.insert_pts]
+        self.extraction_pts_pxl = [[int(float(pt[0]) / self.mm_per_pixel), -1 * int(float(pt[1]) / self.mm_per_pixel)] for pt in self.extract_pts]
 
-        
+        print(self.center_pts_pxl)
         # convert back to pixel, and round
 
         # self.ZU = ZU('inclined')
@@ -122,6 +122,7 @@ class SutureDisplayAdjust:
         self.img_point = img_point
         np.save("./record/img_color_inclined.npy", self.img_color)
         np.save("./record/img_point_inclined.npy", self.img_point)
+        print("2")
 
         self.__user_display_pnts()  # fills self.pnts with user selected points
         # print('self.pnts after __user_select_pnts')

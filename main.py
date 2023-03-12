@@ -101,6 +101,8 @@ def suture_display_adj_pipeline(newSuturePlacer):
     extract_pts = newSuturePlacer.extract_pts
     mm_per_pixel = newSuturePlacer.mm_per_pixel
 
+    print(center_pts)
+
     newSutureDisAdj = SutureDisplayAdjust(insert_pts, center_pts, extract_pts, mm_per_pixel)
 
     # convert back to pixel values
@@ -123,6 +125,7 @@ if __name__ == "__main__":
     ROOT.withdraw()
 
     suturePlacer = suture_placing_pipeline()
+    print("returning")
 
     suture_display_adj_pipeline(suturePlacer)
 
