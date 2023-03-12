@@ -5,6 +5,7 @@ class Constraints:
         # This object should contain the optimizer, the spline curve, the image, etc., i.e. all of the relevant objects involved, as attributes.
         self.wound_width = wound_width # TODO Varun: this is a random #, lookup
 
+
     def con2(self, t):
         insert_dists, center_dists, extract_dists, insert_pts, center_pts, extract_pts = self.DistanceCalculator.calculate_distances(t)   
         h = self.wound_width * 0.5
@@ -21,8 +22,14 @@ class Constraints:
     def constraints(self):
         start = self.wound_points[0]
         end = self.wound_points[-1]
+
+        # start = 0
+        # end = 1 # NOTE: it should always be this way!
         return ({'type': 'eq', 'fun': lambda t: t[0] - start}, {'type': 'eq', 'fun': lambda t: t[-1] - end}, 
                {'type': 'ineq', 'fun': lambda t: self.con2(t)},
                {'type': 'ineq', 'fun': lambda t: self.con3(t)},
-               #{'type': 'ineq', 'fun': lambda t: self.con4(t)}, 
+               {'type': 'ineq', 'fun': lambda t: t - start},
+               {'type': 'ineq', 'fun': lambda t: end - t},
+
+                #{'type': 'ineq', 'fun': lambda t: self.con4(t)},
                )

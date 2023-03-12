@@ -68,7 +68,7 @@ def suture_placing_pipeline():
 
     # couldn't find reference to this in the codebase? I'm using make_interp_spline for now
     # wound = scipy_generate_sample_spline.generate_sample_spline()
-    tck, u = inter.splprep([x, y], k=deg)
+    tck, u = inter.splprep([x, y], k=3)
     wound_parametric = lambda t, d: inter.splev(t, tck, der = d)
 
     def wound(x):
@@ -76,7 +76,6 @@ def suture_placing_pipeline():
         # pnts[1] = pnts[1] * -1
         return pnts
 
-    wound(3)
     # Put the wound into all the relevant objects
     newSuturePlacer = SuturePlacer(wound_width, mm_per_pixel)
     newSuturePlacer.wound = wound
@@ -89,6 +88,7 @@ def suture_placing_pipeline():
     newSuturePlacer.wound_parametric = wound_parametric
     newSuturePlacer.DistanceCalculator.wound_parametric = wound_parametric
     newSuturePlacer.Optimizer.wound_parametric = wound_parametric
+
 
     # The main algorithm
     newSuturePlacer.place_sutures()

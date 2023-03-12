@@ -30,7 +30,9 @@ class SuturePlacer:
         
         def final_loss(t):
             self.RewardFunction.insert_dists, self.RewardFunction.center_dists, self.RewardFunction.extract_dists, insert_pts, center_pts, extract_pts = self.DistanceCalculator.calculate_distances(t)    
-            return self.RewardFunction.final_loss(a = 1, b = 1)
+            self.RewardFunction.wound_points = t
+            self.RewardFunction.suture_points = list(zip(insert_pts, center_pts, extract_pts))
+            return self.RewardFunction.final_loss(c_lossIdeal = 30, c_lossVar = 1, c_lossClosure = 20, c_lossShear = 2)
 
         result = optim.minimize(final_loss, wound_points, constraints = self.Constraints.constraints(), tol=1e-2)
         insert_dists, center_dists, extract_dists, insert_pts, center_pts, extract_pts = self.DistanceCalculator.calculate_distances(result.x)
@@ -38,6 +40,31 @@ class SuturePlacer:
         self.insert_pts = insert_pts
         self.center_pts = center_pts
         self.extract_pts = extract_pts
+
+
+        # varun's printing code for shear/closure
+        # print(final_loss(wound_points))
+
+        # result = optim.minimize(final_loss, wound_points, constraints = self.Constraints.constraints())
+        # #print(self.DistanceCalculator.calculate_distances(result.x))
+        # print(final_loss(result.x))
+        # print('final wound points', result.x)
+        # plt.clf()
+        # self.DistanceCalculator.plot(result.x, plot_closure=True)
+        # self.DistanceCalculator.plot(result.x, plot_shear=True)
+
+        # # plt.clf()
+        # # plt.plot(np.arange(len(self.RewardFunction.closure_forces)), (self.RewardFunction.closure_forces - 1) ** 2, c='blue')
+        # # plt.plot(np.arange(len(self.RewardFunction.shear_forces)), (self.RewardFunction.shear_forces ** 2), c='orange')
+
+        # # plt.show()
+        # # closure = (closure_forces - 1) ** 2
+        # # shear = shear_forces ** 2
+
+        # result_x, result_y = self.DistanceCalculator.wound_parametric(result.x, 0)
+        # print(result_x)
+        # print(result_y)
+        # return result_x, result_y
 
         return insert_dists, center_dists, extract_dists, insert_pts, center_pts, extract_pts, result.x
     
