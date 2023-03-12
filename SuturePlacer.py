@@ -32,7 +32,7 @@ class SuturePlacer:
             self.RewardFunction.insert_dists, self.RewardFunction.center_dists, self.RewardFunction.extract_dists, insert_pts, center_pts, extract_pts = self.DistanceCalculator.calculate_distances(t)    
             return self.RewardFunction.final_loss(a = 1, b = 1)
 
-        result = optim.minimize(final_loss, wound_points, constraints = self.Constraints.constraints())
+        result = optim.minimize(final_loss, wound_points, constraints = self.Constraints.constraints(), tol=1e-2)
         insert_dists, center_dists, extract_dists, insert_pts, center_pts, extract_pts = self.DistanceCalculator.calculate_distances(result.x)
         
         self.insert_pts = insert_pts
