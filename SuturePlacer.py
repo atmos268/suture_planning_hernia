@@ -53,8 +53,10 @@ class SuturePlacer:
         print(final_loss(result.x))
         print('final wound points', result.x)
         plt.clf()
-        self.DistanceCalculator.plot(result.x, "closure plot", plot_closure=True, save_fig='images/' + str(len(wound_points)) + '_closure_' + str(random.randint(0, 1000000)))
-        self.DistanceCalculator.plot(result.x, "shear plot", plot_shear=True, save_fig='images/' + str(len(wound_points)) + '_shear_' + str(random.randint(0, 1000000)))
+        save_intermittent_plots = False
+        if save_intermittent_plots:
+            self.DistanceCalculator.plot(result.x, "closure plot", plot_closure=True, save_fig='images/' + str(len(wound_points)) + '_closure_' + str(random.randint(0, 1000000)))
+            self.DistanceCalculator.plot(result.x, "shear plot", plot_shear=True, save_fig='images/' + str(len(wound_points)) + '_shear_' + str(random.randint(0, 1000000)))
 
         # plt.clf()
         # plt.plot(np.arange(len(self.RewardFunction.closure_forces)), (self.RewardFunction.closure_forces - 1) ** 2, c='blue')
@@ -79,7 +81,8 @@ class SuturePlacer:
         # choosing 8 points along curve as placeholder
         # currently, we have chosen a set of unequal points to demostrate visually what the optimization is doing
         # in reality, we would likely warm-start with equally spaced points.
-        num_sutures = 7 # int(self.DistanceCalculator.initial_number_of_sutures(0, 1))
+        num_sutures = int(self.DistanceCalculator.initial_number_of_sutures(0, 1))
+        print('NUM SUTURES: ', num_sutures)
         heuristic = num_sutures
         best_loss = float('inf')
         wound_points = np.linspace(0, 1, num_sutures)
@@ -91,6 +94,7 @@ class SuturePlacer:
         print('best_loss: ', best_loss)
         b_insert_pts, b_center_pts, b_extract_pts, b_ts = insert_pts, center_pts, extract_pts, ts
         losses = [best_loss]
+        first_downward = True
         while True:
             num_sutures += 1
             print('NUM SUTURES: ', num_sutures)
@@ -110,6 +114,8 @@ class SuturePlacer:
         while True:
             num_sutures -= 1
             print('NUM SUTURES: ', num_sutures)
+            if num_sutures <= 1:
+                break
             wound_points = np.linspace(0, 1, num_sutures)
             insert_dists, center_dists, extract_dists, insert_pts, center_pts, extract_pts, ts = self.optimize(wound_points=wound_points)
             self.RewardFunction.insert_dists = insert_dists
@@ -119,9 +125,10 @@ class SuturePlacer:
             if curr_loss < best_loss:
                 best_loss = curr_loss
                 b_insert_pts, b_center_pts, b_extract_pts, b_ts = insert_pts, center_pts, extract_pts, ts
-            if len(losses) >= 2 and curr_loss > max(losses[0], losses[1]):
+            if not first_downward and (len(losses) >= 2 and curr_loss > max(losses[0], losses[1])):
                 break
             losses = [curr_loss] + losses
+            first_downward = False
         self.insert_pts = b_insert_pts
         self.center_pts = b_center_pts
         self.extract_pts = b_extract_pts

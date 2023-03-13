@@ -15,7 +15,7 @@ def suture_placing_pipeline():
     #  points along the wound. That'll return a spline.
 
 
-    sample_spline = 's1' # Change to None to allow the surgeon to click
+    sample_spline = None # 's1' # Change to None to allow the surgeon to click
     if sample_spline is None:
         # make a new scale object to get the scale
         newScale = ScaleGenerator()
@@ -51,7 +51,7 @@ def suture_placing_pipeline():
 
         # now, use our conversion factor to scale points appropriately
         x = [float(elem) * mm_per_pixel for elem in x]
-        y = [float(elem) * mm_per_pixel for elem in y]
+        y = [float(elem) * -mm_per_pixel for elem in y]
     else:
         mm_per_pixel=1
         if sample_spline == 's1':
