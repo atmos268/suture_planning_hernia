@@ -45,8 +45,8 @@ class DistanceCalculator():
         # gets the norm of the vector (1, gradient)
         num_pts = len(wound_point_t)
 
-        def get_norm(gradient):
-            return math.sqrt(1 + gradient**2)
+        def get_norm(x, y):
+            return math.sqrt(x**2 + y**2)
 
         # might be worth vectorizing in the future
 
@@ -58,12 +58,11 @@ class DistanceCalculator():
         # orig_y = [0.0, 0.5, 1.8, 0.9, 0.4, 0.8, 1.2]
         # plt.scatter(orig_x, orig_y, color='orange')
         wound_derivatives_x, wound_derivatives_y = self.wound_parametric(wound_point_t, 1)
-        wound_derivatives = np.divide(wound_derivatives_y, wound_derivatives_x)
         # extract the norms of the vectors
-        norms = [get_norm(wound_derivative) for wound_derivative in wound_derivatives]
+        norms = [get_norm(wound_derivatives_x[i], wound_derivatives_y[i]) for i in range(len(wound_derivatives_x))]
 
         # get the normal vectors as norm = 1
-        normal_vecs = [[wound_derivatives[i]/norms[i], -1/norms[i]] for i in range(num_pts)]
+        normal_vecs = [[wound_derivatives_y[i]/norms[i], -wound_derivatives_x[i]/norms[i]] for i in range(num_pts)]
         
         # make norm width wound_width
         normal_vecs = [[normal_vec[0] * self.wound_width, normal_vec[1] * self.wound_width] for normal_vec in normal_vecs]
@@ -168,7 +167,7 @@ class DistanceCalculator():
             return 1
     
 
-    def plot(self, wound_point_t, title_plot, plot_closure=False, plot_shear=False, save_fig=False):
+    def plot(self, wound_point_t, title_plot, plot_closure=False, plot_shear=False, save_fig=False, plot_all=False):
         plt.clf()
 
         # wound points is the set of time-steps along the wound that correspond to wound points
@@ -184,21 +183,25 @@ class DistanceCalculator():
         # gets the norm of the vector (1, gradient)
         num_pts = len(wound_point_t)
 
-        def get_norm(gradient):
-            return math.sqrt(1 + gradient**2)
+        def get_norm(x, y):
+            return math.sqrt(x**2 + y**2)
 
-        # might be worth vecotrizing in the future
-            
+        # might be worth vectorizing in the future
+
         # get the curve and gradient for each point (the second argument allows you to on the fly take the derivative)
         wound_points, wound_curve = self.wound_parametric(wound_point_t, 0)
+        # print('wound_points', wound_points)
+        # print('parametric 0', self.wound_parametric(0, 0))
+        # orig_x = [0.0, 0.7, 1.0, 1.1, 1.6, 1.8, 2]
+        # orig_y = [0.0, 0.5, 1.8, 0.9, 0.4, 0.8, 1.2]
+        # plt.scatter(orig_x, orig_y, color='orange')
         wound_derivatives_x, wound_derivatives_y = self.wound_parametric(wound_point_t, 1)
-        wound_derivatives = np.divide(wound_derivatives_y, wound_derivatives_x)
         # extract the norms of the vectors
-        norms = [get_norm(wound_derivative) for wound_derivative in wound_derivatives]
+        norms = [get_norm(wound_derivatives_x[i], wound_derivatives_y[i]) for i in range(len(wound_derivatives_x))]
 
         # get the normal vectors as norm = 1
-        normal_vecs = [[wound_derivatives[i]/norms[i], -1/norms[i]] for i in range(num_pts)]
-        
+        normal_vecs = [[wound_derivatives_y[i]/norms[i], -wound_derivatives_x[i]/norms[i]] for i in range(num_pts)]
+          
         # make norm width wound_width
         normal_vecs = [[normal_vec[0] * self.wound_width, normal_vec[1] * self.wound_width] for normal_vec in normal_vecs]
 
@@ -208,11 +211,6 @@ class DistanceCalculator():
         extract_pts = [[wound_points[i] - normal_vecs[i][0], wound_curve[i] - normal_vecs[i][1]] for i in range(num_pts)]
 
         center_pts = [[wound_points[i], wound_curve[i]] for i in range(num_pts)]
-
-        #if wound_derivative_x and wound_derivative_y is negative then switch insertion and extraction point to ensure that extraction points are on convex side of the curve
-        for i in range(num_pts):
-            if wound_derivatives_x[i] < 0 and wound_derivatives_y[i]<0:
-                insert_pts[i], extract_pts[i] = extract_pts[i], insert_pts[i]
 
 
         # Returns evenly spaced numbers
@@ -228,12 +226,65 @@ class DistanceCalculator():
         
         # Plotting the Graph
 
-        if not (True or plot_shear or plot_closure):
-            plt.plot(X_, Y_)
+        # if not (True or plot_shear or plot_closure):
+        #     plt.plot(X_, Y_)
+        plt.plot(X_, Y_)
         plt.scatter([insert_pts[i][0] for i in range(num_pts)], [insert_pts[i][1] for i in range(num_pts)], c="red")
         plt.scatter([extract_pts[i][0] for i in range(num_pts)], [extract_pts[i][1] for i in range(num_pts)], c="blue")
         plt.scatter([center_pts[i][0] for i in range(num_pts)], [center_pts[i][1] for i in range(num_pts)], c="green")
         
+
+        if plot_all:
+            plt.axis('square')
+            plt.title("Result")
+            if save_fig:
+                plt.savefig(save_fig)
+            else:
+                plt.show()
+            plt.plot(X_, Y_)
+            plt.scatter([insert_pts[i][0] for i in range(num_pts)], [insert_pts[i][1] for i in range(num_pts)], c="red")
+            plt.scatter([extract_pts[i][0] for i in range(num_pts)], [extract_pts[i][1] for i in range(num_pts)], c="blue")
+            plt.scatter([center_pts[i][0] for i in range(num_pts)], [center_pts[i][1] for i in range(num_pts)], c="green")
+            force_to_plot = self.suturePlacer.RewardFunction.closure_forces
+            wcp_xs = self.suturePlacer.RewardFunction.wcp_xs
+            wcp_ys = self.suturePlacer.RewardFunction.wcp_ys
+            
+            print("closure_pts: ", wcp_ys)
+
+            ax = plt.gca()
+            plt.scatter(wcp_xs, wcp_ys, c=force_to_plot, cmap='viridis', marker='o')
+
+            for i, txt in enumerate(force_to_plot):
+                if i % 2 == 0:
+                    plt.annotate("{:.4f}".format(txt), (wcp_xs[i], wcp_ys[i]))
+            plt.axis('square')
+            plt.title("Closure forces")
+            if save_fig:
+                plt.savefig(save_fig)
+            else:
+                plt.show()
+
+            force_to_plot = self.suturePlacer.RewardFunction.shear_forces
+            wcp_xs = self.suturePlacer.RewardFunction.wcp_xs
+            wcp_ys = self.suturePlacer.RewardFunction.wcp_ys
+            
+            print("closure_pts: ", wcp_ys)
+
+            ax = plt.gca()
+            plt.scatter(wcp_xs, wcp_ys, c=force_to_plot, cmap='viridis', marker='o')
+
+            for i, txt in enumerate(force_to_plot):
+                if i % 2 == 0:
+                    plt.annotate("{:.4f}".format(txt), (wcp_xs[i], wcp_ys[i]))
+            plt.axis('square')
+            plt.title("Shear forces")
+            if save_fig:
+                plt.savefig(save_fig)
+            else:
+                plt.show()
+
+            return
+
 
         # insert_distances, center_distances, extract_distances, insert_pts, center_pts, extract_pts = self.calculate_distances(wound_point_t)
 

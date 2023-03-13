@@ -15,7 +15,7 @@ def suture_placing_pipeline():
     #  points along the wound. That'll return a spline.
 
 
-    sample_spline = None # 's1' # Change to None to allow the surgeon to click
+    sample_spline = 's4' #None # 's1' # Change to None to allow the surgeon to click
     if sample_spline is None:
         # make a new scale object to get the scale
         newScale = ScaleGenerator()
@@ -55,19 +55,19 @@ def suture_placing_pipeline():
         deg = 5
     else:
         mm_per_pixel=1
-        if sample_spline == 's1':
+        if sample_spline == 's3':
             x = [0, 7, 10, 15, 21, 25, 30]
             y = [0, -5, 5, 35, 18, 7, 13]
             deg = 5
             pnts = zip(x, y)
             wound_width = 1.5
-        elif sample_spline == 's2':
+        elif sample_spline == 's5':
             x = [0, 3, 10, 15, 21, 25, 30]
             y = [0, -10, 5, -20, 18, 7, 13]
             deg = 5
             pnts = zip(x, y)
             wound_width = 1.5
-        elif sample_spline == 's3':
+        elif sample_spline == 's2':
             x = [0, 3, 10, 15, 21, 25, 30]
             y = [0, 1, 3, 5, 3, 1, 0]
             deg = 2
@@ -79,7 +79,7 @@ def suture_placing_pipeline():
             deg = 5
             pnts = zip(x, y)
             wound_width = 1.5
-        elif sample_spline == 's5':
+        elif sample_spline == 's1':
             x = [0, 1, 2, 3, 4, 5, 6]
             y = [0, 0, 0, 0, 0, 0, 0]
             deg = 5

@@ -37,7 +37,7 @@ class SuturePlacer:
             self.RewardFunction.suture_points = list(zip(insert_pts, center_pts, extract_pts))
             return self.RewardFunction.final_loss(c_lossIdeal = 30, c_lossVar = 1, c_lossClosure = 20, c_lossShear = 2)
 
-        result = optim.minimize(final_loss, wound_points, constraints = self.Constraints.constraints(), options={"maxiter":1000}, method = 'COBYLA', tol=1e-2)
+        result = optim.minimize(final_loss, wound_points, constraints = self.Constraints.constraints(), options={"maxiter":200}, method = 'COBYLA', tol=1e-2)
         insert_dists, center_dists, extract_dists, insert_pts, center_pts, extract_pts = self.DistanceCalculator.calculate_distances(result.x)
         
         self.insert_pts = insert_pts
@@ -48,7 +48,7 @@ class SuturePlacer:
         # varun's printing code for shear/closure
         print(final_loss(wound_points))
 
-        result = optim.minimize(final_loss, wound_points, constraints = self.Constraints.constraints(), options={"maxiter":1000}, method = 'COBYLA', tol = 1e-2)
+        result = optim.minimize(final_loss, wound_points, constraints = self.Constraints.constraints(), options={"maxiter":200}, method = 'COBYLA', tol = 1e-2)
         #print(self.DistanceCalculator.calculate_distances(result.x))
         print(final_loss(result.x))
         print('final wound points', result.x)
@@ -83,6 +83,7 @@ class SuturePlacer:
         # in reality, we would likely warm-start with equally spaced points.
         num_sutures = int(self.DistanceCalculator.initial_number_of_sutures(0, 1))
         print('NUM SUTURES: ', num_sutures)
+        # num_sutures = 12
         heuristic = num_sutures
         best_loss = float('inf')
         wound_points = np.linspace(0, 1, num_sutures)
@@ -91,7 +92,7 @@ class SuturePlacer:
         self.RewardFunction.center_dists = center_dists
         self.RewardFunction.extract_dists = extract_dists
         best_loss = self.RewardFunction.hyperLoss()
-        print('best_loss: ', best_loss)
+        print('loss: ', best_loss)
         b_insert_pts, b_center_pts, b_extract_pts, b_ts = insert_pts, center_pts, extract_pts, ts
         losses = [best_loss]
         first_downward = True
@@ -110,6 +111,7 @@ class SuturePlacer:
             if len(losses) >= 2 and curr_loss > max(losses[-1], losses[-2]):
                 break
             losses.append(curr_loss)
+            print("loss", curr_loss)
         num_sutures = heuristic
         while True:
             num_sutures -= 1
@@ -129,11 +131,12 @@ class SuturePlacer:
                 break
             losses = [curr_loss] + losses
             first_downward = False
+            print("loss", curr_loss)
         self.insert_pts = b_insert_pts
         self.center_pts = b_center_pts
         self.extract_pts = b_extract_pts
         print(losses)
-        self.DistanceCalculator.plot(b_ts, "Plotting after optimization")
+        self.DistanceCalculator.plot(b_ts, "Plotting after optimization", plot_closure=True)
         print("plotting")
         return b_insert_pts, b_center_pts, b_extract_pts
 

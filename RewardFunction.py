@@ -48,28 +48,32 @@ class RewardFunction():
 
     def lossIdeal(self):
         ideal = self.SuturePlacer.wound_width
-        power = 2
-        extra_pen = 100
-        insertion = []
-        extraction = []
-        center = []
-        for i in range(len(self.insert_dists)):
-            ins = self.insert_dists[i]
-            if ins < ideal:
-                insertion.append((ins-ideal) ** power * extra_pen)
-            else:
-                insertion.append((ins-ideal) ** power)
-            ext = self.extract_dists[i]
-            if ext < ideal:
-                extraction.append((ext-ideal) ** power * extra_pen)
-            else:
-                extraction.append((ext-ideal) ** power)
-            cen = self.insert_dists[i]
-            if cen < ideal:
-                center.append((cen-ideal) ** power * extra_pen)
-            else:
-                center.append((cen-ideal) ** power)
-        return sum(insertion + center + extraction)
+        return sum([(i - ideal)**2 for i in self.insert_dists]) + sum([(i - ideal)**2 for i in self.extract_dists]) + sum([(i - ideal)**2 for i in self.center_dists])
+
+
+
+        # power = 2
+        # extra_pen = 100
+        # insertion = []
+        # extraction = []
+        # center = []
+        # for i in range(len(self.insert_dists)):
+        #     ins = self.insert_dists[i]
+        #     if ins < ideal:
+        #         insertion.append((ins-ideal) ** power * extra_pen)
+        #     else:
+        #         insertion.append((ins-ideal) ** power)
+        #     ext = self.extract_dists[i]
+        #     if ext < ideal:
+        #         extraction.append((ext-ideal) ** power * extra_pen)
+        #     else:
+        #         extraction.append((ext-ideal) ** power)
+        #     cen = self.insert_dists[i]
+        #     if cen < ideal:
+        #         center.append((cen-ideal) ** power * extra_pen)
+        #     else:
+        #         center.append((cen-ideal) ** power)
+        # return sum(insertion + center + extraction)
 
     def distance_along(self, wound, a, b, num_samples_per_suture):
         'Note: Signed distance, and a can be greater than b'
@@ -223,9 +227,7 @@ class RewardFunction():
         return (max(self.insert_dists) + max(self.center_dists) + max(self.extract_dists))
     
     def hyperLoss(self):
-        ideal = 5
-        return sum([(i - ideal)**2 for i in self.insert_dists]) + sum([(i - ideal)**2 for i in self.extract_dists]) + sum([(i - ideal)**2 for i in self.center_dists])
-
+        return self.final_loss(c_lossIdeal = 1, c_lossVar = 1, c_lossClosure = 20, c_lossShear = 2)
 
     # ... and so forth: refer to slide 14 from the presentation for details on how to design this.
     # It may be influenced by the optimizer as well.
