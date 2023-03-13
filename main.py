@@ -52,13 +52,41 @@ def suture_placing_pipeline():
         # now, use our conversion factor to scale points appropriately
         x = [float(elem) * mm_per_pixel for elem in x]
         y = [float(elem) * -mm_per_pixel for elem in y]
+        deg = 5
     else:
         mm_per_pixel=1
         if sample_spline == 's1':
             x = [0, 7, 10, 15, 21, 25, 30]
             y = [0, -5, 5, 35, 18, 7, 13]
+            deg = 5
             pnts = zip(x, y)
             wound_width = 1.5
+        elif sample_spline == 's2':
+            x = [0, 3, 10, 15, 21, 25, 30]
+            y = [0, -10, 5, -20, 18, 7, 13]
+            deg = 5
+            pnts = zip(x, y)
+            wound_width = 1.5
+        elif sample_spline == 's3':
+            x = [0, 3, 10, 15, 21, 25, 30]
+            y = [0, 1, 3, 5, 3, 1, 0]
+            deg = 2
+            pnts = zip(x, y)
+            wound_width = 1.5
+        elif sample_spline == 's4':
+            x = [0, 3, 10, 15, 10, 3, 1]
+            y = [0, 1, 3, 5, 8, 10, 5]
+            deg = 5
+            pnts = zip(x, y)
+            wound_width = 1.5
+        elif sample_spline == 's5':
+            x = [0, 1, 2, 3, 4, 5, 6]
+            y = [0, 0, 0, 0, 0, 0, 0]
+            deg = 5
+            pnts = zip(x, y)
+            wound_width = 1.5
+        else:
+            raise Exception("not a pre-saved wound")
 
     # But for now, just use this sample spline. It's a Bezier spline
 
@@ -71,11 +99,10 @@ def suture_placing_pipeline():
 
     # x = [0.0, 0.7, 1.0, 1.5, 2.1, 2.5, 3.0] # OLD manually-chosen example
     # y = [0.0, -0.5, 0.5, 3.5, 1.8, 0.7, 1.3] # OLD manually-chosen example
-    deg = 5
 
     # couldn't find reference to this in the codebase? I'm using make_interp_spline for now
     # wound = scipy_generate_sample_spline.generate_sample_spline()
-    tck, u = inter.splprep([x, y], k=3)
+    tck, u = inter.splprep([x, y], k=deg)
     wound_parametric = lambda t, d: inter.splev(t, tck, der = d)
 
     def wound(x):
