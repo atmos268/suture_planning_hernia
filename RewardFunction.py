@@ -227,7 +227,7 @@ class RewardFunction():
         return (max(self.insert_dists) + max(self.center_dists) + max(self.extract_dists))
     
     def hyperLoss(self):
-        return self.final_loss(c_lossIdeal = 1, c_lossVar = 1, c_lossClosure = 20, c_lossShear = 2)
+        return self.final_loss(c_lossIdeal = 0, c_lossVar = 1, c_lossClosure = 20, c_lossShear = 2)
 
     # ... and so forth: refer to slide 14 from the presentation for details on how to design this.
     # It may be influenced by the optimizer as well.

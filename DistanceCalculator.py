@@ -241,6 +241,7 @@ class DistanceCalculator():
                 plt.savefig(save_fig)
             else:
                 plt.show()
+            plt.clf()
             plt.plot(X_, Y_)
             plt.scatter([insert_pts[i][0] for i in range(num_pts)], [insert_pts[i][1] for i in range(num_pts)], c="red")
             plt.scatter([extract_pts[i][0] for i in range(num_pts)], [extract_pts[i][1] for i in range(num_pts)], c="blue")
@@ -249,7 +250,7 @@ class DistanceCalculator():
             wcp_xs = self.suturePlacer.RewardFunction.wcp_xs
             wcp_ys = self.suturePlacer.RewardFunction.wcp_ys
             
-            print("closure_pts: ", wcp_ys)
+            # print("closure_pts: ", wcp_ys)
 
             ax = plt.gca()
             plt.scatter(wcp_xs, wcp_ys, c=force_to_plot, cmap='viridis', marker='o')
@@ -263,12 +264,13 @@ class DistanceCalculator():
                 plt.savefig(save_fig)
             else:
                 plt.show()
+            plt.clf()
 
             force_to_plot = self.suturePlacer.RewardFunction.shear_forces
             wcp_xs = self.suturePlacer.RewardFunction.wcp_xs
             wcp_ys = self.suturePlacer.RewardFunction.wcp_ys
             
-            print("closure_pts: ", wcp_ys)
+            # print("closure_pts: ", wcp_ys)
 
             ax = plt.gca()
             plt.scatter(wcp_xs, wcp_ys, c=force_to_plot, cmap='viridis', marker='o')
@@ -282,6 +284,7 @@ class DistanceCalculator():
                 plt.savefig(save_fig)
             else:
                 plt.show()
+            plt.clf()
 
             return
 
@@ -307,7 +310,7 @@ class DistanceCalculator():
             wcp_xs = self.suturePlacer.RewardFunction.wcp_xs
             wcp_ys = self.suturePlacer.RewardFunction.wcp_ys
             
-            print("closure_pts: ", wcp_ys)
+            # print("closure_pts: ", wcp_ys)
 
             ax = plt.gca()
             # m = ax.pcolormesh(, y, data, cmap=cmap, levels=np.linspace(0, scale, 11))
@@ -328,5 +331,5 @@ class DistanceCalculator():
 
     def initial_number_of_sutures(self, start, end):
         dist_along_spline = self.distance_along(start, end, 100)
-        print(dist_along_spline)
+        # print("dist_along_spline", dist_along_spline)
         return dist_along_spline/5
