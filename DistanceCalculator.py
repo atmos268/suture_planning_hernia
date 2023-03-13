@@ -257,7 +257,7 @@ class DistanceCalculator():
 
             for i, txt in enumerate(force_to_plot):
                 if i % 2 == 0:
-                    plt.annotate("{:.4f}".format(txt), (wcp_xs[i], wcp_ys[i]))
+                    plt.annotate("{:.4f}".format(txt), (wcp_xs[i], wcp_ys[i]), size=8)
             plt.axis('square')
             plt.title("Closure forces")
             if save_fig:

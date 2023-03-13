@@ -27,13 +27,14 @@ class RewardFunction():
     # distance lists added to this object by SuturePlacer.
     # variance
 
-    def final_loss(self, c_lossVar = 1, c_lossIdeal = 1, c_lossClosure=1, c_lossShear=1):
-        lossVar = self.lossVar()
+    def final_loss(self, c_lossMin = 1, c_lossVarCenter = 1, c_lossVarInsExt = 1, c_lossIdeal = 1, c_lossClosure=1, c_lossShear=1):
+        weighted_lossVar = self.lossVar(c_lossVarCenter, c_lossVarInsExt)
         lossIdeal = self.lossIdeal()
         weighted_lossClosure = self.lossClosureForce(c_lossClosure, c_lossShear)
-        return c_lossVar * lossVar + c_lossIdeal * lossIdeal + weighted_lossClosure
+        lossMin = self.lossMin()
+        return weighted_lossVar + c_lossIdeal * lossIdeal + weighted_lossClosure + c_lossMin * lossMin
 
-    def lossVar(self):
+    def lossVar(self, c_lossVarCenter, c_lossVarInsExt):
         mean_insert = sum(self.insert_dists) / len(self.insert_dists)
         var_insert = sum([(i - mean_insert)**2 for i in self.insert_dists])
         
@@ -43,7 +44,10 @@ class RewardFunction():
         mean_extract = sum(self.extract_dists) / len(self.extract_dists)
         var_extract = sum([(i - mean_extract)**2 for i in self.extract_dists])
         
-        return var_insert + var_center + var_extract
+        return c_lossVarInsExt * (var_insert + var_extract) + c_lossVarCenter * var_center
+
+    def lossMin(self):
+        return -np.log(min(self.insert_dists) - self.SuturePlacer.wound_width * (1/5)) -np.log(min(self.extract_dists) - self.SuturePlacer.wound_width * (1/5))
     
 
     def lossIdeal(self):
@@ -200,7 +204,7 @@ class RewardFunction():
             closure_force, shear = all_wounds_closure_and_shear_force(p)
             closure_forces.append(closure_force)
             shear_forces.append(shear)
-        closure_forces = np.array(closure_forces)
+        closure_forces = closure_forces
         shear_forces = np.array(shear_forces)
         self.closure_forces = closure_forces
         self.shear_forces = shear_forces
@@ -211,7 +215,11 @@ class RewardFunction():
         self.wcp_xs = xs
         self.wcp_ys = ys
         # return 0 # right now, I don't want to change the final result
-
+        """
+        Exponential version
+        closure_forces_minus1 = [a - 1 for a in closure_forces]
+        closure_loss = sum([10 ** a - 9 for a in closure_forces_minus1])
+        """
         closure_loss = sum((closure_forces - 1) ** 2)
         shear_loss =  sum(shear_forces ** 2)
 
@@ -227,7 +235,7 @@ class RewardFunction():
         return (max(self.insert_dists) + max(self.center_dists) + max(self.extract_dists))
     
     def hyperLoss(self):
-        return self.final_loss(c_lossIdeal = 0, c_lossVar = 1, c_lossClosure = 20, c_lossShear = 2)
+        return self.final_loss(c_lossMin=self.SuturePlacer.c_lossMin, c_lossIdeal = self.SuturePlacer.c_lossIdeal, c_lossVarCenter = self.SuturePlacer.c_lossVarCenter, c_lossVarInsExt = self.SuturePlacer.c_lossVarInsExt, c_lossClosure = self.SuturePlacer.c_lossClosure, c_lossShear = self.SuturePlacer.c_lossShear)
 
     # ... and so forth: refer to slide 14 from the presentation for details on how to design this.
     # It may be influenced by the optimizer as well.

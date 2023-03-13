@@ -8,7 +8,7 @@ class Constraints:
 
     def con2(self, t):
         insert_dists, center_dists, extract_dists, insert_pts, center_pts, extract_pts = self.DistanceCalculator.calculate_distances(t)   
-        h = self.wound_width * 0.5
+        h = self.wound_width * (1/5)
         return [i - h for i in insert_dists] + [i - h for i in center_dists] + [i - h for i in extract_dists]
     
     def con3(self, t): # max distance b/w 2 sutures
@@ -18,7 +18,7 @@ class Constraints:
 
     def con4(self, t):
         return [t[i+1] - t[i] for i in range(len(t)-1)]
-    
+
     def constraints(self):
         start = self.wound_points[0]
         end = self.wound_points[-1]
