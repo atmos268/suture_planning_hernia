@@ -1,3 +1,5 @@
+import random
+
 import DistanceCalculator
 import RewardFunction
 import Optimizer
@@ -51,8 +53,8 @@ class SuturePlacer:
         print(final_loss(result.x))
         print('final wound points', result.x)
         plt.clf()
-        self.DistanceCalculator.plot(result.x, "closure plot", plot_closure=True)
-        self.DistanceCalculator.plot(result.x, "shear plot", plot_shear=True)
+        self.DistanceCalculator.plot(result.x, "closure plot", plot_closure=True, save_fig='images/' + str(len(wound_points)) + '_closure_' + str(random.randint(0, 1000000)))
+        self.DistanceCalculator.plot(result.x, "shear plot", plot_shear=True, save_fig='images/' + str(len(wound_points)) + '_shear_' + str(random.randint(0, 1000000)))
 
         # plt.clf()
         # plt.plot(np.arange(len(self.RewardFunction.closure_forces)), (self.RewardFunction.closure_forces - 1) ** 2, c='blue')
@@ -63,9 +65,10 @@ class SuturePlacer:
         # shear = shear_forces ** 2
 
         result_x, result_y = self.DistanceCalculator.wound_parametric(result.x, 0)
-        print(result_x)
-        print(result_y)
-        return result_x, result_y
+        print('result_x', result_x)
+        print('result_y',
+              result_y)
+        # return result_x, result_y
 
         return insert_dists, center_dists, extract_dists, insert_pts, center_pts, extract_pts, result.x
     
@@ -76,7 +79,7 @@ class SuturePlacer:
         # choosing 8 points along curve as placeholder
         # currently, we have chosen a set of unequal points to demostrate visually what the optimization is doing
         # in reality, we would likely warm-start with equally spaced points.
-        num_sutures = int(self.DistanceCalculator.initial_number_of_sutures(0, 1))
+        num_sutures = 7 # int(self.DistanceCalculator.initial_number_of_sutures(0, 1))
         heuristic = num_sutures
         best_loss = float('inf')
         wound_points = np.linspace(0, 1, num_sutures)
@@ -85,11 +88,12 @@ class SuturePlacer:
         self.RewardFunction.center_dists = center_dists
         self.RewardFunction.extract_dists = extract_dists
         best_loss = self.RewardFunction.hyperLoss()
-        print(best_loss)
+        print('best_loss: ', best_loss)
         b_insert_pts, b_center_pts, b_extract_pts, b_ts = insert_pts, center_pts, extract_pts, ts
         losses = [best_loss]
         while True:
             num_sutures += 1
+            print('NUM SUTURES: ', num_sutures)
             wound_points = np.linspace(0, 1, num_sutures)
             insert_dists, center_dists, extract_dists, insert_pts, center_pts, extract_pts, ts = self.optimize(wound_points=wound_points)
             self.RewardFunction.insert_dists = insert_dists
@@ -105,6 +109,7 @@ class SuturePlacer:
         num_sutures = heuristic
         while True:
             num_sutures -= 1
+            print('NUM SUTURES: ', num_sutures)
             wound_points = np.linspace(0, 1, num_sutures)
             insert_dists, center_dists, extract_dists, insert_pts, center_pts, extract_pts, ts = self.optimize(wound_points=wound_points)
             self.RewardFunction.insert_dists = insert_dists

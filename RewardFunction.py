@@ -188,8 +188,8 @@ class RewardFunction():
             return closure_force, shear_amount
 
         sample_points = np.linspace(0, 1, 100)
-        print(num_samples_per_suture)
-        print(self.influence_region)
+        # print(num_samples_per_suture)
+        # print(self.influence_region)
         closure_forces = []
         shear_forces = []
         for p in sample_points:
@@ -211,8 +211,8 @@ class RewardFunction():
         closure_loss = sum((closure_forces - 1) ** 2)
         shear_loss =  sum(shear_forces ** 2)
 
-        print('closure loss: ', closure_loss)
-        print('shear loss: ', shear_loss)
+        # print('closure loss: ', closure_loss)
+        # print('shear loss: ', shear_loss)
 
         return c_lossClosure * closure_loss + c_lossShear * shear_loss
 

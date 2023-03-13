@@ -76,14 +76,14 @@ class DistanceCalculator():
         center_pts = [[wound_points[i], wound_curve[i]] for i in range(num_pts)]
 
         # Flip y points cause pixel to real transform!
-        insert_pts = [[insert_pts[i][0], -insert_pts[i][1]] for i in range(len(insert_pts))]
-        center_pts = [[center_pts[i][0], -center_pts[i][1]] for i in range(len(center_pts))]
-        extract_pts = [[extract_pts[i][0], -extract_pts[i][1]] for i in range(len(extract_pts))]
+        # insert_pts = [[insert_pts[i][0], -insert_pts[i][1]] for i in range(len(insert_pts))]
+        # center_pts = [[center_pts[i][0], -center_pts[i][1]] for i in range(len(center_pts))]
+        # extract_pts = [[extract_pts[i][0], -extract_pts[i][1]] for i in range(len(extract_pts))]
 
         # verify works by plotting
         wound_sample_x, wound_sample_y = self.wound(np.linspace(0, 1, 5000))
-        wound_sample_x *= 1 
-        wound_sample_y *= -1 # Flip y points cause pixel to real transform!
+        # wound_sample_x *= 1
+        # wound_sample_y *= -1 # Flip y points cause pixel to real transform!
         plt.plot(wound_sample_x, wound_sample_y, c='k')
         plt.scatter([insert_pts[i][0] for i in range(num_pts)], [insert_pts[i][1] for i in range(num_pts)], c="red")
         plt.scatter([extract_pts[i][0] for i in range(num_pts)], [extract_pts[i][1] for i in range(num_pts)], c="blue")
@@ -168,7 +168,7 @@ class DistanceCalculator():
             return 1
     
 
-    def plot(self, wound_point_t, title_plot, plot_closure=False, plot_shear=False):
+    def plot(self, wound_point_t, title_plot, plot_closure=False, plot_shear=False, save_fig=False):
         plt.clf()
 
         # wound points is the set of time-steps along the wound that correspond to wound points
@@ -222,17 +222,17 @@ class DistanceCalculator():
             t = min(wound_point_t) + (max(wound_point_t) - min(wound_point_t))*i/500
             temp = self.wound_parametric(t, 0)
             X_.append(temp[0])
-            Y_.append(-temp[1])
+            Y_.append(temp[1])
         # X_ = np.linspace(wound_points.min(), wound_points.max(), 500)
         # Y_ = spline(X_)
         
         # Plotting the Graph
 
-        if not (plot_shear or plot_closure):
+        if not (True or plot_shear or plot_closure):
             plt.plot(X_, Y_)
-        plt.scatter([insert_pts[i][0] for i in range(num_pts)], [-insert_pts[i][1] for i in range(num_pts)], c="red")
-        plt.scatter([extract_pts[i][0] for i in range(num_pts)], [-extract_pts[i][1] for i in range(num_pts)], c="blue")
-        plt.scatter([center_pts[i][0] for i in range(num_pts)], [-center_pts[i][1] for i in range(num_pts)], c="green")
+        plt.scatter([insert_pts[i][0] for i in range(num_pts)], [insert_pts[i][1] for i in range(num_pts)], c="red")
+        plt.scatter([extract_pts[i][0] for i in range(num_pts)], [extract_pts[i][1] for i in range(num_pts)], c="blue")
+        plt.scatter([center_pts[i][0] for i in range(num_pts)], [center_pts[i][1] for i in range(num_pts)], c="green")
         
 
         # insert_distances, center_distances, extract_distances, insert_pts, center_pts, extract_pts = self.calculate_distances(wound_point_t)
@@ -270,7 +270,10 @@ class DistanceCalculator():
 
         plt.axis('square')
         plt.title(title_plot)
-        plt.show()
+        if save_fig:
+            plt.savefig(save_fig)
+        else:
+            plt.show()
 
     def initial_number_of_sutures(self, start, end):
         dist_along_spline = self.distance_along(start, end, 100)

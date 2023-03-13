@@ -14,39 +14,51 @@ def suture_placing_pipeline():
     # TODO Varun: will rope in Sam's code that has the interface for the surgeon to click
     #  points along the wound. That'll return a spline.
 
-    # make a new scale object to get the scale
-    newScale = ScaleGenerator()
 
-    space_between_sutures = 0.010  # 1 cm
-    desired_compute_time = 1
-    IPG = InsertionPointGenerator(cut_width=.0075, desired_compute_time=desired_compute_time,
-                                  space_between_sutures=space_between_sutures)
+    sample_spline = 's1' # Change to None to allow the surgeon to click
+    if sample_spline is None:
+        # make a new scale object to get the scale
+        newScale = ScaleGenerator()
 
-    img_color = cv2.imread('hand_image.png')
-    img_point = np.load("record/img_point_inclined.npy")
+        space_between_sutures = 0.010  # 1 cm
+        desired_compute_time = 1
+        IPG = InsertionPointGenerator(cut_width=.0075, desired_compute_time=desired_compute_time,
+                                      space_between_sutures=space_between_sutures)
 
-    # get the scale measurement from surgeon
-    scale_pts = newScale.get_scale_pts(img_color, img_point)
+        img_color = cv2.imread('hand_image.png')
+        img_point = np.load("record/img_point_inclined.npy")
 
-    # request the surgeon for a distance
+        # get the scale measurement from surgeon
+        scale_pts = newScale.get_scale_pts(img_color, img_point)
 
-    # make into GUI, and also request wound width, space between sutures 
-    # real_dist = input('Please enter the distance in mm that you measured: ')
-    real_dist = simpledialog.askfloat(title="dist prompt", prompt="Please enter the distance in mm that you measured")
+        # request the surgeon for a distance
 
-    wound_width = simpledialog.askfloat(title="width prompt", prompt="Please enter the width of suture in mm")
-    
-    cv2.destroyAllWindows()
+        # make into GUI, and also request wound width, space between sutures
+        # real_dist = input('Please enter the distance in mm that you measured: ')
+        real_dist = simpledialog.askfloat(title="dist prompt",
+                                          prompt="Please enter the distance in mm that you measured")
 
-    pixel_dist = math.sqrt((scale_pts[0][0] - scale_pts[1][0])**2 + (scale_pts[0][1] - scale_pts[1][1])**2)
-    mm_per_pixel = real_dist/pixel_dist
+        wound_width = simpledialog.askfloat(title="width prompt", prompt="Please enter the width of suture in mm")
 
-    sample_spline = False
-    if not sample_spline:
+        cv2.destroyAllWindows()
+
+        pixel_dist = math.sqrt((scale_pts[0][0] - scale_pts[1][0]) ** 2 + (scale_pts[0][1] - scale_pts[1][1]) ** 2)
+        mm_per_pixel = real_dist / pixel_dist
+
         pnts = IPG.get_insertion_points_from_selection(img_color, img_point)
+        x = [a[0] for a in pnts]
+        y = [a[1] for a in pnts]
+
+        # now, use our conversion factor to scale points appropriately
+        x = [float(elem) * mm_per_pixel for elem in x]
+        y = [float(elem) * mm_per_pixel for elem in y]
     else:
-        pnts = [[46, 233], [50, 213], [57, 195], [67, 175], [77, 160], [91, 136], [107, 114], [121, 111], [137, 111],
-         [144, 120], [158, 136], [166, 166], [175, 208], [193, 233], [227, 218], [251, 183], [275, 128]]
+        mm_per_pixel=1
+        if sample_spline == 's1':
+            x = [0, 7, 10, 15, 21, 25, 30]
+            y = [0, -5, 5, 35, 18, 7, 13]
+            pnts = zip(x, y)
+            wound_width = 1.5
 
     # But for now, just use this sample spline. It's a Bezier spline
 
@@ -55,12 +67,7 @@ def suture_placing_pipeline():
     #  but I don't think it has a function to fit points to a bezier curve. SciPy's bezier module can fit points to a curve, but it is in the format [x -> y] which is more limiting
     #  for the types of curves we can handle. Goal is to fit points to a parametric bezier curve.
     """
-    x = [a[0] for a in pnts]
-    y = [a[1] for a in pnts]
 
-    # now, use our conversion factor to scale points appropriately
-    x = [float(elem) * mm_per_pixel for elem in x]
-    y = [float(elem) * mm_per_pixel for elem in y]
 
     # x = [0.0, 0.7, 1.0, 1.5, 2.1, 2.5, 3.0] # OLD manually-chosen example
     # y = [0.0, -0.5, 0.5, 3.5, 1.8, 0.7, 1.3] # OLD manually-chosen example
@@ -89,7 +96,6 @@ def suture_placing_pipeline():
     newSuturePlacer.DistanceCalculator.wound_parametric = wound_parametric
     newSuturePlacer.Optimizer.wound_parametric = wound_parametric
     newSuturePlacer.RewardFunction.wound_parametric = wound_parametric
-
 
     # The main algorithm
     newSuturePlacer.place_sutures()
