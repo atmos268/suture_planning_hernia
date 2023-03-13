@@ -81,8 +81,10 @@ class SuturePlacer:
         # currently, we have chosen a set of unequal points to demostrate visually what the optimization is doing
         # in reality, we would likely warm-start with equally spaced points.
         num_sutures = int(self.DistanceCalculator.initial_number_of_sutures(0, 1))
+        d = {}
         for num_sutures in range(10, 21):
             print('NUM SUTURES: ', num_sutures)
+            d[num_sutures] = {}
             heuristic = num_sutures
             best_loss = float('inf')
             wound_points = np.linspace(0, 1, num_sutures)
@@ -96,6 +98,11 @@ class SuturePlacer:
             print('shear loss', self.RewardFunction.lossClosureForce(0, 1))
             print('var loss', self.RewardFunction.lossVar())
             print('ideal loss', self.RewardFunction.lossIdeal())
+            d[num_sutures]['loss'] = best_loss
+            d[num_sutures]['closure loss'] = self.RewardFunction.lossClosureForce(1, 0)
+            d[num_sutures]['shear loss'] = self.RewardFunction.lossClosureForce(0, 1)
+            d[num_sutures]['var loss'] = self.RewardFunction.lossVar()
+            d[num_sutures]['ideal loss'] = self.RewardFunction.lossIdeal()
             b_insert_pts, b_center_pts, b_extract_pts, b_ts = insert_pts, center_pts, extract_pts, ts
             losses = [best_loss]
             first_downward = True
@@ -143,6 +150,7 @@ class SuturePlacer:
             self.DistanceCalculator.plot(b_ts, "Plotting after optimization", save_fig='images/closure' + str(num_sutures), plot_closure=True)
             self.DistanceCalculator.plot(b_ts, "Plotting after optimization", save_fig='images/shear' + str(num_sutures), plot_shear=True)
             print("plotting")
+        print(d)
         return b_insert_pts, b_center_pts, b_extract_pts
 
         
