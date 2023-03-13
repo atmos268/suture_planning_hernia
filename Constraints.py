@@ -25,7 +25,8 @@ class Constraints:
 
         # start = 0
         # end = 1 # NOTE: it should always be this way!
-        return ({'type': 'eq', 'fun': lambda t: t[0] - start}, {'type': 'eq', 'fun': lambda t: t[-1] - end}, 
+        return ({'type': 'ineq', 'fun': lambda t: t[0] - start}, {'type': 'ineq', 'fun': lambda t: t[-1] - end}, 
+               {'type': 'ineq', 'fun': lambda t: - t[0] + start}, {'type': 'ineq', 'fun': lambda t: - t[-1] + end}, 
                {'type': 'ineq', 'fun': lambda t: self.con2(t)},
                {'type': 'ineq', 'fun': lambda t: self.con3(t)},
                {'type': 'ineq', 'fun': lambda t: t - start},

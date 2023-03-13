@@ -71,7 +71,7 @@ def suture_placing_pipeline():
 
     # x = [0.0, 0.7, 1.0, 1.5, 2.1, 2.5, 3.0] # OLD manually-chosen example
     # y = [0.0, -0.5, 0.5, 3.5, 1.8, 0.7, 1.3] # OLD manually-chosen example
-    deg = 3
+    deg = 5
 
     # couldn't find reference to this in the codebase? I'm using make_interp_spline for now
     # wound = scipy_generate_sample_spline.generate_sample_spline()

@@ -37,7 +37,7 @@ class SuturePlacer:
             self.RewardFunction.suture_points = list(zip(insert_pts, center_pts, extract_pts))
             return self.RewardFunction.final_loss(c_lossIdeal = 30, c_lossVar = 1, c_lossClosure = 20, c_lossShear = 2)
 
-        result = optim.minimize(final_loss, wound_points, constraints = self.Constraints.constraints(), tol=1e-2)
+        result = optim.minimize(final_loss, wound_points, constraints = self.Constraints.constraints(), options={"maxiter":1000}, method = 'COBYLA')
         insert_dists, center_dists, extract_dists, insert_pts, center_pts, extract_pts = self.DistanceCalculator.calculate_distances(result.x)
         
         self.insert_pts = insert_pts
@@ -48,7 +48,7 @@ class SuturePlacer:
         # varun's printing code for shear/closure
         print(final_loss(wound_points))
 
-        result = optim.minimize(final_loss, wound_points, constraints = self.Constraints.constraints())
+        result = optim.minimize(final_loss, wound_points, constraints = self.Constraints.constraints(), options={"maxiter":1000}, method = 'COBYLA')
         #print(self.DistanceCalculator.calculate_distances(result.x))
         print(final_loss(result.x))
         print('final wound points', result.x)
