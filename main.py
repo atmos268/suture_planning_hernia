@@ -15,7 +15,7 @@ def suture_placing_pipeline():
     #  points along the wound. That'll return a spline.
 
 
-    sample_spline = 's4' #None # 's1' # Change to None to allow the surgeon to click
+    sample_spline = None # 's1' # Change to None to allow the surgeon to click
     if sample_spline is None:
         # make a new scale object to get the scale
         newScale = ScaleGenerator()
