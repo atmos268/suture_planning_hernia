@@ -88,9 +88,10 @@ class SuturePlacer:
         # currently, we have chosen a set of unequal points to demostrate visually what the optimization is doing
         # in reality, we would likely warm-start with equally spaced points.
         num_sutures = int(self.DistanceCalculator.initial_number_of_sutures(0, 1))
-        losses_array = np.zeros((11, 6))
-        for i, num_sutures in enumerate(range(10, 21)):
+        d = {}
+        for num_sutures in range(10, 21):
             print('NUM SUTURES: ', num_sutures)
+            d[num_sutures] = {}
             heuristic = num_sutures
             best_loss = float('inf')
             wound_points = np.linspace(0, 1, num_sutures)
@@ -105,7 +106,11 @@ class SuturePlacer:
             print('center var loss', self.RewardFunction.lossVar(1, 0))
             print('InsExt var loss', self.RewardFunction.lossVar(0, 1))
             print('ideal loss', self.RewardFunction.lossIdeal())
-            losses_array[i,:] = np.array([best_loss, self.RewardFunction.lossClosureForce(1, 0), self.RewardFunction.lossClosureForce(0, 1), self.RewardFunction.lossVar(1, 0), self.RewardFunction.lossVar(0, 1), self.RewardFunction.lossIdeal()])
+            d[num_sutures]['loss'] = best_loss
+            d[num_sutures]['closure loss'] = self.RewardFunction.lossClosureForce(1, 0)
+            d[num_sutures]['shear loss'] = self.RewardFunction.lossClosureForce(0, 1)
+            d[num_sutures]['var loss'] = self.RewardFunction.lossVar()
+            d[num_sutures]['ideal loss'] = self.RewardFunction.lossIdeal()
             b_insert_pts, b_center_pts, b_extract_pts, b_ts = insert_pts, center_pts, extract_pts, ts
             losses = [best_loss]
             first_downward = True
@@ -153,8 +158,8 @@ class SuturePlacer:
             self.DistanceCalculator.plot(b_ts, "Plotting after optimization", save_fig='images/closure' + str(num_sutures), plot_closure=True)
             self.DistanceCalculator.plot(b_ts, "Plotting after optimization", save_fig='images/shear' + str(num_sutures), plot_shear=True)
             print("plotting")
-        print('losses_array:\n', losses_array)
-        np.savetxt('images/losses_array', losses_array, delimiter=',', fmt='%4f')
+        print(d)
+        np.savetxt('images/losses_array', d, delimiter=',')
         return b_insert_pts, b_center_pts, b_extract_pts
 
         

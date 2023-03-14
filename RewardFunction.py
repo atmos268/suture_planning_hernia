@@ -43,12 +43,9 @@ class RewardFunction():
         
         mean_extract = sum(self.extract_dists) / len(self.extract_dists)
         var_extract = sum([(i - mean_extract)**2 for i in self.extract_dists])
-        
-        return c_lossVarInsExt * (var_insert + var_extract) + c_lossVarCenter * var_center
 
-    def lossMin(self):
-        return -np.log(min(self.insert_dists) - self.SuturePlacer.wound_width * (1/5)) -np.log(min(self.extract_dists) - self.SuturePlacer.wound_width * (1/5))
-    
+        return var_insert + var_center * 6 + var_extract
+
 
     def lossIdeal(self):
         ideal = self.SuturePlacer.wound_width
