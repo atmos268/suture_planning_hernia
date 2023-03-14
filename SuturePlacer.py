@@ -87,9 +87,9 @@ class SuturePlacer:
         # choosing 8 points along curve as placeholder
         # currently, we have chosen a set of unequal points to demostrate visually what the optimization is doing
         # in reality, we would likely warm-start with equally spaced points.
-        num_sutures = int(self.DistanceCalculator.initial_number_of_sutures(0, 1))
+        num_sutures = int(self.DistanceCalculator.initial_number_of_sutures(0, 1)) # heuristic
         d = {}
-        for num_sutures in range(10, 21):
+        for num_sutures in range(10, 21): # This should be (0.8 * heuristic to 1.4 * heuristic)
             print('NUM SUTURES: ', num_sutures)
             d[num_sutures] = {}
             heuristic = num_sutures
@@ -154,7 +154,7 @@ class SuturePlacer:
             self.center_pts = b_center_pts
             self.extract_pts = b_extract_pts
             print(losses)
-            self.DistanceCalculator.plot(b_ts, "Plotting after optimization", save_fig='images/sutures' + str(num_sutures))
+            self.DistanceCalculator.plot(b_ts, "Plotting after optimization", save_fig='images/sutures' + str(num_sutures) + str(random.randint(10000000))) # put the spine name here
             self.DistanceCalculator.plot(b_ts, "Plotting after optimization", save_fig='images/closure' + str(num_sutures), plot_closure=True)
             self.DistanceCalculator.plot(b_ts, "Plotting after optimization", save_fig='images/shear' + str(num_sutures), plot_shear=True)
             print("plotting")
