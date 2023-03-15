@@ -7,6 +7,7 @@ import Constraints
 import scipy.optimize as optim
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
 
 class SuturePlacer:
@@ -164,19 +165,10 @@ class SuturePlacer:
             print("plotting")
             points_dict[num_sutures] = b_ts
         print(d)
-        save_dict_to_file(d, sample_spline + "_losses.txt")
+        #save losses dictionary as a csv file
+        dict_to_csv(d, sample_spline + "_losses")
+        #save points 
         save_dict_to_file(points_dict, sample_spline +"_points.txt")
-        #np.savetxt('images/losses_array_all', d, delimiter=',')
-        #Saving top 3
-        lossesKeys = list(losses.keys())
-        lossesKeys.sort()
-        final_d = {}
-        for i in lossesKeys[0:3]:
-            num = losses[i]
-            final_d[num] = d[num]
-        print(final_d)
-        #save_dict_to_file(d)
-        #np.savetxt('images/losses_array_top3', final_d, delimiter=',')
         return b_insert_pts, b_center_pts, b_extract_pts
 
 def save_dict_to_file(dic, filename):
@@ -189,6 +181,17 @@ def load_dict_from_file():
     data=f.read()
     f.close()
     return eval(data)
+
+def dict_to_csv(d, filename):
+    df = pd.DataFrame(columns = ['num_sutures', 'loss', 'closure loss', 'shear loss', 'var loss'])
+    d2 = {}
+    for k,v in d.items():
+        d2["num_sutures"] = k
+        d2 = {**d2, **v}
+        df = df.append(d2,
+            ignore_index = True)
+    df = df.sort_values(by=['loss'])
+    df.to_csv(filename + ".csv", index=False) 
 
         
         

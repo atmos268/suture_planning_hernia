@@ -274,6 +274,7 @@ class DistanceCalculator():
 
             ax = plt.gca()
             plt.scatter(wcp_xs, [-y for y in wcp_ys], c=force_to_plot, cmap='viridis', marker='o', s=8)
+            
 
             # for i, txt in enumerate(force_to_plot):
             #     if i % 2 == 0:
