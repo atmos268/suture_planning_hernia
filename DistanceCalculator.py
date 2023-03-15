@@ -220,7 +220,7 @@ class DistanceCalculator():
             t = min(wound_point_t) + (max(wound_point_t) - min(wound_point_t))*i/500
             temp = self.wound_parametric(t, 0)
             X_.append(temp[0])
-            Y_.append(temp[1])
+            Y_.append(-temp[1])
         # X_ = np.linspace(wound_points.min(), wound_points.max(), 500)
         # Y_ = spline(X_)
         
@@ -229,9 +229,9 @@ class DistanceCalculator():
         # if not (True or plot_shear or plot_closure):
         #     plt.plot(X_, Y_)
         plt.plot(X_, Y_)
-        plt.scatter([insert_pts[i][0] for i in range(num_pts)], [insert_pts[i][1] for i in range(num_pts)], c="red", s = 5)
-        plt.scatter([extract_pts[i][0] for i in range(num_pts)], [extract_pts[i][1] for i in range(num_pts)], c="blue", s = 5)
-        plt.scatter([center_pts[i][0] for i in range(num_pts)], [center_pts[i][1] for i in range(num_pts)], c="green", s = 5)
+        plt.scatter([insert_pts[i][0] for i in range(num_pts)], [-insert_pts[i][1] for i in range(num_pts)], c="red", s = 5)
+        plt.scatter([extract_pts[i][0] for i in range(num_pts)], [-extract_pts[i][1] for i in range(num_pts)], c="blue", s = 5)
+        plt.scatter([center_pts[i][0] for i in range(num_pts)], [-center_pts[i][1] for i in range(num_pts)], c="green", s = 5)
         
 
         if plot_all:
@@ -243,9 +243,9 @@ class DistanceCalculator():
                 plt.show()
             plt.clf()
             plt.plot(X_, Y_)
-            plt.scatter([insert_pts[i][0] for i in range(num_pts)], [insert_pts[i][1] for i in range(num_pts)], c="red", s = 5)
-            plt.scatter([extract_pts[i][0] for i in range(num_pts)], [extract_pts[i][1] for i in range(num_pts)], c="blue", s = 5)
-            plt.scatter([center_pts[i][0] for i in range(num_pts)], [center_pts[i][1] for i in range(num_pts)], c="green", s = 5)
+            plt.scatter([insert_pts[i][0] for i in range(num_pts)], [-insert_pts[i][1] for i in range(num_pts)], c="red", s = 5)
+            plt.scatter([extract_pts[i][0] for i in range(num_pts)], [-extract_pts[i][1] for i in range(num_pts)], c="blue", s = 5)
+            plt.scatter([center_pts[i][0] for i in range(num_pts)], [-center_pts[i][1] for i in range(num_pts)], c="green", s = 5)
             force_to_plot = self.suturePlacer.RewardFunction.closure_forces
             wcp_xs = self.suturePlacer.RewardFunction.wcp_xs
             wcp_ys = self.suturePlacer.RewardFunction.wcp_ys
@@ -253,7 +253,7 @@ class DistanceCalculator():
             # print("closure_pts: ", wcp_ys)
 
             ax = plt.gca()
-            plt.scatter(wcp_xs, wcp_ys, c=force_to_plot, cmap='viridis', marker='o', s=8)
+            plt.scatter(wcp_xs, [-y for y in wcp_ys], c=force_to_plot, cmap='viridis', marker='o', s=8)
 
             # for i, txt in enumerate(force_to_plot):
             #     if i % 2 == 0:
@@ -273,7 +273,7 @@ class DistanceCalculator():
             # print("closure_pts: ", wcp_ys)
 
             ax = plt.gca()
-            plt.scatter(wcp_xs, wcp_ys, c=force_to_plot, cmap='viridis', marker='o', s=8)
+            plt.scatter(wcp_xs, [-y for y in wcp_ys], c=force_to_plot, cmap='viridis', marker='o', s=8)
 
             # for i, txt in enumerate(force_to_plot):
             #     if i % 2 == 0:
@@ -315,7 +315,7 @@ class DistanceCalculator():
             ax = plt.gca()
             # m = ax.pcolormesh(, y, data, cmap=cmap, levels=np.linspace(0, scale, 11))
 
-            plt.scatter(wcp_xs, wcp_ys, c=force_to_plot, cmap='viridis', marker='o', s=8)
+            plt.scatter(wcp_xs, [-y for y in wcp_ys], c=force_to_plot, cmap='viridis', marker='o', s=8)
 
             # for i, txt in enumerate(force_to_plot):
             #     if i % 2 == 0:
@@ -332,4 +332,4 @@ class DistanceCalculator():
     def initial_number_of_sutures(self, start, end):
         dist_along_spline = self.distance_along(start, end, 100)
         # print("dist_along_spline", dist_along_spline)
-        return dist_along_spline/self.wound_width
+        return dist_along_spline/(self.wound_width*2)
