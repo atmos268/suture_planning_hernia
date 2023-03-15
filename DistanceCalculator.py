@@ -229,9 +229,9 @@ class DistanceCalculator():
         # if not (True or plot_shear or plot_closure):
         #     plt.plot(X_, Y_)
         plt.plot(X_, Y_)
-        plt.scatter([insert_pts[i][0] for i in range(num_pts)], [insert_pts[i][1] for i in range(num_pts)], c="red")
-        plt.scatter([extract_pts[i][0] for i in range(num_pts)], [extract_pts[i][1] for i in range(num_pts)], c="blue")
-        plt.scatter([center_pts[i][0] for i in range(num_pts)], [center_pts[i][1] for i in range(num_pts)], c="green")
+        plt.scatter([insert_pts[i][0] for i in range(num_pts)], [insert_pts[i][1] for i in range(num_pts)], c="red", s = 5)
+        plt.scatter([extract_pts[i][0] for i in range(num_pts)], [extract_pts[i][1] for i in range(num_pts)], c="blue", s = 5)
+        plt.scatter([center_pts[i][0] for i in range(num_pts)], [center_pts[i][1] for i in range(num_pts)], c="green", s = 5)
         
 
         if plot_all:
@@ -243,9 +243,9 @@ class DistanceCalculator():
                 plt.show()
             plt.clf()
             plt.plot(X_, Y_)
-            plt.scatter([insert_pts[i][0] for i in range(num_pts)], [insert_pts[i][1] for i in range(num_pts)], c="red")
-            plt.scatter([extract_pts[i][0] for i in range(num_pts)], [extract_pts[i][1] for i in range(num_pts)], c="blue")
-            plt.scatter([center_pts[i][0] for i in range(num_pts)], [center_pts[i][1] for i in range(num_pts)], c="green")
+            plt.scatter([insert_pts[i][0] for i in range(num_pts)], [insert_pts[i][1] for i in range(num_pts)], c="red", s = 5)
+            plt.scatter([extract_pts[i][0] for i in range(num_pts)], [extract_pts[i][1] for i in range(num_pts)], c="blue", s = 5)
+            plt.scatter([center_pts[i][0] for i in range(num_pts)], [center_pts[i][1] for i in range(num_pts)], c="green", s = 5)
             force_to_plot = self.suturePlacer.RewardFunction.closure_forces
             wcp_xs = self.suturePlacer.RewardFunction.wcp_xs
             wcp_ys = self.suturePlacer.RewardFunction.wcp_ys
@@ -253,11 +253,11 @@ class DistanceCalculator():
             # print("closure_pts: ", wcp_ys)
 
             ax = plt.gca()
-            plt.scatter(wcp_xs, wcp_ys, c=force_to_plot, cmap='viridis', marker='o')
+            plt.scatter(wcp_xs, wcp_ys, c=force_to_plot, cmap='viridis', marker='o', s=8)
 
-            for i, txt in enumerate(force_to_plot):
-                if i % 2 == 0:
-                    plt.annotate("{:.4f}".format(txt), (wcp_xs[i], wcp_ys[i]), size=8)
+            # for i, txt in enumerate(force_to_plot):
+            #     if i % 2 == 0:
+            #         plt.annotate("{:.4f}".format(txt), (wcp_xs[i], wcp_ys[i]), size=8)
             plt.axis('square')
             plt.title("Closure forces")
             if save_fig:
@@ -273,11 +273,11 @@ class DistanceCalculator():
             # print("closure_pts: ", wcp_ys)
 
             ax = plt.gca()
-            plt.scatter(wcp_xs, wcp_ys, c=force_to_plot, cmap='viridis', marker='o')
+            plt.scatter(wcp_xs, wcp_ys, c=force_to_plot, cmap='viridis', marker='o', s=8)
 
-            for i, txt in enumerate(force_to_plot):
-                if i % 2 == 0:
-                    plt.annotate("{:.4f}".format(txt), (wcp_xs[i], wcp_ys[i]))
+            # for i, txt in enumerate(force_to_plot):
+            #     if i % 2 == 0:
+            #         plt.annotate("{:.4f}".format(txt), (wcp_xs[i], wcp_ys[i]))
             plt.axis('square')
             plt.title("Shear forces")
             if save_fig:
@@ -315,11 +315,11 @@ class DistanceCalculator():
             ax = plt.gca()
             # m = ax.pcolormesh(, y, data, cmap=cmap, levels=np.linspace(0, scale, 11))
 
-            plt.scatter(wcp_xs, wcp_ys, c=force_to_plot, cmap='viridis', marker='o')
+            plt.scatter(wcp_xs, wcp_ys, c=force_to_plot, cmap='viridis', marker='o', s=8)
 
-            for i, txt in enumerate(force_to_plot):
-                if i % 2 == 0:
-                    plt.annotate("{:.4f}".format(txt), (wcp_xs[i], wcp_ys[i]))
+            # for i, txt in enumerate(force_to_plot):
+            #     if i % 2 == 0:
+            #         plt.annotate("{:.4f}".format(txt), (wcp_xs[i], wcp_ys[i]))
 
 
         plt.axis('square')
@@ -332,4 +332,4 @@ class DistanceCalculator():
     def initial_number_of_sutures(self, start, end):
         dist_along_spline = self.distance_along(start, end, 100)
         # print("dist_along_spline", dist_along_spline)
-        return dist_along_spline/5
+        return dist_along_spline/self.wound_width

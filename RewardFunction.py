@@ -28,13 +28,13 @@ class RewardFunction():
     # variance
 
     def final_loss(self, c_lossMin = 1, c_lossVarCenter = 1, c_lossVarInsExt = 1, c_lossIdeal = 1, c_lossClosure=1, c_lossShear=1):
-        weighted_lossVar = self.lossVar(c_lossVarCenter, c_lossVarInsExt)
+        weighted_lossVar = self.lossVar()
         lossIdeal = self.lossIdeal()
         weighted_lossClosure = self.lossClosureForce(c_lossClosure, c_lossShear)
-        lossMin = self.lossMin()
-        return weighted_lossVar + c_lossIdeal * lossIdeal + weighted_lossClosure + c_lossMin * lossMin
+        lossMinMax = self.lossMinMax()
+        return weighted_lossVar + c_lossIdeal * lossIdeal + weighted_lossClosure + c_lossMin * lossMinMax
 
-    def lossVar(self, c_lossVarCenter, c_lossVarInsExt):
+    def lossVar(self):
         mean_insert = sum(self.insert_dists) / len(self.insert_dists)
         var_insert = sum([(i - mean_insert)**2 for i in self.insert_dists])
         
@@ -217,7 +217,7 @@ class RewardFunction():
         closure_forces_minus1 = [a - 1 for a in closure_forces]
         closure_loss = sum([10 ** a - 9 for a in closure_forces_minus1])
         """
-        closure_loss = sum((closure_forces - 1) ** 2)
+        closure_loss = sum([a-1 for a in closure_forces]) ** 2
         shear_loss =  sum(shear_forces ** 2)
 
         # print('closure loss: ', closure_loss)

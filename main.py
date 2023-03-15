@@ -10,12 +10,12 @@ import math
 import tkinter as tk
 from tkinter import simpledialog
 
-def suture_placing_pipeline():
+def suture_placing_pipeline(sample_spline):
     # TODO Varun: will rope in Sam's code that has the interface for the surgeon to click
     #  points along the wound. That'll return a spline.
 
 
-    sample_spline = None # 's1' # Change to None to allow the surgeon to click
+    #sample_spline = 's4' # 's1' # Change to None to allow the surgeon to click
     if sample_spline is None:
         # make a new scale object to get the scale
         newScale = ScaleGenerator()
@@ -125,7 +125,7 @@ def suture_placing_pipeline():
     newSuturePlacer.RewardFunction.wound_parametric = wound_parametric
 
     # The main algorithm
-    newSuturePlacer.place_sutures()
+    newSuturePlacer.place_sutures(sample_spline)
     return newSuturePlacer
 
 def suture_display_adj_pipeline(newSuturePlacer):
@@ -158,7 +158,9 @@ if __name__ == "__main__":
     ROOT = tk.Tk()
     ROOT.withdraw()
 
-    suturePlacer = suture_placing_pipeline()
+    sample_splines = ['s5']
+    for i in sample_splines:
+        suturePlacer = suture_placing_pipeline(i)
     print("returning")
 
     suture_display_adj_pipeline(suturePlacer)

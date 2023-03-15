@@ -8,6 +8,7 @@ import scipy.optimize as optim
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 class SuturePlacer:
     def __init__(self, wound_width, mm_per_pixel):
         # This object should contain the optimizer, the spline curve, the image, etc., i.e. all of the relevant objects involved, as attributes.
@@ -80,16 +81,19 @@ class SuturePlacer:
 
         return insert_dists, center_dists, extract_dists, insert_pts, center_pts, extract_pts, result.x
     
-    def place_sutures(self):
+    def place_sutures(self, sample_spline):
         # I want it to have an initial placement and then a forward pass thru to the reward so we can test our code.
         # Maybe this initial placement could be based on some smart heuristic to make optimization faster...
        
         # choosing 8 points along curve as placeholder
         # currently, we have chosen a set of unequal points to demostrate visually what the optimization is doing
         # in reality, we would likely warm-start with equally spaced points.
-        num_sutures = int(self.DistanceCalculator.initial_number_of_sutures(0, 1)) # heuristic
+        num_sutures_initial = int(self.DistanceCalculator.initial_number_of_sutures(0, 1)) # heuristic
+        print("NUM SUTURES INITIAL", num_sutures_initial)
         d = {}
-        for num_sutures in range(10, 21): # This should be (0.8 * heuristic to 1.4 * heuristic)
+        losses = {}
+        points_dict = {}
+        for num_sutures in range(max(1, int(0.8*num_sutures_initial)), int(1.4*num_sutures_initial)): # This should be (0.8 * heuristic to 1.4 * heuristic)
             print('NUM SUTURES: ', num_sutures)
             d[num_sutures] = {}
             heuristic = num_sutures
@@ -103,8 +107,8 @@ class SuturePlacer:
             print('loss: ', best_loss)
             print('closure loss', self.RewardFunction.lossClosureForce(1, 0))
             print('shear loss', self.RewardFunction.lossClosureForce(0, 1))
-            print('center var loss', self.RewardFunction.lossVar(1, 0))
-            print('InsExt var loss', self.RewardFunction.lossVar(0, 1))
+            print('center var loss', self.RewardFunction.lossVar())
+            print('InsExt var loss', self.RewardFunction.lossVar())
             print('ideal loss', self.RewardFunction.lossIdeal())
             d[num_sutures]['loss'] = best_loss
             d[num_sutures]['closure loss'] = self.RewardFunction.lossClosureForce(1, 0)
@@ -112,7 +116,7 @@ class SuturePlacer:
             d[num_sutures]['var loss'] = self.RewardFunction.lossVar()
             d[num_sutures]['ideal loss'] = self.RewardFunction.lossIdeal()
             b_insert_pts, b_center_pts, b_extract_pts, b_ts = insert_pts, center_pts, extract_pts, ts
-            losses = [best_loss]
+            losses[best_loss] = num_sutures
             first_downward = True
             # while True:
             #     num_sutures += 1
@@ -154,13 +158,37 @@ class SuturePlacer:
             self.center_pts = b_center_pts
             self.extract_pts = b_extract_pts
             print(losses)
-            self.DistanceCalculator.plot(b_ts, "Plotting after optimization", save_fig='images/sutures' + str(num_sutures) + str(random.randint(10000000))) # put the spine name here
-            self.DistanceCalculator.plot(b_ts, "Plotting after optimization", save_fig='images/closure' + str(num_sutures), plot_closure=True)
-            self.DistanceCalculator.plot(b_ts, "Plotting after optimization", save_fig='images/shear' + str(num_sutures), plot_shear=True)
+            self.DistanceCalculator.plot(b_ts, "", save_fig='images/sutures_' + sample_spline + "_" + str(num_sutures) + "_" + str(random.randint(0, 10000000))) # put the spine name here
+            self.DistanceCalculator.plot(b_ts, "", save_fig='images/closure_' + sample_spline +  "_" + str(num_sutures) + "_" + str(random.randint(0, 10000000)), plot_closure=True)
+            self.DistanceCalculator.plot(b_ts, "", save_fig='images/shear_' + sample_spline +  "_" + str(num_sutures) + "_" + str(random.randint(0, 10000000)), plot_shear=True)
             print("plotting")
+            points_dict[num_sutures] = b_ts
         print(d)
-        np.savetxt('images/losses_array', d, delimiter=',')
+        save_dict_to_file(d, sample_spline + "_losses.txt")
+        save_dict_to_file(points_dict, sample_spline +"_points.txt")
+        #np.savetxt('images/losses_array_all', d, delimiter=',')
+        #Saving top 3
+        lossesKeys = list(losses.keys())
+        lossesKeys.sort()
+        final_d = {}
+        for i in lossesKeys[0:3]:
+            num = losses[i]
+            final_d[num] = d[num]
+        print(final_d)
+        #save_dict_to_file(d)
+        #np.savetxt('images/losses_array_top3', final_d, delimiter=',')
         return b_insert_pts, b_center_pts, b_extract_pts
+
+def save_dict_to_file(dic, filename):
+    f = open(filename,'w')
+    f.write(str(dic))
+    f.close()
+
+def load_dict_from_file():
+    f = open('dict.txt','r')
+    data=f.read()
+    f.close()
+    return eval(data)
 
         
         
