@@ -24,10 +24,10 @@ class SuturePlacer:
         self.Optimizer = Optimizer.Optimizer() # cvxpy? Feel free to make your own file with a class for Optimizer if you want one.
 
         self.c_lossMin = 0
-        self.c_lossIdeal = 0
-        self.c_lossVarCenter = 6
-        self.c_lossVarInsExt = 1
-        self.c_lossClosure = 20
+        self.c_lossIdeal = 2
+        self.c_lossVarCenter = 12
+        self.c_lossVarInsExt = 6
+        self.c_lossClosure = 15
         self.c_lossShear = 2
 
     def optimize(self, wound_points):
@@ -40,6 +40,9 @@ class SuturePlacer:
         start = wound_points[0]
         end = wound_points[-1]
         
+        def jac(t):
+            return optim.approx_fprime(t, final_loss)
+
         def final_loss(t):
             self.RewardFunction.insert_dists, self.RewardFunction.center_dists, self.RewardFunction.extract_dists, insert_pts, center_pts, extract_pts = self.DistanceCalculator.calculate_distances(t)    
             self.RewardFunction.wound_points = t
@@ -64,8 +67,8 @@ class SuturePlacer:
         plt.clf()
         save_intermittent_plots = False
         if save_intermittent_plots:
-            self.DistanceCalculator.plot(result.x, "closure plot", plot_closure=True, save_fig='images/' + str(len(wound_points)) + '_closure_' + str(random.randint(0, 1000000)))
-            self.DistanceCalculator.plot(result.x, "shear plot", plot_shear=True, save_fig='images/' + str(len(wound_points)) + '_shear_' + str(random.randint(0, 1000000)))
+            self.DistanceCalculator.plot(result.x, "closure plot", plot_closure=True, save_fig='s5/' + str(len(wound_points)) + '_closure_' + str(random.randint(0, 1000000)))
+            self.DistanceCalculator.plot(result.x, "shear plot", plot_shear=True, save_fig='s5/' + str(len(wound_points)) + '_shear_' + str(random.randint(0, 1000000)))
 
         # plt.clf()
         # plt.plot(np.arange(len(self.RewardFunction.closure_forces)), (self.RewardFunction.closure_forces - 1) ** 2, c='blue')
@@ -94,7 +97,7 @@ class SuturePlacer:
         d = {}
         losses = {}
         points_dict = {}
-        for num_sutures in range(max(1, int(0.8*num_sutures_initial)), int(1.4*num_sutures_initial)): # This should be (0.8 * heuristic to 1.4 * heuristic)
+        for num_sutures in range(45, 60): # This should be (0.8 * heuristic to 1.4 * heuristic)
             print('NUM SUTURES: ', num_sutures)
             d[num_sutures] = {}
             heuristic = num_sutures
@@ -108,13 +111,14 @@ class SuturePlacer:
             print('loss: ', best_loss)
             print('closure loss', self.RewardFunction.lossClosureForce(1, 0))
             print('shear loss', self.RewardFunction.lossClosureForce(0, 1))
-            print('center var loss', self.RewardFunction.lossVar())
-            print('InsExt var loss', self.RewardFunction.lossVar())
+            print('center var loss', self.RewardFunction.lossVar(1, 0))
+            print('InsExt var loss', self.RewardFunction.lossVar(0, 1))
             print('ideal loss', self.RewardFunction.lossIdeal())
             d[num_sutures]['loss'] = best_loss
             d[num_sutures]['closure loss'] = self.RewardFunction.lossClosureForce(1, 0)
             d[num_sutures]['shear loss'] = self.RewardFunction.lossClosureForce(0, 1)
-            d[num_sutures]['var loss'] = self.RewardFunction.lossVar()
+            d[num_sutures]['var loss - center'] = self.RewardFunction.lossVar(1, 0)
+            d[num_sutures]['var loss - ins/ext'] = self.RewardFunction.lossVar(0, 1)
             d[num_sutures]['ideal loss'] = self.RewardFunction.lossIdeal()
             b_insert_pts, b_center_pts, b_extract_pts, b_ts = insert_pts, center_pts, extract_pts, ts
             losses[best_loss] = num_sutures
@@ -159,9 +163,9 @@ class SuturePlacer:
             self.center_pts = b_center_pts
             self.extract_pts = b_extract_pts
             print(losses)
-            self.DistanceCalculator.plot(b_ts, "", save_fig='images/sutures_' + sample_spline + "_" + str(num_sutures) + "_" + str(random.randint(0, 10000000))) # put the spine name here
-            self.DistanceCalculator.plot(b_ts, "", save_fig='images/closure_' + sample_spline +  "_" + str(num_sutures) + "_" + str(random.randint(0, 10000000)), plot_closure=True)
-            self.DistanceCalculator.plot(b_ts, "", save_fig='images/shear_' + sample_spline +  "_" + str(num_sutures) + "_" + str(random.randint(0, 10000000)), plot_shear=True)
+            self.DistanceCalculator.plot(b_ts, "", save_fig='s5/sutures_' + sample_spline + "_" + str(num_sutures) + "_" + str(random.randint(0, 10000000))) # put the spine name here
+            self.DistanceCalculator.plot(b_ts, "", save_fig='s5/closure_' + sample_spline +  "_" + str(num_sutures) + "_" + str(random.randint(0, 10000000)), plot_closure=True)
+            self.DistanceCalculator.plot(b_ts, "", save_fig='s5/shear_' + sample_spline +  "_" + str(num_sutures) + "_" + str(random.randint(0, 10000000)), plot_shear=True)
             print("plotting")
             points_dict[num_sutures] = b_ts
         print(d)

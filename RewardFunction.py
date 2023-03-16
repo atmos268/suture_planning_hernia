@@ -28,13 +28,13 @@ class RewardFunction():
     # variance
 
     def final_loss(self, c_lossMin = 1, c_lossVarCenter = 1, c_lossVarInsExt = 1, c_lossIdeal = 1, c_lossClosure=1, c_lossShear=1):
-        weighted_lossVar = self.lossVar()
+        weighted_lossVar = self.lossVar(c_lossVarCenter, c_lossVarInsExt)
         lossIdeal = self.lossIdeal()
         weighted_lossClosure = self.lossClosureForce(c_lossClosure, c_lossShear)
         lossMinMax = self.lossMinMax()
         return weighted_lossVar + c_lossIdeal * lossIdeal + weighted_lossClosure + c_lossMin * lossMinMax
 
-    def lossVar(self):
+    def lossVar(self, c_lossVarCenter, c_lossVarInsExt):
         mean_insert = sum(self.insert_dists) / len(self.insert_dists)
         var_insert = sum([(i - mean_insert)**2 for i in self.insert_dists])
         
@@ -44,7 +44,7 @@ class RewardFunction():
         mean_extract = sum(self.extract_dists) / len(self.extract_dists)
         var_extract = sum([(i - mean_extract)**2 for i in self.extract_dists])
 
-        return var_insert + var_center * 6 + var_extract
+        return var_insert * c_lossVarInsExt + var_center * c_lossVarCenter + var_extract * c_lossVarInsExt
 
 
     def lossIdeal(self):
