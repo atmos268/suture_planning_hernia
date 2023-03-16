@@ -168,6 +168,7 @@ class SuturePlacer:
             self.DistanceCalculator.plot(b_ts, "", save_fig='s5/shear_' + sample_spline +  "_" + str(num_sutures) + "_" + str(random.randint(0, 10000000)), plot_shear=True)
             print("plotting")
             points_dict[num_sutures] = b_ts
+            
         print(d)
         #save losses dictionary as a csv file
         dict_to_csv(d, sample_spline + "_losses")
