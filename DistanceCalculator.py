@@ -266,11 +266,13 @@ class DistanceCalculator():
             # for i, txt in enumerate(force_to_plot):
             #     if i % 2 == 0:
             #         plt.annotate("{:.4f}".format(txt), (wcp_xs[i], wcp_ys[i]))
-
+            plt.colorbar()
+        else:
+            for i in range(len(insert_pts)):
+                plt.plot([insert_pts[i][0], extract_pts[i][0]], [-insert_pts[i][1], -extract_pts[i][1]], color = 'k')
 
         plt.axis('square')
         plt.title(title_plot)
-        plt.colorbar()
         if save_fig:
             plt.savefig(save_fig)
         else:

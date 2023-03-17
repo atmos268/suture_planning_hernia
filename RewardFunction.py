@@ -48,8 +48,15 @@ class RewardFunction():
 
 
     def lossIdeal(self):
-        ideal = self.SuturePlacer.wound_width
-        return sum([(i - ideal)**2 for i in self.insert_dists]) + sum([(i - ideal)**2 for i in self.extract_dists]) + sum([(i - ideal)**2 for i in self.center_dists])
+        ideal = 2
+        rv = 0
+        all = self.insert_dists + self.extract_dists + self.center_dists
+        for i in all:
+            if i < 1:
+                rv += (i-ideal)**2 * 10
+            else:
+                rv += (i - ideal)**2
+        return rv #sum([(i - ideal)**2 for i in self.insert_dists]) + sum([(i - ideal)**2 for i in self.extract_dists]) + sum([(i - ideal)**2 for i in self.center_dists])
 
 
 
