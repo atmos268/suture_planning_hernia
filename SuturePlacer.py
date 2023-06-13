@@ -163,17 +163,27 @@ class SuturePlacer:
             self.center_pts = b_center_pts
             self.extract_pts = b_extract_pts
             print(losses)
-            self.DistanceCalculator.plot(b_ts, "Sutures placed for " + str(num_sutures) + " sutures. Total loss = " + str(best_loss), save_fig= str(sample_spline) + '/sutures_' + sample_spline + "_" + str(num_sutures) + "_" + str(random.randint(0, 10000000))) # put the spine name here
-            self.DistanceCalculator.plot(b_ts, "Closure force for " + str(num_sutures) + " sutures", save_fig= str(sample_spline) + '/closure_' + sample_spline +  "_" + str(num_sutures) + "_" + str(random.randint(0, 10000000)), plot_closure=True)
-            self.DistanceCalculator.plot(b_ts, "Shear force for " + str(num_sutures) + " sutures", save_fig= str(sample_spline) + '/shear_' + sample_spline +  "_" + str(num_sutures) + "_" + str(random.randint(0, 10000000)), plot_shear=True)
+            # self.DistanceCalculator.plot(b_ts, "Sutures placed for " + str(num_sutures) + " sutures. Total loss = " + str(best_loss), save_fig= str(sample_spline) + '/sutures_' + sample_spline + "_" + str(num_sutures) + "_" + str(random.randint(0, 10000000))) # put the spine name here
+            # self.DistanceCalculator.plot(b_ts, "Closure force for " + str(num_sutures) + " sutures", save_fig= str(sample_spline) + '/closure_' + sample_spline +  "_" + str(num_sutures) + "_" + str(random.randint(0, 10000000)), plot_closure=True)
+            # self.DistanceCalculator.plot(b_ts, "Shear force for " + str(num_sutures) + " sutures", save_fig= str(sample_spline) + '/shear_' + sample_spline +  "_" + str(num_sutures) + "_" + str(random.randint(0, 10000000)), plot_shear=True)
+
+            rand_int = str(random.randint(0, 10000000))
+            self.DistanceCalculator.plot(b_ts, "Sutures placed for " + str(num_sutures) + " sutures. Total loss = " + str(best_loss), save_fig= "clicking" + '/sutures_' + str(num_sutures) + "_" + rand_int) # put the spine name here
+            self.DistanceCalculator.plot(b_ts, "Closure force for " + str(num_sutures) + " sutures", save_fig= "clicking" + '/closure_' + str(num_sutures) + "_" + rand_int, plot_closure=True)
+            self.DistanceCalculator.plot(b_ts, "Shear force for " + str(num_sutures) + " sutures", save_fig= "clicking" + '/shear_' + str(num_sutures) + "_" + rand_int, plot_shear=True)
+
             print("plotting")
             points_dict[num_sutures] = b_ts
             
         print(d)
         #save losses dictionary as a csv file
-        dict_to_csv(d, sample_spline + "_losses")
+        # dict_to_csv(d, sample_spline + "_losses")
+        # #save points 
+        # save_dict_to_file(points_dict, sample_spline +"_points.txt")
+
+        dict_to_csv(d, "clicked_losses")
         #save points 
-        save_dict_to_file(points_dict, sample_spline +"_points.txt")
+        save_dict_to_file(points_dict, "clicked_points.txt")
         return b_insert_pts, b_center_pts, b_extract_pts
 
 def save_dict_to_file(dic, filename):

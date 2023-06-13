@@ -10,7 +10,7 @@ import math
 import tkinter as tk
 from tkinter import simpledialog
 
-def suture_placing_pipeline(sample_spline):
+def suture_placing_pipeline(sample_spline=None):
     # TODO Varun: will rope in Sam's code that has the interface for the surgeon to click
     #  points along the wound. That'll return a spline.
 
@@ -158,11 +158,13 @@ if __name__ == "__main__":
     ROOT = tk.Tk()
     ROOT.withdraw()
 
-    sample_splines = ['s1', 's2', 's3', 's4', 's5']
-    for i in sample_splines:
-        suturePlacer = suture_placing_pipeline(i)
-    print("returning")
+    # sample_splines = ['s1', 's2', 's3', 's4', 's5']
+    # for i in sample_splines:
+    #     suturePlacer = suture_placing_pipeline(i)
+    # print("returning")
 
-    suture_display_adj_pipeline(suturePlacer)
+    suturePlacerTest = suture_placing_pipeline()
+
+    suture_display_adj_pipeline(suturePlacerTest)
 
     cv2.destroyAllWindows()
