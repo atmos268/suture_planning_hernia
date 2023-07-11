@@ -13,9 +13,7 @@ class DistanceCalculator():
         pass
 
     def distance_along(self, a, b, num_waypoints = 100):
-        'Note: Signed distance, and a can be greater than b'
-        # return b - a # placeholder simple thing
-        # return b - a
+        '''Note: Signed distance, and a can be greater than b'''
         sign = 1
         assert(a < b)
         if a > b:
@@ -23,7 +21,7 @@ class DistanceCalculator():
             a = b
             b = old_a
             sign = -1
-        steps = np.linspace(a, b, num_waypoints)# must define your num_waypoints!
+        steps = np.linspace(a, b, num_waypoints) # must define your num_waypoints!
         wound_points = [np.array(self.wound_parametric(s, 0)) for s in steps]
         cuml_dist = 0
         wound_vectors = [wound_points[i+1] - wound_points[i] for i in range(len(wound_points) - 1)]
@@ -52,12 +50,8 @@ class DistanceCalculator():
 
         # get the curve and gradient for each point (the second argument allows you to on the fly take the derivative)
         wound_points, wound_curve = self.wound_parametric(wound_point_t, 0)
-        # print('wound_points', wound_points)
-        # print('parametric 0', self.wound_parametric(0, 0))
-        # orig_x = [0.0, 0.7, 1.0, 1.1, 1.6, 1.8, 2]
-        # orig_y = [0.0, 0.5, 1.8, 0.9, 0.4, 0.8, 1.2]
-        # plt.scatter(orig_x, orig_y, color='orange')
         wound_derivatives_x, wound_derivatives_y = self.wound_parametric(wound_point_t, 1)
+        
         # extract the norms of the vectors
         norms = [get_norm(wound_derivatives_x[i], wound_derivatives_y[i]) for i in range(len(wound_derivatives_x))]
 
@@ -69,20 +63,12 @@ class DistanceCalculator():
 
         # add and subtract for insertion and exit
         insert_pts = [[wound_points[i] + normal_vecs[i][0], wound_curve[i] + normal_vecs[i][1]] for i in range(num_pts)]
-
         extract_pts = [[wound_points[i] - normal_vecs[i][0], wound_curve[i] - normal_vecs[i][1]] for i in range(num_pts)]
-
         center_pts = [[wound_points[i], wound_curve[i]] for i in range(num_pts)]
 
-        # Flip y points cause pixel to real transform!
-        # insert_pts = [[insert_pts[i][0], -insert_pts[i][1]] for i in range(len(insert_pts))]
-        # center_pts = [[center_pts[i][0], -center_pts[i][1]] for i in range(len(center_pts))]
-        # extract_pts = [[extract_pts[i][0], -extract_pts[i][1]] for i in range(len(extract_pts))]
 
         # verify works by plotting
         wound_sample_x, wound_sample_y = self.wound(np.linspace(0, 1, 5000))
-        # wound_sample_x *= 1
-        # wound_sample_y *= -1 # Flip y points cause pixel to real transform!
         plt.plot(wound_sample_x, wound_sample_y, c='k')
         plt.scatter([insert_pts[i][0] for i in range(num_pts)], [insert_pts[i][1] for i in range(num_pts)], c="red")
         plt.scatter([extract_pts[i][0] for i in range(num_pts)], [extract_pts[i][1] for i in range(num_pts)], c="blue")
@@ -117,7 +103,7 @@ class DistanceCalculator():
         self.suturePlacer.center_pts = center_pts
         self.suturePlacer.extract_pts = extract_pts
 
-        #making insert_dist/extract dist negative if there are crossings
+        # making insert_dist/extract dist negative if there are crossings
         for i in range(len(insert_pts)-1):
             center_orientation, insert_orientation, extract_orientation = 0, 0, 0
             if self.intersect(insert_pts[i], extract_pts[i], insert_pts[i+1], extract_pts[i+1]):
@@ -131,7 +117,7 @@ class DistanceCalculator():
 
         return insert_distances, center_distances, extract_distances, insert_pts, center_pts, extract_pts
     
-    #check for intersections
+    # check for intersections
     def on_segment(self, p1, p2, p):
         return min(p1[0], p2[0]) <= p[0] <= max(p1[0], p2[0]) and min(p1[1], p2[1]) <= p[1] <= max(p1[1], p2[1])
     
@@ -186,16 +172,10 @@ class DistanceCalculator():
         def get_norm(x, y):
             return math.sqrt(x**2 + y**2)
 
-        # might be worth vectorizing in the future
-
         # get the curve and gradient for each point (the second argument allows you to on the fly take the derivative)
         wound_points, wound_curve = self.wound_parametric(wound_point_t, 0)
-        # print('wound_points', wound_points)
-        # print('parametric 0', self.wound_parametric(0, 0))
-        # orig_x = [0.0, 0.7, 1.0, 1.1, 1.6, 1.8, 2]
-        # orig_y = [0.0, 0.5, 1.8, 0.9, 0.4, 0.8, 1.2]
-        # plt.scatter(orig_x, orig_y, color='orange')
         wound_derivatives_x, wound_derivatives_y = self.wound_parametric(wound_point_t, 1)
+
         # extract the norms of the vectors
         norms = [get_norm(wound_derivatives_x[i], wound_derivatives_y[i]) for i in range(len(wound_derivatives_x))]
 
@@ -207,9 +187,7 @@ class DistanceCalculator():
 
         # add and subtract for insertion and exit
         insert_pts = [[wound_points[i] + normal_vecs[i][0], wound_curve[i] + normal_vecs[i][1]] for i in range(num_pts)]
-
         extract_pts = [[wound_points[i] - normal_vecs[i][0], wound_curve[i] - normal_vecs[i][1]] for i in range(num_pts)]
-
         center_pts = [[wound_points[i], wound_curve[i]] for i in range(num_pts)]
 
 
@@ -221,28 +199,11 @@ class DistanceCalculator():
             temp = self.wound_parametric(t, 0)
             X_.append(temp[0])
             Y_.append(-temp[1])
-        # X_ = np.linspace(wound_points.min(), wound_points.max(), 500)
-        # Y_ = spline(X_)
         
-        # Plotting the Graph
-
-        # if not (True or plot_shear or plot_closure):
-        #     plt.plot(X_, Y_)
         plt.plot(X_, Y_)
         plt.scatter([insert_pts[i][0] for i in range(num_pts)], [-insert_pts[i][1] for i in range(num_pts)], c="red", s = 5)
         plt.scatter([extract_pts[i][0] for i in range(num_pts)], [-extract_pts[i][1] for i in range(num_pts)], c="blue", s = 5)
         plt.scatter([center_pts[i][0] for i in range(num_pts)], [-center_pts[i][1] for i in range(num_pts)], c="green", s = 5)
-        
-
-
-        # insert_distances, center_distances, extract_distances, insert_pts, center_pts, extract_pts = self.calculate_distances(wound_point_t)
-
-        # for i, txt in enumerate(insert_distances):
-        #     plt.annotate("{:.4f}".format(txt), (insert_pts[i][0], insert_pts[i][1]))
-        # for i, txt in enumerate(center_distances):
-        #     plt.annotate("{:.4f}".format(txt), (center_pts[i][0], center_pts[i][1]-0.2), color='red')
-        # for i, txt in enumerate(extract_distances):
-        #     plt.annotate("{:.4f}".format(txt), (extract_pts[i][0], extract_pts[i][1]))
 
 
         if plot_closure or plot_shear:
@@ -255,17 +216,9 @@ class DistanceCalculator():
 
             wcp_xs = self.suturePlacer.RewardFunction.wcp_xs
             wcp_ys = self.suturePlacer.RewardFunction.wcp_ys
-            
-            # print("closure_pts: ", wcp_ys)
 
             ax = plt.gca()
-            # m = ax.pcolormesh(, y, data, cmap=cmap, levels=np.linspace(0, scale, 11))
-
             plt.scatter(wcp_xs, [-y for y in wcp_ys], c=force_to_plot, cmap='viridis', marker='o', s=8)
-
-            # for i, txt in enumerate(force_to_plot):
-            #     if i % 2 == 0:
-            #         plt.annotate("{:.4f}".format(txt), (wcp_xs[i], wcp_ys[i]))
             plt.colorbar()
         else:
             for i in range(len(insert_pts)):
@@ -280,5 +233,4 @@ class DistanceCalculator():
 
     def initial_number_of_sutures(self, start, end):
         dist_along_spline = self.distance_along(start, end, 100)
-        # print("dist_along_spline", dist_along_spline)
         return dist_along_spline/(self.wound_width*1.5)

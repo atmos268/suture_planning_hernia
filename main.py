@@ -85,12 +85,10 @@ def suture_placing_pipeline(sample_spline=None, image=None):
     newSuturePlacer.tck = tck
     newSuturePlacer.DistanceCalculator.wound = wound
     newSuturePlacer.DistanceCalculator.tck = tck
-    newSuturePlacer.Optimizer.wound = wound
-    newSuturePlacer.Optimizer.tck = tck
+
     
     newSuturePlacer.wound_parametric = wound_parametric
     newSuturePlacer.DistanceCalculator.wound_parametric = wound_parametric
-    newSuturePlacer.Optimizer.wound_parametric = wound_parametric
     newSuturePlacer.RewardFunction.wound_parametric = wound_parametric
 
     newSuturePlacer.image = image

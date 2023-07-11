@@ -2,7 +2,6 @@ import random
 
 import DistanceCalculator
 import RewardFunction
-import Optimizer
 import Constraints
 import scipy.optimize as optim
 import numpy as np
@@ -24,8 +23,6 @@ class SuturePlacer:
         self.b_center_pts = []
         self.b_extract_pts = []
         self.b_loss = float('inf')
-
-        self.Optimizer = Optimizer.Optimizer()
 
         self.c_lossMin = 0
         self.c_lossIdeal = 1
