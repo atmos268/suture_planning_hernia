@@ -9,23 +9,21 @@ import cv2
 import math
 import tkinter as tk
 from tkinter import simpledialog
+import sys
 
-def suture_placing_pipeline(sample_spline=None):
-    # TODO Varun: will rope in Sam's code that has the interface for the surgeon to click
-    #  points along the wound. That'll return a spline.
+NUM_EXAMPLES = 5
 
-
-    #sample_spline = 's1' # 's1' # Change to None to allow the surgeon to click
+def suture_placing_pipeline(sample_spline=None, image=None):
     if sample_spline is None:
+
         # make a new scale object to get the scale
         newScale = ScaleGenerator()
-
         space_between_sutures = 0.010  # 1 cm
         desired_compute_time = 1
         IPG = InsertionPointGenerator(cut_width=.0075, desired_compute_time=desired_compute_time,
                                       space_between_sutures=space_between_sutures)
 
-        img_color = cv2.imread('hand_image.png')
+        img_color = cv2.imread(image)
         img_point = np.load("record/img_point_inclined.npy")
 
         # get the scale measurement from surgeon
@@ -55,59 +53,30 @@ def suture_placing_pipeline(sample_spline=None):
         deg = 5
     else:
         mm_per_pixel=1
-        if sample_spline == 's3':
-            x = [0, 7, 10, 15, 21, 25, 30]
-            y = [0, -5, 5, 35, 18, 7, 13]
-            deg = 5
-            pnts = zip(x, y)
-            wound_width = 1.5
-        elif sample_spline == 's5':
-            x = [0, 3, 10, 18, 29, 35, 40]
-            y = [0, -10, 5, -20, 18, 7, 13]
-            deg = 5
-            pnts = zip(x, y)
-            wound_width = 1.25
-        elif sample_spline == 's2':
-            x = [0, 3, 10, 15, 21, 25, 30]
-            y = [0, 1, 3, 5, 3, 1, 0]
-            deg = 2
-            pnts = zip(x, y)
-            wound_width = 1.5
-        elif sample_spline == 's4':
-            x = [0, 3, 10, 15, 10, 3, 1]
-            y = [0, 1, 3, 5, 8, 10, 5]
-            deg = 5
-            pnts = zip(x, y)
-            wound_width = 1.5
-        elif sample_spline == 's1':
-            x = [0, 1, 2, 3, 4, 5, 6]
-            y = [0, 0, 0, 0, 0, 0, 0]
-            deg = 5
-            pnts = zip(x, y)
-            wound_width = 1.5
+        point_data = (
+            [[[0, 1, 2, 3, 4, 5, 6], [0, 0, 0, 0, 0, 0, 0]], 
+             [[0, 3, 10, 15, 21, 25, 30], [0, 1, 3, 5, 3, 1, 0]],  
+             [[0, 7, 10, 15, 21, 25, 30], [0, -5, 5, 35, 18, 7, 13]],
+             [[0, 3, 10, 15, 10, 3, 1], [0, 1, 3, 5, 8, 10, 5]],
+             [[0, 3, 10, 18, 29, 35, 40], [0, -10, 5, -20, 18, 7, 13]]
+             ])
+        
+        width_data = [1.5, 1.5, 1.5, 1.5, 1.25]
+        degree_data = [5, 2, 5, 5, 5]
+
+        if 0 <= sample_spline < NUM_EXAMPLES:
+            pnts = point_data[sample_spline]
+            wound_width = width_data[sample_spline]
+            deg = degree_data[sample_spline]
+
         else:
             raise Exception("not a pre-saved wound")
 
-    # But for now, just use this sample spline. It's a Bezier spline
-
-    # Varun/Viraj: For now this is OK, but maybe we will need to incorporate wounds that can't be represented as y(x) later using multiple B-spline curves or something else.
-    """ Notes on old version of Bezier: So this bezier library can make arbitrary parametric [t -> x(t), y(t)] bezier curves which allows for wounds where y is not a function of x or vice versa,
-    #  but I don't think it has a function to fit points to a bezier curve. SciPy's bezier module can fit points to a curve, but it is in the format [x -> y] which is more limiting
-    #  for the types of curves we can handle. Goal is to fit points to a parametric bezier curve.
-    """
-
-
-    # x = [0.0, 0.7, 1.0, 1.5, 2.1, 2.5, 3.0] # OLD manually-chosen example
-    # y = [0.0, -0.5, 0.5, 3.5, 1.8, 0.7, 1.3] # OLD manually-chosen example
-
-    # couldn't find reference to this in the codebase? I'm using make_interp_spline for now
-    # wound = scipy_generate_sample_spline.generate_sample_spline()
     tck, u = inter.splprep([x, y], k=deg)
     wound_parametric = lambda t, d: inter.splev(t, tck, der = d)
 
     def wound(x):
         pnts = inter.splev(x, tck)
-        # pnts[1] = pnts[1] * -1
         return pnts
 
     # Put the wound into all the relevant objects
@@ -124,47 +93,40 @@ def suture_placing_pipeline(sample_spline=None):
     newSuturePlacer.Optimizer.wound_parametric = wound_parametric
     newSuturePlacer.RewardFunction.wound_parametric = wound_parametric
 
+    newSuturePlacer.image = image
     # The main algorithm
     newSuturePlacer.place_sutures(sample_spline)
     return newSuturePlacer
 
 def suture_display_adj_pipeline(newSuturePlacer):
     
-    insert_pts = newSuturePlacer.insert_pts
-    center_pts = newSuturePlacer.center_pts
-    extract_pts = newSuturePlacer.extract_pts
+    insert_pts = newSuturePlacer.b_insert_pts
+    center_pts = newSuturePlacer.b_center_pts
+    extract_pts = newSuturePlacer.b_extract_pts
     mm_per_pixel = newSuturePlacer.mm_per_pixel
 
-    print(center_pts)
-
     newSutureDisAdj = SutureDisplayAdjust(insert_pts, center_pts, extract_pts, mm_per_pixel)
-
-    # convert back to pixel values
     
-    # display and allow for edit
-    # (cv2)
-    img_color = cv2.imread('hand_image.png')
+    # display
+    img_color = cv2.imread(newSuturePlacer.image)
     img_point = np.load("record/img_point_inclined.npy")
 
+    # allow for edit
     newSutureDisAdj.adjust_points(img_color, img_point)
-    
-    # pull up image using cv2
-
-    # plot points from optimization (need to source from somewhere)
-    
     return
 
 if __name__ == "__main__":
+    args = sys.argv
     ROOT = tk.Tk()
     ROOT.withdraw()
 
-    # sample_splines = ['s1', 's2', 's3', 's4', 's5']
-    # for i in sample_splines:
-    #     suturePlacer = suture_placing_pipeline(i)
-    # print("returning")
-
-    suturePlacerTest = suture_placing_pipeline()
-
-    suture_display_adj_pipeline(suturePlacerTest)
-
+    if len(args) != 3:
+        raise Exception("incorrect format: format is python main.py -i [image.jpg] || -s [spline_number]")
+    
+    if args[1] == "-s" :
+        suturePlacerTest = suture_placing_pipeline(sample_spline=int(args[2]))
+    elif args[1] == "-i":
+        suturePlacerTest = suture_placing_pipeline(sample_spline=None, image=args[2])
+        suture_display_adj_pipeline(suturePlacerTest)
+    
     cv2.destroyAllWindows()
