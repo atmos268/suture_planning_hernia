@@ -20,6 +20,11 @@ class SuturePlacer:
         self.Constraints = Constraints.Constraints(wound_width)
         self.Constraints.DistanceCalculator = self.DistanceCalculator
 
+        self.b_insert_pts = []
+        self.b_center_pts = []
+        self.b_extract_pts = []
+        self.b_loss = float('inf')
+
         # NB: Viraj: added a class in order to allow code to run
         self.Optimizer = Optimizer.Optimizer() # cvxpy? Feel free to make your own file with a class for Optimizer if you want one.
 
@@ -92,6 +97,8 @@ class SuturePlacer:
         # choosing 8 points along curve as placeholder
         # currently, we have chosen a set of unequal points to demostrate visually what the optimization is doing
         # in reality, we would likely warm-start with equally spaced points.
+
+
         num_sutures_initial = int(self.DistanceCalculator.initial_number_of_sutures(0, 1)) # heuristic
         print("NUM SUTURES INITIAL", num_sutures_initial)
         d = {}
@@ -162,6 +169,13 @@ class SuturePlacer:
             self.insert_pts = b_insert_pts
             self.center_pts = b_center_pts
             self.extract_pts = b_extract_pts
+
+            if best_loss < self.b_loss:
+                self.b_loss = best_loss
+                self.b_insert_pts = b_insert_pts
+                self.b_center_pts = b_center_pts
+                self.b_extract_pts = b_extract_pts
+
             print(losses)
             # self.DistanceCalculator.plot(b_ts, "Sutures placed for " + str(num_sutures) + " sutures. Total loss = " + str(best_loss), save_fig= str(sample_spline) + '/sutures_' + sample_spline + "_" + str(num_sutures) + "_" + str(random.randint(0, 10000000))) # put the spine name here
             # self.DistanceCalculator.plot(b_ts, "Closure force for " + str(num_sutures) + " sutures", save_fig= str(sample_spline) + '/closure_' + sample_spline +  "_" + str(num_sutures) + "_" + str(random.randint(0, 10000000)), plot_closure=True)
