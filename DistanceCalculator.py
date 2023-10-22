@@ -2,6 +2,7 @@ import math
 import matplotlib.pyplot as plt
 import torch as torch
 import numpy as np
+import os
 from scipy.interpolate import make_interp_spline
 
 class DistanceCalculator():
@@ -155,6 +156,10 @@ class DistanceCalculator():
 
     def plot(self, wound_point_t, title_plot, plot_closure=False, plot_shear=False, save_fig=False):
         plt.clf()
+
+        # make dir folder if requested to save figs and not present
+        if save_fig and not os.path.isdir("clicking"):
+            os.mkdir('clicking')
 
         # wound points is the set of time-steps along the wound that correspond to wound points
 
