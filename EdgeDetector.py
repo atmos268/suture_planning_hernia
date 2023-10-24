@@ -1,7 +1,9 @@
+from PIL import Image
 import cv2
 import numpy as np
 from skimage.morphology import skeletonize
 import matplotlib.pyplot as plt
+from SAM import create_mask
 
 '''This class will process an image, and produce a spline of where the wound is based on the image'''
 class EdgeDetector:
@@ -26,12 +28,16 @@ if __name__ == "__main__":
     img = cv2.imread('chicken_wound.jpg')
     cropped_img = img[1200:2200, 1700:2300]
     cv2.imwrite('cropped_wound.jpg', cropped_img)
-    img = cv2.imread('cropped_wound.jpg')
-
+    #img = cv2.imread('cropped_wound.jpg')
+    img = create_mask('SAM_image_output.png', np.array([[349, 600]]))
     new_edge_detector = EdgeDetector()
     edges = new_edge_detector.find_edges(img)
     cv2.imwrite('edges_clip.jpg', edges)
     img_dilated = new_edge_detector.dilate_to_line(edges, 50)
+    #plt.subplot(121)
+    #np.array([[349, 600]])
+    #plt.imshow(img_dilated)
+    #plt.show()
     cv2.imwrite("dilated_img_clip.jpg", img_dilated)
     binary_image = np.clip(img_dilated, 0, 1)
 
