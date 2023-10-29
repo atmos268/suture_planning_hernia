@@ -5,7 +5,7 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import cv2
 from segment_anything import sam_model_registry, SamPredictor
-def create_mask(imgPath, point): #point is the point where we floodfill from.
+def create_mask(imgPath, point, model_type='base'): #point is the point where we floodfill from.
     def show_mask(mask, ax, random_color=False):
         if random_color:
             color = np.concatenate([np.random.random(3), np.array([0.6])], axis=0)
@@ -26,8 +26,15 @@ def create_mask(imgPath, point): #point is the point where we floodfill from.
         w, h = box[2] - box[0], box[3] - box[1]
         ax.add_patch(plt.Rectangle((x0, y0), w, h, edgecolor='green', facecolor=(0,0,0,0), lw=2))  
 
-    sam_checkpoint = "sam_vit_h_4b8939.pth"
-    model_type = "vit_h"
+    if model_type == 'base':
+        sam_checkpoint = "sam_vit_b_01ec64.pth"
+        model_type = "vit_b"
+    elif model_type == 'huge':
+        sam_checkpoint = "sam_vit_h_4b8939.pth"
+        model_type = "vit_h"
+    else:
+        raise ValueError("Please enter either 'base' or 'huge'")
+    
     device = "cpu"
 
     sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)
@@ -44,8 +51,11 @@ def create_mask(imgPath, point): #point is the point where we floodfill from.
         point_labels=input_label,
         multimask_output=False,
     )
-  
 
-    masks_left = np.transpose(masks_left, (1, 2, 0))
-    masked_left_img = img1*masks_left
-    return cv2.cvtColor(masked_left_img, cv2.COLOR_BGR2RGB)
+    
+    img_trans = np.transpose(masks_left, (1, 2, 0))
+    masks_left = masks_left[0]
+    masked_left_img = img1*img_trans
+    zero_one_mask = np.ones_like(masks_left, dtype=int) * masks_left * 256
+    
+    return zero_one_mask, cv2.cvtColor(masked_left_img, cv2.COLOR_BGR2RGB)
