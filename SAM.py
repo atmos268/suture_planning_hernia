@@ -5,7 +5,7 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import cv2
 from segment_anything import sam_model_registry, SamPredictor
-def create_mask(imgPath, point, model_type='base'): #point is the point where we floodfill from.
+def create_mask(imgPath, points, labels, model_type='base'): #point is the point where we floodfill from.
     def show_mask(mask, ax, random_color=False):
         if random_color:
             color = np.concatenate([np.random.random(3), np.array([0.6])], axis=0)
@@ -44,8 +44,8 @@ def create_mask(imgPath, point, model_type='base'): #point is the point where we
     img1 = cv2.imread(img1_path)
 
     predictor1.set_image(img1)
-    input_point = point
-    input_label = np.array([1])
+    input_point = points
+    input_label = labels
     masks_left, scores_left, logits_left = predictor1.predict(
         point_coords=input_point,
         point_labels=input_label,
