@@ -5,7 +5,8 @@ from skimage.morphology import skeletonize
 import matplotlib.pyplot as plt
 # import plantcv
 from SAM import create_mask
-
+from largestCC import keep_largest_connected_component
+from fillHoles import fillHoles
 '''This class will process an image, and produce a spline of where the wound is based on the image'''
 class EdgeDetector:
     
@@ -25,6 +26,24 @@ class EdgeDetector:
     def generate_spline(self, pixels):
         pass
 
+def keep_largest_connected_component(imgPath):
+    # Ensure the input image is in binary format (0 and 255).
+    input_image = cv2.imread(imgPath, cv2.IMREAD_GRAYSCALE)
+    # Ensure the image is binary (threshold if needed).
+    _, binary_image = cv2.threshold(input_image, 128, 255, cv2.THRESH_BINARY)
+    if len(np.unique(binary_image)) != 2:
+        raise ValueError("Input image must be binary (0 and 255).")
+
+    # Find connected components in the binary image.
+    num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(binary_image, connectivity=8)
+
+    # Find the index of the largest connected component (excluding the background).
+    largest_component_index = np.argmax(stats[1:, cv2.CC_STAT_AREA]) + 1
+
+    # Create a binary mask for the largest component.
+    largest_component_mask = (labels == largest_component_index).astype(np.uint8) * 255
+
+    return largest_component_mask
 
 # Karim's DFS code
 def find_length_and_endpoints(skeleton_img):
@@ -132,32 +151,21 @@ def find_length_and_endpoints(skeleton_img):
     return total_length, final_endpoints
 
 if __name__ == "__main__":
-    img = cv2.imread('chicken_wound.jpg')
-    cropped_img = img[1200:2200, 1700:2300]
-    cv2.imwrite('cropped_wound.jpg', cropped_img)
-    #img = cv2.imread('cropped_wound.jpg')
-
-    
     mask, img = create_mask('Real Wound.jpeg', np.array([[40, 40], [136,130]]), np.array([0,1]), 'base')
+    mask = keep_largest_connected_component('sam_mask.jpg')
     cv2.imwrite('sam_mask.jpg', mask)
     cv2.imwrite('sam_img.jpg', img)
+    
     new_edge_detector = EdgeDetector()
-    # edges = new_edge_detector.find_edges(mask)
-    # cv2.imwrite('edges_sam.jpg', edges)
     mask = cv2.imread('sam_mask.jpg')
-    img_dilated = new_edge_detector.dilate_to_line(mask, 20)
-    #plt.subplot(121)
-    #np.array([[349, 600]])
-    #plt.imshow(img_dilated)
-    #plt.show()
+    img_dilated = new_edge_detector.dilate_to_line(mask, 5)
     cv2.imwrite("dilated_sam.jpg", img_dilated)
-
+    img_dilated = fillHoles('dilated_sam.jpg')
+    cv2.imwrite("filledHoles.jpg", img_dilated)
     skeleton = skeletonize(img_dilated)
-
-    # prune 
-    # pruned_image = plantcv.morphology.prune(skeleton)
-    # print(pruned_image)
-
     plt.imsave('skeleton_sam.png', skeleton)
 
-    # now, run the DFS function
+    #Fill in the holes
+    #only keep the largest connected component
+
+
