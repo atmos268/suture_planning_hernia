@@ -5,7 +5,7 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import cv2
 from segment_anything import sam_model_registry, SamPredictor
-def create_mask(imgPath, points, labels, model_type='base'): #point is the point where we floodfill from.
+def create_mask(imgPath, points, labels, model_type='base', box_method=False): #point is the point where we floodfill from.
     def show_mask(mask, ax, random_color=False):
         if random_color:
             color = np.concatenate([np.random.random(3), np.array([0.6])], axis=0)
@@ -42,6 +42,34 @@ def create_mask(imgPath, points, labels, model_type='base'): #point is the point
     predictor1 = SamPredictor(sam)
     img1_path = imgPath
     img1 = cv2.imread(img1_path)
+
+    if box_method:
+        mask_predictor = SamPredictor(sam)
+
+        image_bgr = cv2.imread(imgPath)
+        image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+        mask_predictor.set_image(image_rgb)
+
+        box = np.array(points)
+
+        masks, scores, logits = mask_predictor.predict(
+            box=box,
+            multimask_output=True
+        )
+
+        # pick the mask with the highest score
+        max_score = scores[0]
+        max_idx = 0
+        for i in range(1, len(scores)):
+            if scores[i] > max_score:
+                max_score = scores[i]
+                max_idx = i
+
+        best_mask = masks[max_idx]
+        print(best_mask.shape)
+
+        return best_mask
+
 
     predictor1.set_image(img1)
     input_point = points
