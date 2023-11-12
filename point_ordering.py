@@ -3,24 +3,26 @@ import cv2
 import matplotlib.pyplot as plt
 
 
-def get_neighbors(pt, seen, binary_skeleton):
 
-    neighs = []
-
-    r, c = pt[0], pt[1]
-    for n_r in range(max(0, r - 1), min(len(binary_skeleton), r + 2)):
-        for n_c in range(max(0, c - 1), min(len(binary_skeleton[0]), c + 2)):
-            if r == n_r and c == n_c:
-                continue
-
-            # otherwise we add to neighbor
-            if binary_skeleton[n_r][n_c] != 0 and (n_r, n_c) not in seen:
-                neighs.append((n_r, n_c))
-
-    return neighs
 
 def get_pt_ordering(mask_path):
+    
+    def get_neighbors(pt, binary_skeleton):
 
+        neighs = []
+
+        r, c = pt[0], pt[1]
+        
+        for n_r in range(max(0, r - 1), min(len(binary_skeleton), r + 2)):
+            for n_c in range(max(0, c - 1), min(len(binary_skeleton[0]), c + 2)):
+                if r == n_r and c == n_c:
+                    continue
+
+                # otherwise we add to neighbor
+                if binary_skeleton[n_r][n_c] != 0 and (n_r, n_c) not in seen:
+                    
+                    neighs.append((n_r, n_c))
+        return neighs
     skeleton_mask = np.load(mask_path, allow_pickle=True)
     
     # asarray() class is used to convert
@@ -51,7 +53,7 @@ def get_pt_ordering(mask_path):
         next_layer = []
 
         for fringe_pt in curr_layer:
-            neighbors = get_neighbors(fringe_pt, seen, binary_skeleton)
+            neighbors = get_neighbors(fringe_pt, binary_skeleton)
 
             for neighbor in neighbors:
                 seen.add(neighbor)
@@ -64,12 +66,68 @@ def get_pt_ordering(mask_path):
     
     print(prev_layer)
 
+
+
+
+    endpoint1 = (prev_layer[0][0], prev_layer[0][1])
+    seen = set()
+    curr_layer = []
+    prev_layer = []    
+
+    nonzero_pts = cv2.findNonZero(np.float32(skeleton_mask))
+
+    start_pt = endpoint1
+
+    seen.add(start_pt)
+
+    curr_layer = [start_pt]
+
+    # check that actually 1
+    print("check:", start_pt, binary_skeleton[start_pt[0]][start_pt[1]])
+
+    # now, do a BFS from the point outwards
+    parent = {}
+    while curr_layer:
+
+        next_layer = []
+
+        for fringe_pt in curr_layer:
+            neighbors = get_neighbors(fringe_pt, binary_skeleton)
+
+            for neighbor in neighbors:
+                parent[neighbor] = fringe_pt
+                seen.add(neighbor)
+
+            # N.B these neighbors are unvisited
+            next_layer.extend(neighbors)
+
+        prev_layer = curr_layer
+        curr_layer = next_layer
+    
+    curr = (prev_layer[0][0], prev_layer[0][1])
+    finalLine = [curr]
+    while(curr in parent.keys()):
+        curr = parent[curr]
+        finalLine.append(curr)
+
     plt.scatter([nonzero_pt[0][1] for nonzero_pt in nonzero_pts], [nonzero_pt[0][0] for nonzero_pt in nonzero_pts])
+    plt.scatter([pt[0] for pt in finalLine], [pt[1] for pt in finalLine])
+    plt.scatter([endpoint1[0]], [endpoint1[1]])
     plt.scatter([prev_layer[0][0]], [prev_layer[0][1]])
+    plt.scatter([528], [806])
     plt.show()
 
     # now walk it back the other way, keeping a track of point seen (accomplish this with a prev or next dictionary)
     # Then, we can traverse this list and assign the points their ordering!
+
+
+
+
+
+
+
+
+
 
 # Karim's DFS code
 # FOR REFERENCE
