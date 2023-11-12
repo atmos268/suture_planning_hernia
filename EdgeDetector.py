@@ -4,6 +4,7 @@ import numpy as np
 from skimage.morphology import skeletonize
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+from point_ordering import get_pt_ordering
 # import plantcv
 from SAM import create_mask
 from segment_anything import SamPredictor
@@ -70,114 +71,11 @@ def click_points_simple(img):
     plt.show()
     return left_coords,right_coords
 
-
-# Karim's DFS code
-def find_length_and_endpoints(skeleton_img):
-    #### IDEA: do DFS but have a left and right DFS with distances for one being negative and the other being positive 
-    nonzero_pts = cv2.findNonZero(np.float32(skeleton_img))
-    if nonzero_pts is None:
-        nonzero_pts = [[[0,0]]]
-    total_length = len(nonzero_pts)
-    start_pt = (nonzero_pts[0][0][1], nonzero_pts[0][0][0])
-    # run dfs from this start_pt, when we encounter a point with no more non-visited neighbors that is an endpoint
-    endpoints = []
-    NEIGHS = [(-1, 0), (1, 0), (0, 1), (0, -1), (-1,-1), (-1,1), (1,-1),(1,1)]
-    visited = set()
-    q = [start_pt]
-    dist_q = [0]
-    # tells us if the first thing we look at is actually an endpoint
-    initial_endpoint = False
-    # carry out floodfill
-    q = [start_pt]
-    # carry out floodfill
-    IS_LOOP = False
-    ENTIRE_VISITED = [False] * int(np.nonzero(skeleton_img).sum())
-    def dfs(q, dist_q, visited, start_pixel, increment_amt):
-        '''
-        q: queue with next point on skeleton for one direction
-        dist_q: queue with distance from start point to next point for one direction
-        visited: queue with visited points for only one direction
-        increment_amt: counter that indicates direction +/- 1
-        '''
-
-        is_loop = ENTIRE_VISITED[start_pixel + increment_amt*len(visited)]
-        if is_loop:
-            return is_loop
-
-
-        while len(q) > 0:
-            next_loc = q.pop()
-            distance = dist_q.pop()
-            visited.add(next_loc)
-            counter = 0
-            for n in NEIGHS:
-                test_loc = (next_loc[0]+n[0], next_loc[1]+n[1])
-                if (test_loc in visited):
-                    continue
-                if test_loc[0] >= len(skeleton_img[0]) or test_loc[0] < 0 \
-                        or test_loc[1] >= len(skeleton_img[0]) or test_loc[1] < 0:
-                    continue
-                if skeleton_img[test_loc[0]][test_loc[1]] == True:
-                    counter += 1
-                    #length_checker += 1
-                    q.append(test_loc)
-                    dist_q.append(distance+increment_amt)
-            # this means we haven't added anyone else to the q so we "should" be at an endpoint
-            if counter == 0:
-                endpoints.append([next_loc, distance])
-            # if next_loc == start_pt and counter == 1:
-            #     endpoints.append([next_loc, distance])
-            #     initial_endpoint = True
-    counter = 0
-    length_checker = 0
-    increment_amt = 1
-    visited = set([start_pt])
-    for n in NEIGHS:
-        test_loc = (start_pt[0]+n[0], start_pt[1]+n[1])
-        # one of the neighbors is valued at one so we can dfs across it
-        if skeleton_img[test_loc[0]][test_loc[1]] == True:
-            counter += 1
-            q = [test_loc]
-            dist_q = [0]
-            dfs(q, dist_q, visited, increment_amt)
-            # the first time our distance will be incrementing but the second time
-            # , i.e. when dfs'ing the opposite direction our distance will be negative to differentiate both paths
-            increment_amt = -1
-    # we only have one neighbor therefore we must be an endpoint
-    if counter == 1:
-        distance = 0
-        endpoints.append([start_pt, distance])
-        initial_endpoint = True
-
-    final_endpoints = []
-    
-    largest_pos = None
-    largest_neg = None
-
-    for pt, distance in endpoints:
-        if largest_pos is None or distance > endpoints[largest_pos][1]:
-            largest_pos = endpoints.index([pt, distance])
-        elif largest_neg is None or distance < endpoints[largest_neg][1]:
-            largest_neg = endpoints.index([pt, distance])
-    if initial_endpoint:
-        final_endpoints = [endpoints[0][0], endpoints[largest_pos][0]]
-    else:
-        final_endpoints = [endpoints[largest_neg][0], endpoints[largest_pos][0]]
-    
-    #display results 
-    plt.scatter(x = [j[0][1] for j in endpoints], y=[i[0][0] for i in endpoints],c='w')
-    plt.scatter(x = [final_endpoints[1][1]], y=[final_endpoints[1][0]],c='r')
-    plt.scatter(x = [final_endpoints[0][1]], y=[final_endpoints[0][0]],c='r')
-    plt.title("final endpoints")
-    plt.scatter(x=start_pt[1], y=start_pt[0], c='g')
-    plt.imshow(skeleton_img, interpolation="nearest")
-    plt.show() 
-
-    print("the total length is ", total_length)
-    return total_length, final_endpoints
-
 if __name__ == "__main__":
 
+    # for testing puposes
+    get_pt_ordering('binary_skeleton.npy')
+    print("done")
     box_method = True
 
     img_path = 'image_left_001.png'
@@ -211,7 +109,7 @@ if __name__ == "__main__":
         plt.show()
 
         box = left_coords[0] + left_coords[1]
-        mask = create_mask(img_path, box, [], 'huge', box_method=True)
+        mask = create_mask(img_path, box, [], 'base', box_method=True)
 
         # make the mask into an image and save
         im = Image.fromarray(mask)
@@ -247,9 +145,14 @@ if __name__ == "__main__":
     
     # threshold
     binary_image = np.where(img_dilated > 0, 1, 0)
-
-
     skeleton = skeletonize(binary_image)
+
+    np.save('binary_skeleton.npy', skeleton)
+
+    plt.imshow(skeleton)
+    plt.show()
+
+
     plt.imsave('skeleton_sam.jpg', skeleton)
 
     fig, (ax1,ax2,ax3) = plt.subplots(1,3)
@@ -269,5 +172,8 @@ if __name__ == "__main__":
     fig.tight_layout()
 
     # plot the image, dilation, skeleton
-    plt.savefig('box_results/chicken_result1.jpg', dpi=1200)
+    plt.savefig('temp.jpg', dpi=1200)
+
+    # now, try to order the points
+    ordered_pts = get_pt_ordering('skeleton_sam.jpg')
 
