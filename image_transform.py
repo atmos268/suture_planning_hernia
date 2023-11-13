@@ -48,6 +48,11 @@ Z_wound = -depth_image_wound
 X_wound = (x - cx) * Z_wound / fx
 Y_wound = (y - cy) * Z_wound / fy
 wound_points = np.column_stack((X_wound.flatten(), Y_wound.flatten(), Z_wound.flatten()))
+fig = plt.figure()
+ax = plt.axes(projection='3d')
+# ax.scatter3D(X_wound.flatten(), Y_wound.flatten(), Z_wound.flatten())
+# plt.title("Allied Points")
+# plt.show()
 print(wound_points.shape)
 
 # projecting onto left image
@@ -76,11 +81,11 @@ if not wound_points.shape[0] == 0:
         if 0 <= x < image_width and 0 <= y < image_height:
             left_image[y, x] = 255
 # Visualizing the projection on the image
-cv2.namedWindow('Projected Points', cv2.WINDOW_NORMAL)  # Create a resizable window
-cv2.imshow('Projected Points', left_image)  # Show the modified image
+# cv2.namedWindow('Projected Points', cv2.WINDOW_NORMAL)  # Create a resizable window
+# cv2.imshow('Projected Points', left_image)  # Show the modified image
 
-cv2.waitKey(0)  # Wait for any key press
-cv2.destroyAllWindows()  # Close all OpenCV windows
+# cv2.waitKey(0)  # Wait for any key press
+# cv2.destroyAllWindows()  # Close all OpenCV windows
 
 
 #convert point cloud to overhead coordinates
@@ -90,4 +95,7 @@ for pt in wound_points:
     overhead_wound_points.append(R @ pt + t)
 overhead_wound_points = np.array(overhead_wound_points)
 overhead_wound_points_transpose = overhead_wound_points.T
+ax.scatter3D(overhead_wound_points_transpose[0], overhead_wound_points_transpose[1], overhead_wound_points_transpose[2])
+plt.title("overhead points")
+plt.show()
 print(overhead_wound_points.shape)
