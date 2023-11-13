@@ -21,7 +21,7 @@ def getTransformationMatrix():
 transformation_matrix = getTransformationMatrix()
 
 # disparity_map from raft (for testing used google colab)
-disp_path = "RAFT/suturing.npy"
+disp_path = "RAFT/disp.npy"
 disp = np.load(disp_path)
 
 #calibaration
@@ -44,6 +44,12 @@ Z_wound = -depth_image_wound
 X_wound = (x - cx) * Z_wound / fx
 Y_wound = (y - cy) * Z_wound / fy
 wound_points = np.column_stack((X_wound.flatten(), Y_wound.flatten(), Z_wound.flatten()))
+# fig = plt.figure()
+# ax = plt.axes(projection='3d')
+# ax.scatter3D(X_wound.flatten(), Y_wound.flatten(), Z_wound.flatten())
+# plt.show()
+print(wound_points.shape)
+
 
 #convert point cloud to overhead coordinates
 R, t = transformation_matrix[1:], transformation_matrix[0]
@@ -51,4 +57,7 @@ overhead_wound_points = []
 for pt in wound_points:
     overhead_wound_points.append(R @ pt + t)
 overhead_wound_points = np.array(overhead_wound_points)
+overhead_wound_points_transpose = overhead_wound_points.T
+# ax.scatter3D(overhead_wound_points_transpose[0], overhead_wound_points_transpose[1], overhead_wound_points_transpose[2])
+# plt.show()
 print(overhead_wound_points.shape)
