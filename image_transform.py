@@ -24,6 +24,12 @@ transformation_matrix = getTransformationMatrix()
 disp_path = "RAFT/disp.npy"
 disp = np.load(disp_path)
 
+#mask from SAM
+sam_mask = cv2.imread("sam_mask.jpg", cv2.IMREAD_GRAYSCALE)
+sam_mask = sam_mask.astype('uint8')
+print(sam_mask.dtype)
+print(sam_mask.shape)
+
 #calibaration
 f = 1688.10117
 cx = 657.660185
@@ -33,10 +39,11 @@ cx_diff = 671.318549 - cx
 
 # get depth map from disparity map
 depth_image = (f * Tx) / abs(disp + cx_diff)
+print(depth_image.shape)
 fx, fy, cx, cy = f, f, cx, cy
 rows, cols = depth_image.shape
 y, x = np.meshgrid(range(rows), range(cols), indexing="ij")
-depth_image_wound = cv2.bitwise_and(depth_image, depth_image, mask=None) #todo: add mask here
+depth_image_wound = cv2.bitwise_and(depth_image, depth_image, mask=sam_mask)
 
 #get point cloud
 
