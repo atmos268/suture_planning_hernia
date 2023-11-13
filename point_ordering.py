@@ -2,10 +2,7 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 
-
-
-
-def get_pt_ordering(mask_path):
+def get_pt_ordering(skeleton_mask, viz=False):
     
     def get_neighbors(pt, binary_skeleton):
 
@@ -23,12 +20,13 @@ def get_pt_ordering(mask_path):
                     
                     neighs.append((n_r, n_c))
         return neighs
-    skeleton_mask = np.load(mask_path, allow_pickle=True)
+    
+    # we can just load the array directly in
+    # skeleton_mask = np.load(mask_path, allow_pickle=True)
     
     # asarray() class is used to convert
     # PIL images into NumPy arrays
 
-    print(skeleton_mask)
     binary_skeleton = np.float32(skeleton_mask)
 
     seen = set()
@@ -44,7 +42,7 @@ def get_pt_ordering(mask_path):
     curr_layer = [start_pt]
 
     # check that actually 1
-    print("check:", start_pt, binary_skeleton[start_pt[0]][start_pt[1]])
+    # print("check:", start_pt, binary_skeleton[start_pt[0]][start_pt[1]])
 
     # now, do a BFS from the point outwards
 
@@ -64,11 +62,6 @@ def get_pt_ordering(mask_path):
         prev_layer = curr_layer
         curr_layer = next_layer
     
-    print(prev_layer)
-
-
-
-
     endpoint1 = (prev_layer[0][0], prev_layer[0][1])
     seen = set()
     curr_layer = []
@@ -83,7 +76,7 @@ def get_pt_ordering(mask_path):
     curr_layer = [start_pt]
 
     # check that actually 1
-    print("check:", start_pt, binary_skeleton[start_pt[0]][start_pt[1]])
+    # print("check:", start_pt, binary_skeleton[start_pt[0]][start_pt[1]])
 
     # now, do a BFS from the point outwards
     parent = {}
@@ -110,23 +103,15 @@ def get_pt_ordering(mask_path):
         curr = parent[curr]
         finalLine.append(curr)
 
-    plt.scatter([nonzero_pt[0][1] for nonzero_pt in nonzero_pts], [nonzero_pt[0][0] for nonzero_pt in nonzero_pts])
-    plt.scatter([pt[0] for pt in finalLine], [pt[1] for pt in finalLine])
-    plt.scatter([endpoint1[0]], [endpoint1[1]])
-    plt.scatter([prev_layer[0][0]], [prev_layer[0][1]])
-    plt.scatter([528], [806])
-    plt.show()
+    if viz:
 
-    # now walk it back the other way, keeping a track of point seen (accomplish this with a prev or next dictionary)
-    # Then, we can traverse this list and assign the points their ordering!
+        plt.scatter([nonzero_pt[0][1] for nonzero_pt in nonzero_pts], [nonzero_pt[0][0] for nonzero_pt in nonzero_pts])
+        plt.scatter([pt[0] for pt in finalLine], [pt[1] for pt in finalLine])
+        plt.scatter([endpoint1[0]], [endpoint1[1]])
+        plt.scatter([prev_layer[0][0]], [prev_layer[0][1]])
+        plt.show()
 
-
-
-
-
-
-
-
+    return finalLine
 
 
 # Karim's DFS code
@@ -232,5 +217,4 @@ def find_length_and_endpoints(skeleton_img):
     plt.imshow(skeleton_img, interpolation="nearest")
     plt.show() 
 
-    print("the total length is ", total_length)
     return total_length, final_endpoints

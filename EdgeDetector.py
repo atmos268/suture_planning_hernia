@@ -4,12 +4,15 @@ import numpy as np
 from skimage.morphology import skeletonize
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+import scipy.interpolate as inter
 from point_ordering import get_pt_ordering
 # import plantcv
 from SAM import create_mask
 from segment_anything import SamPredictor
 from largestCC import keep_largest_connected_component
 from fillHoles import fillHoles
+from matplotlib import colormaps
+
 '''This class will process an image, and produce a spline of where the wound is based on the image'''
 class EdgeDetector:
     
@@ -29,35 +32,10 @@ class EdgeDetector:
     def generate_spline(self, pixels):
         pass
 
-# def keep_largest_connected_component(imgPath):
-#     # Ensure the input image is in binary format (0 and 255).
-#     input_image = cv2.imread(imgPath, cv2.IMREAD_GRAYSCALE)
-
-#     print(len(np.unique(input_image)))
-#     # Ensure the image is binary (threshold if needed).
-#     _, binary_image = cv2.threshold(input_image, 128, 255, cv2.THRESH_BINARY)
-
-#     print(len(np.unique(binary_image)))
-#     # if len(np.unique(binary_image)) != 2:
-#     #     raise ValueError("Input image must be binary (0 and 255).")
-
-#     # Find connected components in the binary image.
-#     num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(binary_image, connectivity=8)
-
-#     # Find the index of the largest connected component (excluding the background).
-#     largest_component_index = np.argmax(stats[1:, cv2.CC_STAT_AREA]) + 1
-
-#     # Create a binary mask for the largest component.
-#     largest_component_mask = (labels == largest_component_index).astype(np.uint8) * 255
-
-#     return largest_component_mask
-
-
 # mallika's code for point clicking
-
 def click_points_simple(img):
-    fig, (ax1,ax2) = plt.subplots(1,2)
-    ax1.imshow(img)
+    fig = plt.figure()
+    plt.imshow(img)
     left_coords,right_coords = [], []
     def onclick(event):
         xind,yind = int(event.xdata),int(event.ydata)
@@ -71,15 +49,8 @@ def click_points_simple(img):
     plt.show()
     return left_coords,right_coords
 
-if __name__ == "__main__":
-
-    # for testing puposes
-    get_pt_ordering('binary_skeleton.npy')
-    print("done")
-    box_method = True
-
-    img_path = 'image_left_001.png'
-
+def img_to_line(img_path, box_method, viz=False):
+    
     # load the image and convert into
     # numpy array
     img = Image.open(img_path)
@@ -118,9 +89,6 @@ if __name__ == "__main__":
     else:
 
         left_coords, right_coords = click_points_simple(numpydata)
-        print(left_coords, right_coords)
-
-        cv2_img = cv2.imread(img_path)
 
         num_left = len(left_coords)
         num_right = len(right_coords)
@@ -140,8 +108,6 @@ if __name__ == "__main__":
     cv2.imwrite("dilated_sam.jpg", img_dilated)
     img_dilated = fillHoles('dilated_sam.jpg')
     cv2.imwrite("filledHoles.jpg", img_dilated)
-
-    # check for binary?
     
     # threshold
     binary_image = np.where(img_dilated > 0, 1, 0)
@@ -150,22 +116,26 @@ if __name__ == "__main__":
     np.save('binary_skeleton.npy', skeleton)
 
     plt.imshow(skeleton)
-    plt.show()
-
+    if viz:
+        plt.show()
 
     plt.imsave('skeleton_sam.jpg', skeleton)
 
+    # order points 
+    ordered_points = get_pt_ordering(skeleton)
+
+    # display results
     fig, (ax1,ax2,ax3) = plt.subplots(1,3)
     ax1.imshow(numpydata)
     ax1.title.set_text("Original")
 
-    img = Image.open("filledHoles.jpg")
-    numpydata = np.asarray(img)
+    filled_holes = Image.open("filledHoles.jpg")
+    numpydata = np.asarray(filled_holes)
     ax2.imshow(numpydata)
     ax2.title.set_text("New Dilation (filled holes)")
 
-    img = Image.open('skeleton_sam.jpg')
-    numpydata = np.asarray(img)
+    skeleton_sam = Image.open('skeleton_sam.jpg')
+    numpydata = np.asarray(skeleton_sam)
     ax3.imshow(numpydata)
     ax3.title.set_text("Skeletonization")
 
@@ -174,6 +144,42 @@ if __name__ == "__main__":
     # plot the image, dilation, skeleton
     plt.savefig('temp.jpg', dpi=1200)
 
-    # now, try to order the points
-    ordered_pts = get_pt_ordering('skeleton_sam.jpg')
+    # now, order the points
 
+    # overlay ordered points over the original image
+    fig_overlay =  plt.figure()
+
+    img_np = np.asarray(img)
+    plt.imshow(img_np)
+    plt.plot([pt[1] for pt in ordered_points], [pt[0] for pt in ordered_points])
+
+    if viz:
+        plt.show()
+    
+    return ordered_points
+
+if __name__ == "__main__":
+    
+    box_method = True
+    img_path = 'image_left_001.png'
+
+    line = img_to_line(img_path, box_method, viz=True)
+    
+    # fit spline to points
+    tck, u = inter.splprep([[pt[0] for pt in line], [pt[1] for pt in line]], k=3)
+    wound_parametric = lambda t, d: inter.splev(t, tck, der = d)
+
+    # plot spline
+
+    spline_pts = []
+
+    for t_step in np.linspace(0, 1):
+        spline_pts.append(wound_parametric(t_step, 0))
+
+    img = Image.open(img_path)
+    img_np = np.asarray(img)
+    plt.imshow(img_np)
+    plt.plot([pt[1] for pt in spline_pts], [pt[0] for pt in spline_pts])
+    plt.show()
+
+    
