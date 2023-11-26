@@ -127,7 +127,7 @@ def img_to_line(img_path, box_method, viz=False):
     fig.tight_layout()
 
     # plot the image, dilation, skeleton
-    plt.savefig('temp.jpg', dpi=1200)
+    plt.savefig('box_results/chicken_result_right7.jpg', dpi=1200)
 
     # now, order the points
 

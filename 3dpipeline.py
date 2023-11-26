@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 if __name__ == "__main__":
     
     box_method = True
-    img_path = 'image_left_001.png'
+    img_path = 'image_right_007.png'
 
     img = Image.open(img_path)
     
@@ -45,11 +45,7 @@ if __name__ == "__main__":
     plt.plot([pt[1] for pt in line], [pt[0] for pt in line], color='b')
     plt.plot([pt[1] for pt in scaled_line], [pt[0] for pt in scaled_line], color='b')
 
-<<<<<<< HEAD
     spline, tck = line_to_spline(line, img_path, mm_per_pixel)
-=======
-    spline, tck = line_to_spline(line, img_path)
->>>>>>> 528ce37 (add back files)
     scaled_spline, tck = line_to_spline(scaled_line, img_path, mm_per_pixel)
 
     plt.show()
