@@ -12,6 +12,7 @@ from segment_anything import SamPredictor
 from largestCC import keep_largest_connected_component
 from fillHoles import fillHoles
 from matplotlib import colormaps
+from utils import click_points_simple
 
 '''This class will process an image, and produce a spline of where the wound is based on the image'''
 class EdgeDetector:
@@ -32,22 +33,6 @@ class EdgeDetector:
     def generate_spline(self, pixels):
         pass
 
-# mallika's code for point clicking
-def click_points_simple(img):
-    fig = plt.figure()
-    plt.imshow(img)
-    left_coords,right_coords = [], []
-    def onclick(event):
-        xind,yind = int(event.xdata),int(event.ydata)
-        coords=(xind,yind)
-        nonlocal left_coords,right_coords
-        if(event.button==1):
-            left_coords.append(coords)
-        elif(event.button==3):
-            right_coords.append(coords)
-    cid = fig.canvas.mpl_connect('button_press_event', onclick)
-    plt.show()
-    return left_coords,right_coords
 
 def img_to_line(img_path, box_method, viz=False):
     
@@ -158,28 +143,48 @@ def img_to_line(img_path, box_method, viz=False):
     
     return ordered_points
 
-if __name__ == "__main__":
-    
-    box_method = True
-    img_path = 'image_left_001.png'
+def line_to_spline(line, img_path, mm_per_pixel):
 
-    line = img_to_line(img_path, box_method, viz=True)
-    
     # fit spline to points
-    tck, u = inter.splprep([[pt[0] for pt in line], [pt[1] for pt in line]], k=3)
+    tck, u = inter.splprep([[pt[0] for pt in line], [pt[1] for pt in line]], k=3, s=0)
     wound_parametric = lambda t, d: inter.splev(t, tck, der = d)
 
     # plot spline
 
     spline_pts = []
 
-    for t_step in np.linspace(0, 1):
+    for t_step in np.linspace(0, 1, 100):
         spline_pts.append(wound_parametric(t_step, 0))
 
     img = Image.open(img_path)
     img_np = np.asarray(img)
     plt.imshow(img_np)
-    plt.plot([pt[1] for pt in spline_pts], [pt[0] for pt in spline_pts])
-    plt.show()
+    plt.plot([pt[1] for pt in spline_pts], [pt[0] for pt in spline_pts], color='r')
+    # plt.plot([pt[1]/mm_per_pixel for pt in spline_pts], [pt[0]/mm_per_pixel for pt in spline_pts])
+    # plt.show()
+    # plt.savefig("spline.png")
+
+    return wound_parametric, tck
+
+
+
+if __name__ == "__main__":
+    
+    box_method = True
+    img_path = 'image_left_001.png'
+
+    line = img_to_line(img_path, box_method, viz=True)
+
+    spline, tck = line_to_spline(line, img_path)
+
+    # now run original pipeline
+
+
+
+
+    
+    
+    
+
 
     

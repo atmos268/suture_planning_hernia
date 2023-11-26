@@ -64,7 +64,7 @@ class SuturePlacer:
 
         return insert_dists, center_dists, extract_dists, insert_pts, center_pts, extract_pts, result.x
     
-    def place_sutures(self, sample_spline):
+    def place_sutures(self, sample_spline=None):
 
         num_sutures_initial = int(self.DistanceCalculator.initial_number_of_sutures(0, 1)) # heuristic
         print("NUM SUTURES INITIAL", num_sutures_initial)
