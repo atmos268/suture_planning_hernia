@@ -7,7 +7,9 @@ from PIL import Image
 from matplotlib import pyplot as plt
 import cv2
 from utils import click_points_simple
-
+from largestCC import keep_largest_connected_component
+from EdgeDetector import EdgeDetector
+from fillHoles import fillHoles
 
 def getTransformationMatrix():
     transformation_tensor = tf.io.read_file('transforms/tf_av_left_zivid.tf')
@@ -41,6 +43,22 @@ def get_dilated_mask(img_path, dilation):
 
     cv2.imwrite('original_mask.jpg', mask)
 
+    # connected comp
+    mask = keep_largest_connected_component('original_mask.jpg')
+    cv2.imwrite('original_mask.jpg', mask)
+    # cv2.imwrite('sam_img.jpg', img)
+    
+    new_edge_detector = EdgeDetector()
+    mask = cv2.imread('original_mask.jpg')
+    img_dilated = new_edge_detector.dilate_to_line(mask, 5)
+    cv2.imwrite("original_mask.jpg", img_dilated)
+    img_dilated = fillHoles('original_mask.jpg')
+    cv2.imwrite("original_mask.jpg", img_dilated)
+
+    # now we have our 'original'
+    mask = cv2.imread('original_mask.jpg')
+    img_dilated = new_edge_detector.dilate_to_line(mask, dilation)
+    cv2.imwrite("dilated_mask.jpg", img_dilated)
 
 def get_transformed_points(image_path, disp_path, sam_mask):
     transformation_matrix = getTransformationMatrix()
@@ -71,13 +89,27 @@ def get_transformed_points(image_path, disp_path, sam_mask):
     Z_wound = -depth_image_wound
     X_wound = (x - cx) * Z_wound / fx
     Y_wound = (y - cy) * Z_wound / fy
-    wound_points = np.column_stack((X_wound.flatten(), Y_wound.flatten(), Z_wound.flatten()))
+
+    # eliminiate extraneous Z values
+    flat_X = X_wound.flatten()
+    flat_Y = Y_wound.flatten()
+    flat_Z = Z_wound.flatten()
+
+    include_indices = []
+    for i in range(len(flat_Z)):
+        if flat_Z[i] != 0:
+            include_indices.append(i)
+    
+    cleaned_X = [flat_X[include_idx] for include_idx in include_indices]
+    cleaned_Y = [flat_Y[include_idx] for include_idx in include_indices]
+    cleaned_Z = [flat_Z[include_idx] for include_idx in include_indices]
+
+    wound_points = np.column_stack((cleaned_X, cleaned_Y, cleaned_Z))
     fig = plt.figure()
     ax = plt.axes(projection='3d')
     # ax.scatter3D(X_wound.flatten(), Y_wound.flatten(), Z_wound.flatten())
     # plt.title("Allied Points")
     # plt.show()
-    print("wound_points", wound_points.shape)
 
     # projecting onto left image
     left_image = cv2.imread(image_path)
@@ -122,14 +154,22 @@ def get_transformed_points(image_path, disp_path, sam_mask):
     ax.scatter3D(overhead_wound_points_transpose[0], overhead_wound_points_transpose[1], overhead_wound_points_transpose[2])
     plt.title("overhead points")
     plt.show()
-    print(overhead_wound_points.shape)
+    print("selected points: ", overhead_wound_points.shape)
+
+    return overhead_wound_points
 
 disp_path = "RAFT/disp.npy"
+
 img_path = "image_left_001.png"
 
 # get the mask, save it
-dilation = 5
+dilation = 50
 get_dilated_mask(img_path, dilation)
 
 sam_mask = cv2.imread("original_mask.jpg", cv2.IMREAD_GRAYSCALE)
-get_transformed_points(img_path, disp_path, sam_mask)
+mask_pts = get_transformed_points(img_path, disp_path, sam_mask)
+
+dilated_sam_mask = cv2.imread("dilated_mask.jpg", cv2.IMREAD_GRAYSCALE)
+surrounding_pts = get_transformed_points(img_path, disp_path, dilated_sam_mask)
+
+np.save('surrounding_pts.npy', surrounding_pts)
