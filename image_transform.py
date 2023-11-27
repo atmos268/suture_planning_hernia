@@ -2,9 +2,12 @@ import numpy as np
 import cv2
 import tensorflow as tf
 import subprocess
+from SAM import create_mask
 from PIL import Image
 from matplotlib import pyplot as plt
 import cv2
+from utils import click_points_simple
+
 
 def getTransformationMatrix():
     transformation_tensor = tf.io.read_file('transforms/tf_av_left_zivid.tf')
@@ -20,11 +23,26 @@ def getTransformationMatrix():
     return transformation_matrix
 
 
-def get_expanded_mask():
-    pass
+def get_dilated_mask(img_path, dilation):
+    # use same procedure as before to get the mask in 2D, then dilate
+    img = Image.open(img_path)
+    
+    # asarray() class is used to convert
+    # PIL images into NumPy arrays
+    numpydata = np.asarray(img)
+    left_coords, right_coords = click_points_simple(numpydata)
+
+    num_left = len(left_coords)
+    num_right = len(right_coords)
+
+    fore_back = [1 for _ in range(num_left)] + [0 for _ in range(num_right)]
+
+    mask, img = create_mask(img_path, np.array(left_coords + right_coords), np.array(fore_back), 'base')
+
+    cv2.imwrite('original_mask.jpg', mask)
 
 
-def get_transformed_points(disp_path, sam_mask):
+def get_transformed_points(image_path, disp_path, sam_mask):
     transformation_matrix = getTransformationMatrix()
 
     # disparity_map from raft (for testing used google colab)
@@ -62,8 +80,8 @@ def get_transformed_points(disp_path, sam_mask):
     print("wound_points", wound_points.shape)
 
     # projecting onto left image
-    left_image = cv2.imread("image_left_001.png")
-    left_image = cv2.cvtColor(cv2.imread("image_left_001.png"), cv2.COLOR_BGR2RGB).astype(np.uint8)
+    left_image = cv2.imread(image_path)
+    left_image = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB).astype(np.uint8)
     image_height, image_width, _ = left_image.shape
     left_camera_matrix = np.array(
         [[1688.10117, 0, 657.660185], [0, 1688.10117, 411.400296], [0, 0, 1]],
@@ -107,5 +125,11 @@ def get_transformed_points(disp_path, sam_mask):
     print(overhead_wound_points.shape)
 
 disp_path = "RAFT/disp.npy"
-sam_mask = cv2.imread("sam_mask.jpg", cv2.IMREAD_GRAYSCALE)
-get_transformed_points(disp_path, sam_mask)
+img_path = "image_left_001.png"
+
+# get the mask, save it
+dilation = 5
+get_dilated_mask(img_path, dilation)
+
+sam_mask = cv2.imread("original_mask.jpg", cv2.IMREAD_GRAYSCALE)
+get_transformed_points(img_path, disp_path, sam_mask)
