@@ -163,7 +163,7 @@ disp_path = "RAFT/disp.npy"
 img_path = "image_left_001.png"
 
 # get the mask, save it
-dilation = 50
+dilation = 100
 get_dilated_mask(img_path, dilation)
 
 sam_mask = cv2.imread("original_mask.jpg", cv2.IMREAD_GRAYSCALE)
