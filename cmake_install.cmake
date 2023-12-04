@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # Install script for directory: /Users/juliaisaac/Suture-Placement
+=======
+# Install script for directory: /Users/virajramakrishnan/Desktop/Uni/AUTOLab/Suture-Placement
+>>>>>>> 6bb2e7a (add CGAL mesh functionality)
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -12,7 +16,11 @@ if(NOT DEFINED CMAKE_INSTALL_CONFIG_NAME)
     string(REGEX REPLACE "^[^A-Za-z0-9_]+" ""
            CMAKE_INSTALL_CONFIG_NAME "${BUILD_TYPE}")
   else()
+<<<<<<< HEAD
     set(CMAKE_INSTALL_CONFIG_NAME "")
+=======
+    set(CMAKE_INSTALL_CONFIG_NAME "Release")
+>>>>>>> 6bb2e7a (add CGAL mesh functionality)
   endif()
   message(STATUS "Install configuration: \"${CMAKE_INSTALL_CONFIG_NAME}\"")
 endif()
@@ -34,7 +42,11 @@ endif()
 
 # Set default install directory permissions.
 if(NOT DEFINED CMAKE_OBJDUMP)
+<<<<<<< HEAD
   set(CMAKE_OBJDUMP "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/objdump")
+=======
+  set(CMAKE_OBJDUMP "/Library/Developer/CommandLineTools/usr/bin/objdump")
+>>>>>>> 6bb2e7a (add CGAL mesh functionality)
 endif()
 
 if(CMAKE_INSTALL_COMPONENT)
@@ -45,5 +57,9 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
+<<<<<<< HEAD
 file(WRITE "/Users/juliaisaac/Suture-Placement/${CMAKE_INSTALL_MANIFEST}"
+=======
+file(WRITE "/Users/virajramakrishnan/Desktop/Uni/AUTOLab/Suture-Placement/${CMAKE_INSTALL_MANIFEST}"
+>>>>>>> 6bb2e7a (add CGAL mesh functionality)
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

@@ -1,3 +1,9 @@
+<<<<<<< HEAD
 /Users/juliaisaac/Suture-Placement/CMakeFiles/generate_mesh.dir
 /Users/juliaisaac/Suture-Placement/CMakeFiles/edit_cache.dir
 /Users/juliaisaac/Suture-Placement/CMakeFiles/rebuild_cache.dir
+=======
+/Users/virajramakrishnan/Desktop/Uni/AUTOLab/Suture-Placement/CMakeFiles/generate_mesh.dir
+/Users/virajramakrishnan/Desktop/Uni/AUTOLab/Suture-Placement/CMakeFiles/edit_cache.dir
+/Users/virajramakrishnan/Desktop/Uni/AUTOLab/Suture-Placement/CMakeFiles/rebuild_cache.dir
+>>>>>>> 6bb2e7a (add CGAL mesh functionality)
