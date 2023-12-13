@@ -7,11 +7,14 @@ import cv2
 import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
+from enhance_image import adjust_contrast_saturation
 
 if __name__ == "__main__":
     
-    box_method = True
-    img_path = 'image_right_007.png'
+    box_method = False
+    file_name = 'image_left_001.png'
+    img_path = 'chicken_images/' + file_name
+    img_path_enhanced = 'chicken_images/enhanced/' + file_name
 
     img = Image.open(img_path)
     
@@ -42,11 +45,15 @@ if __name__ == "__main__":
     for i, elem in enumerate(line):
         scaled_line.append((line[i][0] * mm_per_pixel, line[i][1] * mm_per_pixel))
     
-    plt.plot([pt[1] for pt in line], [pt[0] for pt in line], color='b')
-    plt.plot([pt[1] for pt in scaled_line], [pt[0] for pt in scaled_line], color='b')
+    # plt.plot([pt[1] for pt in line], [pt[0] for pt in line], color='b')
+    # plt.plot([pt[1] for pt in scaled_line], [pt[0] for pt in scaled_line], color='b')
 
-    spline, tck = line_to_spline(line, img_path, mm_per_pixel)
-    scaled_spline, tck = line_to_spline(scaled_line, img_path, mm_per_pixel)
+    # add contrast etc. to improve SAM results
+    enhanced = adjust_contrast_saturation(img, 3, 1)
+    enhanced.save(img_path_enhanced)
+
+    # spline, tck = line_to_spline(line, img_path, mm_per_pixel)
+    scaled_spline, tck = line_to_spline(scaled_line, img_path_enhanced, mm_per_pixel)
 
     plt.show()
 
