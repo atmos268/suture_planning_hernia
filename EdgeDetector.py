@@ -65,7 +65,7 @@ def img_to_line(img_path, box_method, viz=False):
         plt.show()
 
         box = left_coords[0] + left_coords[1]
-        mask = create_mask(img_path, box, [], 'base', box_method=True)
+        mask = create_mask(img_path, box, [], 'huge', box_method=True)
 
         # make the mask into an image and save
         im = Image.fromarray(mask)
@@ -110,24 +110,18 @@ def img_to_line(img_path, box_method, viz=False):
     ordered_points = get_pt_ordering(skeleton)
 
     # display results
-    fig, (ax1,ax2,ax3) = plt.subplots(1,3)
+    fig, (ax1,ax2) = plt.subplots(1,2)
     ax1.imshow(numpydata)
     ax1.title.set_text("Original")
 
-    filled_holes = Image.open("filledHoles.jpg")
+    filled_holes = Image.open("sam_mask.jpg")
     numpydata = np.asarray(filled_holes)
     ax2.imshow(numpydata)
-    ax2.title.set_text("New Dilation (filled holes)")
-
-    skeleton_sam = Image.open('skeleton_sam.jpg')
-    numpydata = np.asarray(skeleton_sam)
-    ax3.imshow(numpydata)
-    ax3.title.set_text("Skeletonization")
-
+    ax2.title.set_text("SAM Mask")
     fig.tight_layout()
 
     # plot the image, dilation, skeleton
-    plt.savefig('box_results/chicken_result_right7.jpg', dpi=1200)
+    plt.savefig('experimentation/point_results/chicken_result_left1.jpg', dpi=1200)
 
     # now, order the points
 
@@ -146,32 +140,56 @@ def img_to_line(img_path, box_method, viz=False):
 def line_to_spline(line, img_path, mm_per_pixel):
 
     # fit spline to points
-    tck, u = inter.splprep([[pt[0] for pt in line], [pt[1] for pt in line]], k=3, s=0)
-    wound_parametric = lambda t, d: inter.splev(t, tck, der = d)
+    exact_tck, u = inter.splprep([[pt[0] for pt in line], [pt[1] for pt in line]], k=3, s=0)
+    exact_wound_parametric = lambda t, d: inter.splev(t, exact_tck, der = d)
+
+    sample_ratio = 30
+
+    sampled_pts = [line[i * sample_ratio] for i in range(len(line) // sample_ratio)] + [line[-1]]
+
+    sampled_tck, u = inter.splprep([[pt[0] for pt in sampled_pts], [pt[1] for pt in sampled_pts]], k=3, s=0)
+    sampled_wound_parametric = lambda t, d: inter.splev(t, sampled_tck, der = d)
+
+    smoothed_tck, u = inter.splprep([[pt[0] for pt in line], [pt[1] for pt in line]], k=3)
+    smoothed_wound_parametric = lambda t, d: inter.splev(t, smoothed_tck, der = d)
 
     # plot spline
+    exact_spline_pts = []
+    sampled_spline_pts = []
+    smoothed_spline_pts = []
 
-    spline_pts = []
+    for t_step in np.linspace(0, 1, 500):
+        exact_spline_pts.append(exact_wound_parametric(t_step, 0))
+        sampled_spline_pts.append(sampled_wound_parametric(t_step, 0))
+        smoothed_spline_pts.append(smoothed_wound_parametric(t_step, 0))
+    
 
-    for t_step in np.linspace(0, 1, 100):
-        spline_pts.append(wound_parametric(t_step, 0))
+
 
     img = Image.open(img_path)
     img_np = np.asarray(img)
     plt.imshow(img_np)
-    plt.plot([pt[1] for pt in spline_pts], [pt[0] for pt in spline_pts], color='r')
-    # plt.plot([pt[1]/mm_per_pixel for pt in spline_pts], [pt[0]/mm_per_pixel for pt in spline_pts])
-    # plt.show()
+
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
+    # plt.plot([pt[1] for pt in spline_pts], [pt[0] for pt in spline_pts], color='r')
+    ax1.imshow(img_np)
+    ax1.plot([pt[1]/mm_per_pixel for pt in exact_spline_pts], [pt[0]/mm_per_pixel for pt in exact_spline_pts])
+    ax2.imshow(img_np)
+    ax2.plot([pt[1]/mm_per_pixel for pt in sampled_spline_pts], [pt[0]/mm_per_pixel for pt in sampled_spline_pts])
+    ax3.imshow(img_np)
+    ax3.plot([pt[1]/mm_per_pixel for pt in smoothed_spline_pts], [pt[0]/mm_per_pixel for pt in smoothed_spline_pts])
+    
+    # plot side by side
     # plt.savefig("spline.png")
 
-    return wound_parametric, tck
+    return sampled_spline_pts, sampled_tck
 
 
 
 if __name__ == "__main__":
     
     box_method = True
-    img_path = 'image_left_001.png'
+    img_path = 'chicken_images/image_left_00.png'
 
     line = img_to_line(img_path, box_method, viz=True)
 
