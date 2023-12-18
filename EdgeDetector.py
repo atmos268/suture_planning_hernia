@@ -85,8 +85,8 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
         cv2.imwrite('sam_mask.jpg', mask)
     mask = keep_largest_connected_component('sam_mask.jpg')
     cv2.imwrite('sam_mask.jpg', mask)
-    # cv2.imwrite('sam_img.jpg', img)
-    
+
+    # mask post-processing    
     new_edge_detector = EdgeDetector()
     mask = cv2.imread('sam_mask.jpg')
     img_dilated = new_edge_detector.dilate_to_line(mask, 5)
@@ -94,7 +94,7 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
     img_dilated = fillHoles('dilated_sam.jpg')
     cv2.imwrite("filledHoles.jpg", img_dilated)
     
-    # threshold
+    # threshold to feed into skeletonize
     binary_image = np.where(img_dilated > 0, 1, 0)
     skeleton = skeletonize(binary_image)
 
@@ -144,6 +144,7 @@ def line_to_spline(line, img_path, mm_per_pixel):
     exact_tck, u = inter.splprep([[pt[0] for pt in line], [pt[1] for pt in line]], k=3, s=0)
     exact_wound_parametric = lambda t, d: inter.splev(t, exact_tck, der = d)
 
+    # from our ordered set of points, what fraction we pick: we will pick 1 in every sample_ratio points
     sample_ratio = 30
 
     sampled_pts = [line[i * sample_ratio] for i in range(len(line) // sample_ratio)] + [line[-1]]
@@ -165,8 +166,6 @@ def line_to_spline(line, img_path, mm_per_pixel):
         smoothed_spline_pts.append(smoothed_wound_parametric(t_step, 0))
     
 
-
-
     img = Image.open(img_path)
     img_np = np.asarray(img)
     plt.imshow(img_np)
@@ -184,8 +183,6 @@ def line_to_spline(line, img_path, mm_per_pixel):
     # plt.savefig("spline.png")
 
     return sampled_spline_pts, sampled_tck
-
-
 
 if __name__ == "__main__":
     
