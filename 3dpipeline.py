@@ -13,7 +13,7 @@ from utils import get_mm_per_pixel
 if __name__ == "__main__":
     
     box_method = False
-    save_figs = False
+    save_figs = True
     file_name = 'image_left_001.png'
     img_path = 'chicken_images/' + file_name
     img_path_enhanced = 'chicken_images/enhanced/' + file_name
@@ -62,7 +62,7 @@ if __name__ == "__main__":
     newSuturePlacer.RewardFunction.wound_parametric = wound_parametric
     newSuturePlacer.image = img_path
 
-    newSuturePlacer.place_sutures()
+    newSuturePlacer.place_sutures(save_figs=save_figs)
     suture_display_adj_pipeline(newSuturePlacer)
 
 
