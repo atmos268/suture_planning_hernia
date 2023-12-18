@@ -81,9 +81,7 @@ def suture_placing_pipeline(sample_spline=None, image=None):
 
     # Put the wound into all the relevant objects
     newSuturePlacer = SuturePlacer(wound_width, mm_per_pixel)
-    newSuturePlacer.wound = wound
     newSuturePlacer.tck = tck
-    newSuturePlacer.DistanceCalculator.wound = wound
     newSuturePlacer.DistanceCalculator.tck = tck
 
     

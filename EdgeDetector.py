@@ -34,7 +34,7 @@ class EdgeDetector:
         pass
 
 
-def img_to_line(img_path, box_method, viz=False):
+def img_to_line(img_path, box_method, viz=False, save_figs=False):
     
     # load the image and convert into
     # numpy array
@@ -121,7 +121,8 @@ def img_to_line(img_path, box_method, viz=False):
     fig.tight_layout()
 
     # plot the image, dilation, skeleton
-    plt.savefig('experimentation/point_results/chicken_result_left1.jpg', dpi=1200)
+    if save_figs:
+        plt.savefig('experimentation/point_results/chicken_result_left1.jpg', dpi=1200)
 
     # now, order the points
 
