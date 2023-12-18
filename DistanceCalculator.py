@@ -69,8 +69,6 @@ class DistanceCalculator():
 
 
         # verify works by plotting
-        wound_sample_x, wound_sample_y = self.wound(np.linspace(0, 1, 5000))
-        plt.plot(wound_sample_x, wound_sample_y, c='k')
         plt.scatter([insert_pts[i][0] for i in range(num_pts)], [insert_pts[i][1] for i in range(num_pts)], c="red")
         plt.scatter([extract_pts[i][0] for i in range(num_pts)], [extract_pts[i][1] for i in range(num_pts)], c="blue")
         plt.scatter([center_pts[i][0] for i in range(num_pts)], [center_pts[i][1] for i in range(num_pts)], c="green")
@@ -154,12 +152,10 @@ class DistanceCalculator():
             return 1
     
 
-    def plot(self, wound_point_t, title_plot, plot_closure=False, plot_shear=False, save_fig=False):
+    def plot(self, wound_point_t, title_plot, plot_type, save_fig=False, save_dir=False):
         plt.clf()
 
-        # make dir folder if requested to save figs and not present
-        if save_fig and not os.path.isdir("clicking"):
-            os.mkdir('clicking')
+        # 
 
         # wound points is the set of time-steps along the wound that correspond to wound points
 
@@ -210,14 +206,11 @@ class DistanceCalculator():
         plt.scatter([extract_pts[i][1] for i in range(num_pts)], [-extract_pts[i][0] for i in range(num_pts)], c="blue", s = 5)
         plt.scatter([center_pts[i][1] for i in range(num_pts)], [-center_pts[i][0] for i in range(num_pts)], c="green", s = 5)
 
-
-        if plot_closure or plot_shear:
-            if plot_closure:
-                if plot_shear:
-                    print('NOTE: Just plotting closure, not both that and shear!')
+        if plot_type == 'closure' or plot_type == 'shear':
+            if plot_type == 'closure':
                 force_to_plot = self.suturePlacer.RewardFunction.closure_forces
-            else:
-                force_to_plot = self.suturePlacer.RewardFunction.shear_forces
+            elif plot_type == 'shear':
+                force_to_plot = self.suturePlacer.RewardFunction.shear_forces     
 
             wcp_xs = self.suturePlacer.RewardFunction.wcp_xs
             wcp_ys = self.suturePlacer.RewardFunction.wcp_ys
@@ -232,7 +225,7 @@ class DistanceCalculator():
         plt.axis('square')
         plt.title(title_plot)
         if save_fig:
-            plt.savefig(save_fig)
+            plt.savefig(save_dir + '/' + plot_type + '/' + save_fig)
         else:
             plt.show()
 
