@@ -13,6 +13,7 @@ from largestCC import keep_largest_connected_component
 from fillHoles import fillHoles
 from matplotlib import colormaps
 from utils import click_points_simple
+import os
 
 '''This class will process an image, and produce a spline of where the wound is based on the image'''
 class EdgeDetector:
@@ -34,7 +35,10 @@ class EdgeDetector:
         pass
 
 
-def img_to_line(img_path, box_method, viz=False):
+def img_to_line(img_path, box_method, viz=False, save_figs=False):
+
+    if not os.path.isdir("temp_images"):
+        os.mkdir('temp_images')
     
     # load the image and convert into
     # numpy array
@@ -69,7 +73,7 @@ def img_to_line(img_path, box_method, viz=False):
 
         # make the mask into an image and save
         im = Image.fromarray(mask)
-        im.save('sam_mask.jpg')
+        im.save('temp_images/sam_mask.jpg')
 
     else:
 
@@ -82,29 +86,29 @@ def img_to_line(img_path, box_method, viz=False):
 
         mask, img = create_mask(img_path, np.array(left_coords + right_coords), np.array(fore_back), 'base')
     
-        cv2.imwrite('sam_mask.jpg', mask)
-    mask = keep_largest_connected_component('sam_mask.jpg')
-    cv2.imwrite('sam_mask.jpg', mask)
-    # cv2.imwrite('sam_img.jpg', img)
-    
+        cv2.imwrite('temp_images/sam_mask.jpg', mask)
+    mask = keep_largest_connected_component('temp_images/sam_mask.jpg')
+    cv2.imwrite('temp_images/sam_mask.jpg', mask)
+
+    # mask post-processing    
     new_edge_detector = EdgeDetector()
-    mask = cv2.imread('sam_mask.jpg')
+    mask = cv2.imread('temp_images/sam_mask.jpg')
     img_dilated = new_edge_detector.dilate_to_line(mask, 5)
-    cv2.imwrite("dilated_sam.jpg", img_dilated)
-    img_dilated = fillHoles('dilated_sam.jpg')
-    cv2.imwrite("filledHoles.jpg", img_dilated)
+    cv2.imwrite("temp_images/dilated_sam.jpg", img_dilated)
+    img_dilated = fillHoles('temp_images/dilated_sam.jpg')
+    cv2.imwrite("temp_images/filledHoles.jpg", img_dilated)
     
-    # threshold
+    # threshold to feed into skeletonize
     binary_image = np.where(img_dilated > 0, 1, 0)
     skeleton = skeletonize(binary_image)
 
-    np.save('binary_skeleton.npy', skeleton)
+    np.save('temp_images/binary_skeleton.npy', skeleton)
 
     plt.imshow(skeleton)
     if viz:
         plt.show()
 
-    plt.imsave('skeleton_sam.jpg', skeleton)
+    plt.imsave('temp_images/skeleton_sam.jpg', skeleton)
 
     # order points 
     ordered_points = get_pt_ordering(skeleton)
@@ -114,14 +118,15 @@ def img_to_line(img_path, box_method, viz=False):
     ax1.imshow(numpydata)
     ax1.title.set_text("Original")
 
-    filled_holes = Image.open("sam_mask.jpg")
+    filled_holes = Image.open("temp_images/sam_mask.jpg")
     numpydata = np.asarray(filled_holes)
     ax2.imshow(numpydata)
     ax2.title.set_text("SAM Mask")
     fig.tight_layout()
 
     # plot the image, dilation, skeleton
-    plt.savefig('experimentation/point_results/chicken_result_left1.jpg', dpi=1200)
+    if save_figs:
+        plt.savefig('experimentation/point_results/chicken_result_left1.jpg', dpi=1200)
 
     # now, order the points
 
@@ -143,6 +148,7 @@ def line_to_spline(line, img_path, mm_per_pixel):
     exact_tck, u = inter.splprep([[pt[0] for pt in line], [pt[1] for pt in line]], k=3, s=0)
     exact_wound_parametric = lambda t, d: inter.splev(t, exact_tck, der = d)
 
+    # from our ordered set of points, what fraction we pick: we will pick 1 in every sample_ratio points
     sample_ratio = 30
 
     sampled_pts = [line[i * sample_ratio] for i in range(len(line) // sample_ratio)] + [line[-1]]
@@ -164,8 +170,6 @@ def line_to_spline(line, img_path, mm_per_pixel):
         smoothed_spline_pts.append(smoothed_wound_parametric(t_step, 0))
     
 
-
-
     img = Image.open(img_path)
     img_np = np.asarray(img)
     plt.imshow(img_np)
@@ -184,12 +188,10 @@ def line_to_spline(line, img_path, mm_per_pixel):
 
     return sampled_spline_pts, sampled_tck
 
-
-
 if __name__ == "__main__":
     
     box_method = True
-    img_path = 'chicken_images/image_left_00.png'
+    img_path = 'chicken_images/image_left_001.png'
 
     line = img_to_line(img_path, box_method, viz=True)
 

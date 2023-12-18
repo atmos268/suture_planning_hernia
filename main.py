@@ -75,23 +75,17 @@ def suture_placing_pipeline(sample_spline=None, image=None):
     tck, u = inter.splprep([x, y], k=deg)
     wound_parametric = lambda t, d: inter.splev(t, tck, der = d)
 
-    def wound(x):
-        pnts = inter.splev(x, tck)
-        return pnts
-
     # Put the wound into all the relevant objects
     newSuturePlacer = SuturePlacer(wound_width, mm_per_pixel)
-    newSuturePlacer.wound = wound
     newSuturePlacer.tck = tck
-    newSuturePlacer.DistanceCalculator.wound = wound
     newSuturePlacer.DistanceCalculator.tck = tck
 
-    
     newSuturePlacer.wound_parametric = wound_parametric
     newSuturePlacer.DistanceCalculator.wound_parametric = wound_parametric
     newSuturePlacer.RewardFunction.wound_parametric = wound_parametric
 
     newSuturePlacer.image = image
+    
     # The main algorithm
     newSuturePlacer.place_sutures(sample_spline)
     return newSuturePlacer
