@@ -202,13 +202,13 @@ class DistanceCalculator():
         for i in range(500):
             t = min(wound_point_t) + (max(wound_point_t) - min(wound_point_t))*i/500
             temp = self.wound_parametric(t, 0)
-            X_.append(temp[0])
-            Y_.append(-temp[1])
+            X_.append(temp[1])
+            Y_.append(-temp[0])
         
         plt.plot(X_, Y_)
-        plt.scatter([insert_pts[i][0] for i in range(num_pts)], [-insert_pts[i][1] for i in range(num_pts)], c="red", s = 5)
-        plt.scatter([extract_pts[i][0] for i in range(num_pts)], [-extract_pts[i][1] for i in range(num_pts)], c="blue", s = 5)
-        plt.scatter([center_pts[i][0] for i in range(num_pts)], [-center_pts[i][1] for i in range(num_pts)], c="green", s = 5)
+        plt.scatter([insert_pts[i][1] for i in range(num_pts)], [-insert_pts[i][0] for i in range(num_pts)], c="red", s = 5)
+        plt.scatter([extract_pts[i][1] for i in range(num_pts)], [-extract_pts[i][0] for i in range(num_pts)], c="blue", s = 5)
+        plt.scatter([center_pts[i][1] for i in range(num_pts)], [-center_pts[i][0] for i in range(num_pts)], c="green", s = 5)
 
 
         if plot_closure or plot_shear:
@@ -223,11 +223,11 @@ class DistanceCalculator():
             wcp_ys = self.suturePlacer.RewardFunction.wcp_ys
 
             ax = plt.gca()
-            plt.scatter(wcp_xs, [-y for y in wcp_ys], c=force_to_plot, cmap='viridis', marker='o', s=8)
+            plt.scatter(wcp_ys, [pt * -1 for pt in wcp_xs], c=force_to_plot, cmap='viridis', marker='o', s=8)
             plt.colorbar()
         else:
             for i in range(len(insert_pts)):
-                plt.plot([insert_pts[i][0], extract_pts[i][0]], [-insert_pts[i][1], -extract_pts[i][1]], color = 'k')
+                plt.plot([insert_pts[i][1], extract_pts[i][1]], [-insert_pts[i][0], -extract_pts[i][0]], color = 'k')
 
         plt.axis('square')
         plt.title(title_plot)
