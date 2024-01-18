@@ -99,14 +99,15 @@ int main(int argc, char*argv[])
     std::ofstream f ("out_af.off");
     int num_vertices = output_mesh.num_vertices();
     std::cout << num_vertices << std::endl;
-    std::array<num_vertices> adjacency_list;
+    // TODO: build up adjacency list
+    // std::array<num_vertices> adjacency_list;
     for(vertex_descriptor vd : output_mesh.vertices()){
-      std::vector<int, 3> neighboring_vertices;
-      // std::cout << output_mesh.point(vd) << std::endl;
-      // std::cout << "vertices around vertex " << vd << ": " << output_mesh.point(vd) << std::endl;
+      // std::vector<int, 3> neighboring_vertices;
+      std::cout << output_mesh.point(vd) << std::endl;
+      std::cout << "vertices around vertex " << vd << ": " << output_mesh.point(vd) << std::endl;
       CGAL::Vertex_around_target_circulator<CGAL::Surface_mesh<Point_3>> vbegin(output_mesh.halfedge(vd),output_mesh), done(vbegin);
       do {
-        // std::cout << *vbegin++ << ": " << output_mesh.point(*vbegin) << std::endl;
+        std::cout << *vbegin++ << ": " << output_mesh.point(*vbegin) << std::endl;
       } while(vbegin != done);
     }
 
