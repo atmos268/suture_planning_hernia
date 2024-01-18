@@ -1,4 +1,5 @@
 # utils
+import math
 # mallika's code for point clicking
 import matplotlib.pyplot as plt
 
@@ -17,3 +18,16 @@ def click_points_simple(img):
     cid = fig.canvas.mpl_connect('button_press_event', onclick)
     plt.show()
     return left_coords,right_coords
+
+# gets the euclidian distance from any two points in any dimension
+def euclidean_dist(pt1, pt2):
+    if len(pt1) != len(pt2):
+        raise IndexError("Mismatched size of points to compare")
+    
+    total = 0
+
+    for i in range(len(pt1)):
+        total += (pt1[i] - pt2[i]) ** 2
+    
+    return math.sqrt(total)
+
