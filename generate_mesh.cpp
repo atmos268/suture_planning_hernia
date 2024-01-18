@@ -24,6 +24,8 @@ typedef Kernel::Point_3 Point_3;
 typedef Kernel::Vector_3 Vector_3;
 typedef Kernel::Sphere_3 Sphere_3;
 typedef CGAL::Point_set_3<Point_3, Vector_3> Point_set;
+typedef CGAL::Surface_mesh<Point_3>::Vertex_index vertex_descriptor;
+
 int main(int argc, char*argv[])
 {
   // class to store our points
@@ -92,8 +94,24 @@ int main(int argc, char*argv[])
     vertices.reserve (points.size());
     std::copy (points.points().begin(), points.points().end(), std::back_inserter (vertices));
     CGAL::Surface_mesh<Point_3> output_mesh;
+    // identify vertices
     CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh (vertices, facets, output_mesh);
     std::ofstream f ("out_af.off");
+    int num_vertices = output_mesh.num_vertices();
+    std::cout << num_vertices << std::endl;
+    std::array<num_vertices> adjacency_list;
+    for(vertex_descriptor vd : output_mesh.vertices()){
+      std::vector<int, 3> neighboring_vertices;
+      // std::cout << output_mesh.point(vd) << std::endl;
+      // std::cout << "vertices around vertex " << vd << ": " << output_mesh.point(vd) << std::endl;
+      CGAL::Vertex_around_target_circulator<CGAL::Surface_mesh<Point_3>> vbegin(output_mesh.halfedge(vd),output_mesh), done(vbegin);
+      do {
+        // std::cout << *vbegin++ << ": " << output_mesh.point(*vbegin) << std::endl;
+      } while(vbegin != done);
+    }
+
+    // build up an adjacency list
+
     f << output_mesh;
     f.close ();
   }
