@@ -15,7 +15,9 @@
 #include <CGAL/Polygon_mesh_processing/polygon_soup_to_polygon_mesh.h>
 #include <cstdlib>
 #include <vector>
+#include <iostream>
 #include <fstream>
+using namespace std;
 
 // types
 typedef CGAL::Exact_predicates_inexact_constructions_kernel Kernel;
@@ -98,20 +100,29 @@ int main(int argc, char*argv[])
     CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh (vertices, facets, output_mesh);
     std::ofstream f ("out_af.off");
     int num_vertices = output_mesh.num_vertices();
+    ofstream adj_matrix_file;
+    ofstream vertex_lookup_file;
+    // build up an adjacency list
+    adj_matrix_file.open ("adjacency_matrix.txt");
+    vertex_lookup_file.open ("vertex_lookup.txt");
     std::cout << num_vertices << std::endl;
-    // TODO: build up adjacency list
-    // std::array<num_vertices> adjacency_list;
+
     for(vertex_descriptor vd : output_mesh.vertices()){
-      // std::vector<int, 3> neighboring_vertices;
+      adj_matrix_file << vd << '\n';
+      vertex_lookup_file << vd << ' ';
+      vertex_lookup_file << output_mesh.point(vd);
       std::cout << output_mesh.point(vd) << std::endl;
       std::cout << "vertices around vertex " << vd << ": " << output_mesh.point(vd) << std::endl;
       CGAL::Vertex_around_target_circulator<CGAL::Surface_mesh<Point_3>> vbegin(output_mesh.halfedge(vd),output_mesh), done(vbegin);
       do {
         std::cout << *vbegin++ << ": " << output_mesh.point(*vbegin) << std::endl;
+        adj_matrix_file << *vbegin << '\n';
       } while(vbegin != done);
+      adj_matrix_file << '\n';
+      vertex_lookup_file << '\n';
     }
-
-    // build up an adjacency list
+    adj_matrix_file.close();
+    vertex_lookup_file.close();
 
     f << output_mesh;
     f.close ();
