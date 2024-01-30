@@ -51,6 +51,25 @@ ax.scatter3D(x_vals, y_vals, z_vals)
 plt.title("test surface")
 # plt.show()
 
+def get_plane_estimation(indices, ep):
+    # get grid of ep x ep around area
+    x_lims = [max(indices[0] - ep//2, 0), min(indices[0] + ep//2)]
+    y_lims = [max(indices[1] - ep//2, 0), min(indices[1] + ep//2)]
+
+    local_area = points[x_lims[0]: x_lims[1]][y_lims[0]: y_lims[1]]
+
+    # now, make the plane approximation
+
+    data = np.ones((len(x_lims) * len(y_lims), 4))
+    for i in x_lims:
+        for j in y_lims:
+            data[i * len(x_lims) + j][:-1] = local_area[i][j]
+
+    coeffs = np.linalg.lstsq(data, np.zeros(len(x_lims) * len(y_lims)))
+
+    # we worked out ax + bx + cx + d = 0
+    return coeffs
+
 def get_position(indices):
     return points[indices[0]][indices[1]]
 
@@ -122,7 +141,25 @@ while queue:
 
 # print final list
 print(final_path)
-print(final_len)
+print("path length: ", final_len)
+start_pt = final_path[0]
+end_pt = final_path[-1]
+euc_dist = math.sqrt((start_pt[0] - end_pt[0])** 2 + (start_pt[1] - end_pt[1]) ** 2)
+print("euclidean distance: ", euc_dist)
+
+start_plane = get_plane_estimation(final_path[0])
+end_plane = get_plane_estimation(final_path[-1])
+
+# project the start vector onto the start plane
+
+# locally work out the direction of the wound (use spline fitting + smoothing)
+
+# project the wound direction vecton onto the start and end planes
+
+# for the 'project' method, take the original vector and directly project onto the end plane
+
+# for the 'angle from path' method, take the wound line vector and the force vector, project and find angle
+# then, project the wound line vector onto the end plane, sweep the same angle out. 
 
 coords_list = [get_position(idx) for idx in final_path]
 coords_x = [coord[0] for coord in coords_list]
