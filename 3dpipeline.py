@@ -12,7 +12,7 @@ from utils import get_mm_per_pixel
 
 if __name__ == "__main__":
     
-    box_method = False
+    box_method = True
     save_figs = True
     file_name = 'image_left_001.png'
     img_path = 'chicken_images/' + file_name
