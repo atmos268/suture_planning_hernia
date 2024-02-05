@@ -15,13 +15,9 @@
 #include <CGAL/Polygon_mesh_processing/polygon_soup_to_polygon_mesh.h>
 #include <cstdlib>
 #include <vector>
-<<<<<<< HEAD
 #include <iostream>
 #include <fstream>
 using namespace std;
-=======
-#include <fstream>
->>>>>>> 6bb2e7a (add CGAL mesh functionality)
 
 // types
 typedef CGAL::Exact_predicates_inexact_constructions_kernel Kernel;
@@ -30,11 +26,8 @@ typedef Kernel::Point_3 Point_3;
 typedef Kernel::Vector_3 Vector_3;
 typedef Kernel::Sphere_3 Sphere_3;
 typedef CGAL::Point_set_3<Point_3, Vector_3> Point_set;
-<<<<<<< HEAD
 typedef CGAL::Surface_mesh<Point_3>::Vertex_index vertex_descriptor;
 
-=======
->>>>>>> 6bb2e7a (add CGAL mesh functionality)
 int main(int argc, char*argv[])
 {
   // class to store our points
@@ -103,7 +96,6 @@ int main(int argc, char*argv[])
     vertices.reserve (points.size());
     std::copy (points.points().begin(), points.points().end(), std::back_inserter (vertices));
     CGAL::Surface_mesh<Point_3> output_mesh;
-<<<<<<< HEAD
     // identify vertices
     CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh (vertices, facets, output_mesh);
     std::ofstream f ("out_af.off");
@@ -132,10 +124,6 @@ int main(int argc, char*argv[])
     adj_matrix_file.close();
     vertex_lookup_file.close();
 
-=======
-    CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh (vertices, facets, output_mesh);
-    std::ofstream f ("out_af.off");
->>>>>>> 6bb2e7a (add CGAL mesh functionality)
     f << output_mesh;
     f.close ();
   }
