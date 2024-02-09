@@ -67,7 +67,7 @@ def get_plane_estimation(indices, ep):
 
     coeffs = np.linalg.lstsq(data, np.zeros(len(x_lims) * len(y_lims)))
 
-    # we worked out ax + bx + cx + d = 0
+    # we worked out ax + bx + cx + d = 0 ### TODO: DON'T YOU MEAN ax + by + cz + d = 0 ?
     return coeffs
 
 def get_position(indices):
@@ -139,6 +139,93 @@ while queue:
         heappush(queue, (new_cost + heuristic, next(c), neighbor, new_cost, popped_pt))
     
 
+def project_vector_onto_plane(vector, plane_normal):
+
+    plane_normal_normalized = plane_normal / np.linalg.norm(plane_normal)
+    projection_onto_normal = np.dot(vector, plane_normal_normalized) * plane_normal_normalized
+    projection_onto_plane = vector - projection_onto_normal
+    return projection_onto_plane
+
+
+
+def compute_felt_force(mesh, shortest_path, insertion_pt, wound_pt, insertion_force_vec, ellipse_ecc, points_to_sample, ep, force_decay=1):
+    insertion_plane = get_plane_estimation(insertion_pt, ep)
+    wound_plane = get_plane_estimation(wound_pt, ep)
+
+    # Get the normal vectors from the coefficients (i.e. drop the constant term)
+    insertion_plane_normal = insertion_plane[0:3]
+    wound_plane_normal = wound_plane[0:3]
+
+    # Normalize the normal vectors of the plane
+    insertion_plane_normal = insertion_plane_normal / np.linalg.norm(insertion_plane_normal)
+    wound_plane_normal = wound_plane_normal / np.linalg.norm(wound_plane_normal)
+
+    insertion_vec_proj = project_vector_onto_plane(insertion_force_vec, insertion_plane_normal)
+    insertion_vertex = insertion_pt #TODO: GET THE VERTEX FROM THE MESH
+    wound_vertex = wound_pt #TODO: GET THE VERTEX FROM THE MESH
+    #TODO: GET SHORTEST PATH FROM MESH
+    
+    # Calculate distances between consecutive points
+    distances = np.sqrt(np.sum(np.diff(shortest_path, axis=0)**2, axis=1))
+
+    # Calculate cumulative distance
+    cumulative_distance = np.insert(np.cumsum(distances), 0, 0)
+
+    # Normalize t to range from 0 to 1
+    t = cumulative_distance / cumulative_distance[-1]
+
+
+    # FIT SPLINE TO SHORTEST PATH
+    x = shortest_path[:][0]
+    y = shortest_path[:][1]
+    z = shortest_path[:][2]
+    s_factor = len(x)  # A starting point for the smoothing factor; adjust based on noise level
+    x_smooth = UnivariateSpline(t, x, s=s_factor)
+    y_smooth = UnivariateSpline(t, y, s=s_factor)
+    z_smooth = UnivariateSpline(t, z, s=s_factor)
+    # GET DERIVATIVES OF SPLINE AT insertion_vertex AND wound_vertex
+    x_smooth_deriv = x_smooth.derivative()
+    y_smooth_deriv = y_smooth.derivative()
+    z_smooth_deriv = z_smooth.derivative()
+    dx_start = x_smooth_deriv(0)
+    dy_start = y_smooth_deriv(0)
+    dz_start = z_smooth_deriv(0)
+    dx_end = x_smooth_deriv(1)
+    dy_end = y_smooth_deriv(1)
+    dz_end = z_smooth_deriv(1)
+
+    # Calculate the length of the spline
+    spline_length = np.trapz(np.sqrt(x_smooth_deriv(t)**2 + y_smooth_deriv(t)**2 + z_smooth_deriv(t)**2), t)
+
+    # put together the path vectors at the insertion and wound points
+    insertion_path_vec = np.array([dx_start, dy_start, dz_start])
+    wound_path_vec = np.array([dx_end, dy_end, dz_end])    
+
+    insertion_path_vec_proj = project_vector_onto_plane(insertion_path_vec, insertion_plane_normal)
+    wound_path_vec_proj = project_vector_onto_plane(wound_path_vec, wound_plane_normal)
+    insertion_path_vec_proj_normalized = insertion_path_vec_proj / np.linalg.norm(insertion_path_vec_proj)
+    wound_path_vec_proj_normalized = wound_path_vec_proj / np.linalg.norm(wound_path_vec_proj)
+    insertion_force =  np.linalg.norm(insertion_force_vec)
+    force_angle = np.arccos(np.dot(insertion_path_vec_proj_normalized, insertion_force_vec) / (np.linalg.norm(insertion_path_vec_proj_normalized) * insertion_force))
+    wound_force = insertion_force - force_decay * spline_length * np.sqrt((np.sin(force_angle) / ellipse_ecc) ** 2 + (np.cos(force_angle)) ** 2)
+    wound_force = max(0, wound_force)
+
+    # wound_direction is the direction of the wound on the plane wound_plane from wound_path_vec_proj_normalized by angle force_angle
+    wound_cross_prod = np.cross(wound_plane_normal, wound_path_vec_proj_normalized)
+    wound_direction = np.cos(force_angle) * wound_path_vec_proj_normalized + np.sin(force_angle) * wound_cross_prod
+
+    wound_force_vec = wound_force * wound_direction
+
+    return wound_force_vec
+
+
+
+
+
+
+
+
+
 # print final list
 print(final_path)
 print("path length: ", final_len)
@@ -149,6 +236,8 @@ print("euclidean distance: ", euc_dist)
 
 start_plane = get_plane_estimation(final_path[0])
 end_plane = get_plane_estimation(final_path[-1])
+
+
 
 # project the start vector onto the start plane
 
