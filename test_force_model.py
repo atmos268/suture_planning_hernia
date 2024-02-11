@@ -78,8 +78,22 @@ def plane_estimation_new(mesh, indices, box_size):
 
     # now, make the plane approximation
 
-    
 
+def get_plane_estimation_chatgpt(indices, points, ep=20, verbose=1):
+    x_lims = [max(indices[0] - ep//2, 0), min(indices[0] + ep//2, points.shape[0])]
+    y_lims = [max(indices[1] - ep//2, 0), min(indices[1] + ep//2, points.shape[1])]
+
+    local_area = points[x_lims[0]:x_lims[1], y_lims[0]:y_lims[1]].reshape(-1, 3)
+
+    A = np.column_stack((local_area[:, 0], local_area[:, 1], np.ones_like(local_area[:, 0])))
+    b = local_area[:, 2]
+
+    coeffs, residuals, rank, s = np.linalg.lstsq(A, b, rcond=None)
+    
+    normal = [coeffs[0], coeffs[1], -1]
+    d = coeffs[2]  # Distance from origin
+
+    return normal
 
 
 
@@ -218,16 +232,18 @@ def get_path_xyz(mesh,path):
     return path_xyz
 
 def compute_felt_force(mesh, shortest_path, insertion_pt, wound_pt, insertion_force_vec, ellipse_ecc, points_to_sample, ep, force_decay=1, verbose=10):
-    insertion_plane = get_plane_estimation(insertion_pt)
-    wound_plane = get_plane_estimation(wound_pt)
+    points_array = np.array(points)
+    
+    insertion_plane = get_plane_estimation_chatgpt(insertion_pt, points_array)
+    wound_plane = get_plane_estimation_chatgpt(wound_pt, points_array)
 
     if verbose > 0:
         print("insertion plane: ", insertion_plane)
         #print("wound plane: ", wound_plane)
 
     # Get the normal vectors from the coefficients (i.e. drop the constant term)
-    insertion_plane_normal = insertion_plane[0:3]
-    wound_plane_normal = wound_plane[0:3]
+    insertion_plane_normal = insertion_plane
+    wound_plane_normal = wound_plane
 
     insertion_plane_normal = insertion_plane_normal / np.linalg.norm(insertion_plane_normal)
     wound_plane_normal = wound_plane_normal / np.linalg.norm(wound_plane_normal)
@@ -237,8 +253,8 @@ def compute_felt_force(mesh, shortest_path, insertion_pt, wound_pt, insertion_fo
         print("norm of insertion plane normal:", np.linalg.norm(insertion_plane_normal))
 
     # Normalize the normal vectors of the plane
-    insertion_plane_normal = insertion_plane_normal / np.linalg.norm(insertion_plane_normal)
-    wound_plane_normal = wound_plane_normal / np.linalg.norm(wound_plane_normal)
+    # insertion_plane_normal = insertion_plane_normal / np.linalg.norm(insertion_plane_normal)
+    # wound_plane_normal = wound_plane_normal / np.linalg.norm(wound_plane_normal)
 
     insertion_vec_proj = project_vector_onto_plane(insertion_force_vec, insertion_plane_normal)
     insertion_vertex = insertion_pt #TODO: GET THE VERTEX FROM THE MESH
@@ -413,7 +429,13 @@ print(final_path)
 print("path length: ", final_len)
 start_pt = final_path[0]
 end_pt = final_path[-1]
-euc_dist = math.sqrt((start_pt[0] - end_pt[0])** 2 + (start_pt[1] - end_pt[1]) ** 2)
+
+start_pt_xyz = get_position(start_pt)
+end_pt_xyz = get_position(end_pt)
+
+print("start pt: ", start_pt)
+print("end pt: ", end_pt)
+euc_dist = math.sqrt((start_pt_xyz[0] - end_pt_xyz[0])** 2 + (start_pt_xyz[1] - end_pt_xyz[1]) ** 2)
 print("euclidean distance: ", euc_dist)
 
 start_plane = get_plane_estimation(final_path[0])
