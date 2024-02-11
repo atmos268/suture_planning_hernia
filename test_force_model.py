@@ -51,32 +51,6 @@ if False:
     ax.scatter3D(x_vals, y_vals, z_vals)
     plt.title("test surface")
 # plt.show()
-    
-
-def plane_estimation_new(mesh, indices, box_size):
-    # mesh is a 2D array of 3D points (model_size x model_size x 3)
-    # indices is the point to estimate the plane around
-    # box_size is the size of the box to estimate the plane around
-
-    # method returns the coefficients of the plane ax + by + cz + d = 0
-    # c = -1 always
-
-    # get grid of box_size x box_size around area
-    x_lims = [max(indices[0] - box_size//2, 0), min(indices[0] + box_size//2, model_size)]
-    y_lims = [max(indices[1] - box_size//2, 0), min(indices[1] + box_size//2, model_size)]
-
-    x_range = list(range(x_lims[0], x_lims[1]))
-    y_range = list(range(y_lims[0], y_lims[1]))
-
-    points_to_use = []
-
-    for i in range(x_lims[0], x_lims[1]):
-        for j in range(y_lims[0], y_lims[1]):
-            points_to_use.append(mesh[i][j])
-
-    points_to_use = np.array(points_to_use)
-
-    # now, make the plane approximation
 
 
 def get_plane_estimation_chatgpt(indices, points, ep=20, verbose=1):
@@ -95,57 +69,6 @@ def get_plane_estimation_chatgpt(indices, points, ep=20, verbose=1):
 
     return normal
 
-
-
-
-def get_plane_estimation(indices, ep=20, verbose=1):
-    # get grid of ep x ep around area
-    x_lims = [max(indices[0] - ep//2, 0), min(indices[0] + ep//2, model_size)]
-    y_lims = [max(indices[1] - ep//2, 0), min(indices[1] + ep//2, model_size)]
-
-    if verbose > 0:
-        print("x_lims: ", x_lims)
-        print("y_lims: ", y_lims)
-
-    x_range = list(range(x_lims[0], x_lims[1]))
-    y_range = list(range(y_lims[0], y_lims[1]))
-
-    #local_area = points[x_lims[0]: x_lims[1]][y_lims[0]: y_lims[1]]
-    local_area = []
-
-    for i in range(x_lims[0], x_lims[1]):
-        for j in range(y_lims[0], y_lims[1]):
-            local_area.append(points[i][j])
-
-    if verbose > 0:
-        print("Checking local_area size: ", len(local_area), len(x_range) * len(y_range))
-
-    local_area = np.array(local_area)
-    # append a 1 to each entry of local_area
-    # local_area = np.c_[local_area, np.ones(len(x_range) * len(y_range))]
-
-    if verbose > 0:
-        print("local area dims: ", local_area.shape)
-
-    # now, make the plane approximation
-
-    if False:
-        data = np.ones((len(x_range) * len(y_range), 4))
-        for i in range(len(x_range)):
-            for j in range(len(y_range)):
-                data[i * len(x_range) + j][:-1] = local_area[i][j]
-
-    A = np.vstack([local_area[0], local_area[1], np.ones(len(local_area[0]))])
-    b = local_area[2]
-
-    coeffs, residuals, rank, s = np.linalg.lstsq(A, b)   # gives z = ax + by + c
-    # therefore, ax + by - z + c = 0
-    # therefore the normal is [a, b, -1]
-
-    to_return = [coeffs[0], coeffs[1], -1, coeffs[2]]
-
-    # worked out  z = ax + by + c  ---> 0 = ax + by - z + c
-    return to_return
 
 def get_position(indices):
     return points[indices[0]][indices[1]]
