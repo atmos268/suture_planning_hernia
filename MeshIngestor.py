@@ -1,5 +1,6 @@
 import networkx as nx
 from scipy.spatial import cKDTree
+import random
 
 class MeshIngestor:
     # the idea of this class is that, given a file path, it will generate the python dictionary object
@@ -81,7 +82,9 @@ class MeshIngestor:
         not vertices, we start and and at vertices closest to the indicated points. The 
         format is a list of the vertex indices
         """
-        start_vtx, end_vtx = self.get_nearest_point(start_pt), self.get_nearest_point(end_pt)
+
+        # get_nearest_point returns distance, point, hence we access pt[1]
+        start_vtx, end_vtx = self.get_nearest_point(start_pt)[1], self.get_nearest_point(end_pt)[1]
 
         # run networkx a*
         return nx.astar_path(self.graph, start_vtx, end_vtx)
@@ -107,3 +110,22 @@ if __name__ == '__main__':
     print("Nearest Neighbor:", nearest_neighbor_index)
     print("Nearest Neighbor Location:", mesh.vertex_coordinates[nearest_neighbor_index])
     print("Distance:", nearest_neighbor_distance)
+
+    # get a random point
+    rand_idx = random.randrange(0, len(mesh.vertex_coordinates))
+    rand_pt = mesh.get_point_location(rand_idx)
+    print(rand_idx, rand_pt)
+    nn_dists, nn_pts = mesh.get_nearest_k_points(rand_pt, 10)
+    print(nn_dists, nn_pts)
+
+    # test astar
+    rand_start_pt = mesh.get_point_location(random.randrange(0, len(mesh.vertex_coordinates)))
+    rand_end_pt = mesh.get_point_location(random.randrange(0, len(mesh.vertex_coordinates)))
+
+    astar_path = mesh.get_a_star_path(rand_start_pt, rand_end_pt)
+
+    print(astar_path[:10])
+
+
+
+
