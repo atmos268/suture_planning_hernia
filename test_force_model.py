@@ -7,10 +7,9 @@ import matplotlib.pyplot as plt
 import random
 from heapq import heappop, heappush
 from itertools import count
+from MeshIngestor import MeshIngestor
 
 from utils import euclidean_dist
-
-model_size = 40 # even number plz
 
 def get_neighbors(x, y, size):
 
@@ -27,32 +26,6 @@ def get_neighbors(x, y, size):
 def surface(x, y):
     return 0.05 * x ** 2 + 3 * math.sin(0.1 * x + 0.2 * y) + 2
      
-
-x_vals = []
-y_vals = []
-z_vals = []
-
-points = [[0 for i in range(model_size)] for j in range(model_size)]
-
-for x_idx, x in enumerate(range(-model_size//2, model_size//2)):
-    for y_idx, y in enumerate(range(-model_size//2, model_size//2)):
-        x_ep = (random.randrange(10) - 5) / 10
-        y_ep = (random.randrange(10) - 5) / 10
-        z_ep = (random.randrange(10) - 5) / 40
-        x_vals.append(x + x_ep)
-        y_vals.append(y + y_ep)
-        z_vals.append(surface(x, y) + z_ep)
-
-        points[x_idx][y_idx] = (x + x_ep, y + y_ep, surface(x, y) + z_ep)
-
-if False:
-    fig = plt.figure()
-    ax = plt.axes(projection='3d')
-    ax.scatter3D(x_vals, y_vals, z_vals)
-    plt.title("test surface")
-# plt.show()
-
-
 def get_plane_estimation_chatgpt(indices, points, ep=20, verbose=1):
     x_lims = [max(indices[0] - ep//2, 0), min(indices[0] + ep//2, points.shape[0])]
     y_lims = [max(indices[1] - ep//2, 0), min(indices[1] + ep//2, points.shape[1])]
@@ -73,71 +46,131 @@ def get_plane_estimation_chatgpt(indices, points, ep=20, verbose=1):
 def get_position(indices):
     return points[indices[0]][indices[1]]
 
-# implement an a* search to get an accurate measure of path distance
 
-# pick two points to do the search from one to the other
+model_size = 40 # even number plz
 
-pt1 = (2, 5)
-pt2 = (21, 34)
+x_vals = []
+y_vals = []
+z_vals = []
 
-# now, do a*
-c = count()
-queue = [(0, next(c), pt1, 0, None)]
+points = [[0 for i in range(model_size)] for j in range(model_size)]
+
+for x_idx, x in enumerate(range(-model_size//2, model_size//2)):
+    for y_idx, y in enumerate(range(-model_size//2, model_size//2)):
+        x_ep = (random.randrange(10) - 5) / 10
+        y_ep = (random.randrange(10) - 5) / 10
+        z_ep = (random.randrange(10) - 5) / 40
+        x_vals.append(x + x_ep)
+        y_vals.append(y + y_ep)
+        z_vals.append(surface(x, y) + z_ep)
+
+        points[x_idx][y_idx] = (x + x_ep, y + y_ep, surface(x, y) + z_ep)
+
+def test_synthetic_mesh(vis=False):
+
+    model_size = 40 # even number plz
+
+    x_vals = []
+    y_vals = []
+    z_vals = []
+
+    points = [[0 for i in range(model_size)] for j in range(model_size)]
+
+    for x_idx, x in enumerate(range(-model_size//2, model_size//2)):
+        for y_idx, y in enumerate(range(-model_size//2, model_size//2)):
+            x_ep = (random.randrange(10) - 5) / 10
+            y_ep = (random.randrange(10) - 5) / 10
+            z_ep = (random.randrange(10) - 5) / 40
+            x_vals.append(x + x_ep)
+            y_vals.append(y + y_ep)
+            z_vals.append(surface(x, y) + z_ep)
+
+            points[x_idx][y_idx] = (x + x_ep, y + y_ep, surface(x, y) + z_ep)
+
+    if vis:
+        fig = plt.figure()
+        ax = plt.axes(projection='3d')
+        ax.scatter3D(x_vals, y_vals, z_vals)
+        plt.title("test surface")
+        plt.show()
+
+    # implement an a* search to get an accurate measure of path distance
+    # pick two points to do the search from one to the other
+
+    pt1 = (2, 5)
+    pt2 = (21, 34)
+
+    # now, do a*
+    c = count()
+    queue = [(0, next(c), pt1, 0, None)]
 
 
-# credit: astar.py in Networks package
-enqueued = {}
-explored = {}
+    # credit: astar.py in Networks package
+    enqueued = {}
+    explored = {}
 
-final_path = []
-final_len = 0
+    final_path = []
+    final_len = 0
 
-while queue:
-    priority, _,  popped_pt, curr_dist, parent = heappop(queue)
+    while queue:
+        priority, _,  popped_pt, curr_dist, parent = heappop(queue)
 
-    if popped_pt == pt2:
-        path = [popped_pt]
-        node = parent
-        while node is not None:
-            path.append(node)
-            node = explored[node]
-        path.reverse()
-        final_path = path
-        final_len = priority
-        break
+        if popped_pt == pt2:
+            path = [popped_pt]
+            node = parent
+            while node is not None:
+                path.append(node)
+                node = explored[node]
+            path.reverse()
+            final_path = path
+            final_len = priority
+            break
 
-    if popped_pt in explored:
-        # Do not override the parent of starting node
-        if explored[popped_pt] is None:
-            continue
-
-        # Skip bad paths that were enqueued before finding a better one
-        qcost, heuristic = enqueued[popped_pt]
-        if qcost < curr_dist:
-            continue
-
-    explored[popped_pt] = parent
-
-    # enqueue neighbors unexplored and unqueue with relevant priority
-    neighbors = get_neighbors(popped_pt[0], popped_pt[1], model_size)
-
-    for neighbor in neighbors:
-        step_dist = euclidean_dist(get_position(popped_pt), get_position(neighbor))
-
-        new_cost = curr_dist + step_dist
-
-        if neighbor in enqueued:
-            queue_cost, heuristic = enqueued[neighbor]
-
-            if queue_cost <= new_cost:
+        if popped_pt in explored:
+            # Do not override the parent of starting node
+            if explored[popped_pt] is None:
                 continue
 
-        else:
-            heuristic = euclidean_dist(get_position(pt2), get_position(neighbor))
+            # Skip bad paths that were enqueued before finding a better one
+            qcost, heuristic = enqueued[popped_pt]
+            if qcost < curr_dist:
+                continue
 
-        enqueued[neighbor] = new_cost, heuristic
-        heappush(queue, (new_cost + heuristic, next(c), neighbor, new_cost, popped_pt))
-    
+        explored[popped_pt] = parent
+
+        # enqueue neighbors unexplored and unqueue with relevant priority
+        neighbors = get_neighbors(popped_pt[0], popped_pt[1], model_size)
+
+        for neighbor in neighbors:
+            step_dist = euclidean_dist(get_position(popped_pt), get_position(neighbor))
+
+            new_cost = curr_dist + step_dist
+
+            if neighbor in enqueued:
+                queue_cost, heuristic = enqueued[neighbor]
+
+                if queue_cost <= new_cost:
+                    continue
+
+            else:
+                heuristic = euclidean_dist(get_position(pt2), get_position(neighbor))
+
+            enqueued[neighbor] = new_cost, heuristic
+            heappush(queue, (new_cost + heuristic, next(c), neighbor, new_cost, popped_pt))
+        
+    # print final list
+    print(final_path)
+    print("path length: ", final_len)
+    start_pt = final_path[0]
+    end_pt = final_path[-1]
+
+    start_pt_xyz = get_position(start_pt)
+    end_pt_xyz = get_position(end_pt)
+
+    print("start pt: ", start_pt)
+    print("end pt: ", end_pt)
+    euc_dist = math.sqrt((start_pt_xyz[0] - end_pt_xyz[0])** 2 + (start_pt_xyz[1] - end_pt_xyz[1]) ** 2)
+    print("euclidean distance: ", euc_dist)
 
 def project_vector_onto_plane(vector, plane_normal):
 
@@ -346,53 +379,53 @@ def plot_mesh_path_and_spline(mesh, path, spline, normals, spline_segments=100):
     
     plt.show()
 
+def get_plane_estimation(pt, mesh):
+    pass
 
-# print final list
-print(final_path)
-print("path length: ", final_len)
-start_pt = final_path[0]
-end_pt = final_path[-1]
+def test_real_mesh(vis = False):
 
-start_pt_xyz = get_position(start_pt)
-end_pt_xyz = get_position(end_pt)
+    # Specify the path to your text file
+    adj_path = 'adjacency_matrix.txt'
+    loc_path = 'vertex_lookup.txt'
 
-print("start pt: ", start_pt)
-print("end pt: ", end_pt)
-euc_dist = math.sqrt((start_pt_xyz[0] - end_pt_xyz[0])** 2 + (start_pt_xyz[1] - end_pt_xyz[1]) ** 2)
-print("euclidean distance: ", euc_dist)
+    mesh = MeshIngestor(adj_path, loc_path)
 
-start_plane = get_plane_estimation(final_path[0])
-end_plane = get_plane_estimation(final_path[-1])
+    # Create the graph
+    mesh.generate_mesh()
 
-print("start plane: ", start_plane)
-print("end plane: ", end_plane)
+    start_plane = get_plane_estimation(final_path[0], mesh)
+    end_plane = get_plane_estimation(final_path[-1], mesh)
+
+    print("start plane: ", start_plane)
+    print("end plane: ", end_plane)
+
+    # project the start vector onto the start plane
+
+    # locally work out the direction of the wound (use spline fitting + smoothing)
+
+    # project the wound direction vecton onto the start and end planes
+
+    # for the 'project' method, take the original vector and directly project onto the end plane
+
+    # for the 'angle from path' method, take the wound line vector and the force vector, project and find angle
+    # then, project the wound line vector onto the end plane, sweep the same angle out. 
+
+    coords_list = [get_position(idx) for idx in final_path]
+    coords_x = [coord[0] for coord in coords_list]
+    coords_y = [coord[1] for coord in coords_list]
+    coords_z = [coord[2] for coord in coords_list]
+
+    if False:
+        plt.plot(coords_x, coords_y, coords_z, color='red')
+        plt.show()
+
+    force_vec = generate_random_force_vector()
+    print("force vector: ", force_vec)
+
+    # now, compute the felt force
+    # compute_felt_force(mesh, shortest_path, insertion_pt, wound_pt, insertion_force_vec, ellipse_ecc, points_to_sample, ep, force_decay=1, verbose=1)
+    felt_force = compute_felt_force(points, final_path, start_pt, end_pt, force_vec, 2, 10, 10)
+    print("felt force: ", felt_force)
 
 
 
-# project the start vector onto the start plane
-
-# locally work out the direction of the wound (use spline fitting + smoothing)
-
-# project the wound direction vecton onto the start and end planes
-
-# for the 'project' method, take the original vector and directly project onto the end plane
-
-# for the 'angle from path' method, take the wound line vector and the force vector, project and find angle
-# then, project the wound line vector onto the end plane, sweep the same angle out. 
-
-coords_list = [get_position(idx) for idx in final_path]
-coords_x = [coord[0] for coord in coords_list]
-coords_y = [coord[1] for coord in coords_list]
-coords_z = [coord[2] for coord in coords_list]
-
-if False:
-    plt.plot(coords_x, coords_y, coords_z, color='red')
-    plt.show()
-
-force_vec = generate_random_force_vector()
-print("force vector: ", force_vec)
-
-# now, compute the felt force
-# compute_felt_force(mesh, shortest_path, insertion_pt, wound_pt, insertion_force_vec, ellipse_ecc, points_to_sample, ep, force_decay=1, verbose=1)
-felt_force = compute_felt_force(points, final_path, start_pt, end_pt, force_vec, 2, 10, 10)
-print("felt force: ", felt_force)
