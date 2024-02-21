@@ -42,6 +42,25 @@ def get_plane_estimation_chatgpt(indices, points, ep=20, verbose=1):
 
     return normal
 
+def get_plane_estimation(mesh, pt, num_nearest=20):
+    _, local_area = mesh.get_nearest_k_points(pt, num_nearest)
+
+    #convert to xyz
+    local_xyz = [mesh.get_point_location(pt_idx) for pt_idx in local_area]
+
+    sep_xyz = [[pt[0] for pt in local_xyz], [pt[1] for pt in local_xyz], [pt[2] for pt in local_xyz]]
+
+
+    A = np.column_stack((sep_xyz[0], sep_xyz[1], np.ones_like(sep_xyz[0])))
+    b = sep_xyz[2]
+
+    coeffs, residuals, rank, s = np.linalg.lstsq(A, b, rcond=None)
+    
+    normal = [coeffs[0], coeffs[1], -1]
+    d = coeffs[2]  # Distance from origin
+
+    return normal
+
 
 def get_position(indices):
     return points[indices[0]][indices[1]]
@@ -187,11 +206,13 @@ def get_path_xyz(mesh,path):
     path_xyz = np.array(path_xyz)
     return path_xyz
 
-def compute_felt_force(mesh, shortest_path, insertion_pt, wound_pt, insertion_force_vec, ellipse_ecc, points_to_sample, ep, force_decay=1, verbose=10):
-    points_array = np.array(points)
+def compute_felt_force(mesh, insertion_pt, wound_pt, insertion_force_vec, ellipse_ecc, points_to_sample, ep, force_decay=1, verbose=10):
     
-    insertion_plane = get_plane_estimation_chatgpt(insertion_pt, points_array)
-    wound_plane = get_plane_estimation_chatgpt(wound_pt, points_array)
+    # insertion_plane = get_plane_estimation_chatgpt(insertion_pt, points_array)
+    # wound_plane = get_plane_estimation_chatgpt(wound_pt, points_array)
+
+    insertion_plane = get_plane_estimation(mesh, insertion_pt)
+    wound_plane = get_plane_estimation(mesh, wound_pt)
 
     if verbose > 0:
         print("insertion plane: ", insertion_plane)
@@ -212,13 +233,15 @@ def compute_felt_force(mesh, shortest_path, insertion_pt, wound_pt, insertion_fo
     # insertion_plane_normal = insertion_plane_normal / np.linalg.norm(insertion_plane_normal)
     # wound_plane_normal = wound_plane_normal / np.linalg.norm(wound_plane_normal)
 
-    insertion_vec_proj = project_vector_onto_plane(insertion_force_vec, insertion_plane_normal)
-    insertion_vertex = insertion_pt #TODO: GET THE VERTEX FROM THE MESH
-    wound_vertex = wound_pt #TODO: GET THE VERTEX FROM THE MESH
-    #TODO: GET SHORTEST PATH FROM MESH
+    # insertion_vec_proj = project_vector_onto_plane(insertion_force_vec, insertion_plane_normal)
+    # insertion_vertex = insertion_pt #TODO: GET THE VERTEX FROM THE MESH
+    # wound_vertex = wound_pt #TODO: GET THE VERTEX FROM THE MESH
+        
+    shortest_path = mesh.get_a_star_path(insertion_pt, wound_pt)
+    shortest_path_xyz = np.array([mesh.get_point_location(pt_idx) for pt_idx in shortest_path])
     
     # Calculate distances between consecutive points
-    distances = np.sqrt(np.sum(np.diff(shortest_path, axis=0)**2, axis=1))
+    distances = np.sqrt(np.sum(np.diff(shortest_path_xyz, axis=0)**2, axis=1))
 
     # Calculate cumulative distance
     cumulative_distance = np.insert(np.cumsum(distances), 0, 0)
@@ -226,15 +249,10 @@ def compute_felt_force(mesh, shortest_path, insertion_pt, wound_pt, insertion_fo
     # Normalize t to range from 0 to 1
     t = cumulative_distance / cumulative_distance[-1]
 
-    shortest_path_xyz = get_path_xyz(mesh,shortest_path)
-
-    print(shortest_path_xyz)
-
     # FIT SPLINE TO SHORTEST PATH
     x = shortest_path_xyz[:, 0] # x-coordinates of the shortest path
     y = shortest_path_xyz[:, 1]
     z = shortest_path_xyz[:, 2]
-
 
     print(t,x)
     print(len(t), len(x))
@@ -288,10 +306,6 @@ def compute_felt_force(mesh, shortest_path, insertion_pt, wound_pt, insertion_fo
 
     normals = [insertion_plane_normal, wound_plane_normal]
 
-    if verbose > 1:
-        spline = [x_smooth, y_smooth, z_smooth]
-        plot_mesh_path_and_spline(points, shortest_path, spline, normals)
-
     insertion_force =  np.linalg.norm(insertion_force_vec)
     force_angle = np.arccos(np.dot(insertion_path_vec_proj_normalized, insertion_force_vec) / (np.linalg.norm(insertion_path_vec_proj_normalized) * insertion_force))
     wound_force = insertion_force - force_decay * spline_length * np.sqrt((np.sin(force_angle) / ellipse_ecc) ** 2 + (np.cos(force_angle)) ** 2)
@@ -303,6 +317,12 @@ def compute_felt_force(mesh, shortest_path, insertion_pt, wound_pt, insertion_fo
 
     wound_force_vec = wound_force * wound_direction
 
+
+    if verbose > 1:
+        # TODO: Fix plotting
+        spline = [x_smooth, y_smooth, z_smooth]
+        plot_mesh_path_and_spline(mesh, shortest_path, spline, normals, insertion_force_vec, wound_force_vec)
+
     return wound_force_vec
 
 
@@ -311,18 +331,13 @@ def generate_random_force_vector():
     return np.array([random.random(), random.random(), random.random()])
 
 
-def plot_mesh_path_and_spline(mesh, path, spline, normals, spline_segments=100):
+def plot_mesh_path_and_spline(mesh, path, spline, normals, insertion_force_vec, wound_force_vec,spline_segments=100):
     fig = plt.figure()
     ax = plt.axes(projection='3d')
-    ax.scatter3D(x_vals, y_vals, z_vals)
-    plt.title("test surface")
+    plt.title("Mesh and Spline")
 
-    coords_list = [get_position(idx) for idx in path]
-    coords_x = [coord[0] for coord in coords_list]
-    coords_y = [coord[1] for coord in coords_list]
-    coords_z = [coord[2] for coord in coords_list]
-
-    plt.plot(coords_x, coords_y, coords_z, color='red')
+    mesh_coords = mesh.vertex_coordinates
+    ax.scatter3D(mesh_coords[::5, 0], mesh_coords[::5, 1], mesh_coords[::5, 2], color='red', alpha=0.01)
 
 
     spline_x = spline[0]
@@ -365,8 +380,8 @@ def plot_mesh_path_and_spline(mesh, path, spline, normals, spline_segments=100):
     spline_end_direc_y = 15 * spline_end_direc_y / spline_end_direc_magnitude
     spline_end_direc_z = 15 * spline_end_direc_z / spline_end_direc_magnitude
 
-    plt.quiver(coords_x[0], coords_y[0], coords_z[0], spline_start_direc_x, spline_start_direc_y, spline_start_direc_z, color='purple')
-    plt.quiver(coords_x[-1], coords_y[-1], coords_z[-1], spline_end_direc_x, spline_end_direc_y, spline_end_direc_z, color='purple')
+    plt.quiver(spline_coords_x[0], spline_coords_y[0], spline_coords_z[0], spline_start_direc_x, spline_start_direc_y, spline_start_direc_z, color='purple', normalize=True, length=0.01)
+    plt.quiver(spline_coords_x[-1], spline_coords_y[-1], spline_coords_z[-1], spline_end_direc_x, spline_end_direc_y, spline_end_direc_z, color='purple', normalize=True, length=0.01)
 
     start_plane_normal = normals[0]
     end_plane_normal = normals[1]
@@ -374,13 +389,14 @@ def plot_mesh_path_and_spline(mesh, path, spline, normals, spline_segments=100):
     start_plane_normal = 15 * start_plane_normal
     end_plane_normal = 15 * end_plane_normal
 
-    plt.quiver(coords_x[0], coords_y[0], coords_z[0], start_plane_normal[0], start_plane_normal[1], start_plane_normal[2], color='orange')
-    plt.quiver(coords_x[-1], coords_y[-1], coords_z[-1], end_plane_normal[0], end_plane_normal[1], end_plane_normal[2], color='orange')
+    # plt.quiver(spline_coords_x[0], spline_coords_y[0], spline_coords_z[0], start_plane_normal[0], start_plane_normal[1], start_plane_normal[2], color='orange', length=0.01)
+    # plt.quiver(spline_coords_x[-1], spline_coords_y[-1], spline_coords_z[-1], end_plane_normal[0], end_plane_normal[1], end_plane_normal[2], color='orange', length=0.01)
     
-    plt.show()
+    # plot the insertion and wound forces
+    plt.quiver(spline_coords_x[0], spline_coords_y[0], spline_coords_z[0], insertion_force_vec[0], insertion_force_vec[1], insertion_force_vec[2], color='orange', normalize=True, length=0.01)
+    plt.quiver(spline_coords_x[-1], spline_coords_y[-1], spline_coords_z[-1], wound_force_vec[0], wound_force_vec[1], wound_force_vec[2], color='orange', normalize=True, length=0.01)
 
-def get_plane_estimation(pt, mesh):
-    pass
+    plt.show()
 
 def test_real_mesh(vis = False):
 
@@ -393,39 +409,18 @@ def test_real_mesh(vis = False):
     # Create the graph
     mesh.generate_mesh()
 
-    start_plane = get_plane_estimation(final_path[0], mesh)
-    end_plane = get_plane_estimation(final_path[-1], mesh)
-
-    print("start plane: ", start_plane)
-    print("end plane: ", end_plane)
-
-    # project the start vector onto the start plane
-
-    # locally work out the direction of the wound (use spline fitting + smoothing)
-
-    # project the wound direction vecton onto the start and end planes
-
-    # for the 'project' method, take the original vector and directly project onto the end plane
-
-    # for the 'angle from path' method, take the wound line vector and the force vector, project and find angle
-    # then, project the wound line vector onto the end plane, sweep the same angle out. 
-
-    coords_list = [get_position(idx) for idx in final_path]
-    coords_x = [coord[0] for coord in coords_list]
-    coords_y = [coord[1] for coord in coords_list]
-    coords_z = [coord[2] for coord in coords_list]
-
-    if False:
-        plt.plot(coords_x, coords_y, coords_z, color='red')
-        plt.show()
+    # pick two random points for testing purposes
+    rand_start_pt = mesh.get_point_location(random.randrange(0, len(mesh.vertex_coordinates)))
+    rand_wound_pt = mesh.get_point_location(random.randrange(0, len(mesh.vertex_coordinates)))
 
     force_vec = generate_random_force_vector()
     print("force vector: ", force_vec)
 
     # now, compute the felt force
     # compute_felt_force(mesh, shortest_path, insertion_pt, wound_pt, insertion_force_vec, ellipse_ecc, points_to_sample, ep, force_decay=1, verbose=1)
-    felt_force = compute_felt_force(points, final_path, start_pt, end_pt, force_vec, 2, 10, 10)
+    
+    felt_force = compute_felt_force(mesh, rand_start_pt, rand_wound_pt, force_vec, 2, 10, 10, verbose=10)
     print("felt force: ", felt_force)
 
-
-
+if __name__ == '__main__':
+    test_real_mesh()
