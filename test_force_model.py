@@ -422,5 +422,5 @@ def test_real_mesh(vis = False):
     felt_force = compute_felt_force(mesh, rand_start_pt, rand_wound_pt, force_vec, 2, 10, 10, verbose=10)
     print("felt force: ", felt_force)
 
-if __name__ == '__main__':
-    test_real_mesh()
+# if __name__ == '__main__':
+#     test_real_mesh()
