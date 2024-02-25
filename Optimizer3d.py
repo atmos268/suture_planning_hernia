@@ -18,6 +18,21 @@ class Optimizer3d:
         self.spline = spline
         self.suture_width = suture_width 
         self.suture_placement = None
+
+    def calculate_spline_length(self, spline, mesh):
+        spline_x, spline_y, spline_z = spline[0], spline[1], spline[2]
+        start = [spline_x(0), spline_y(0), spline_z(0)]
+        end = [spline_x(1), spline_y(1), spline_z(1)]
+        shortest_path = mesh.get_a_star_path(start, end)
+        shortest_path_xyz = np.array([mesh.get_point_location(pt_idx) for pt_idx in shortest_path])
+        
+        # Calculate distances between consecutive points
+        distances = np.sqrt(np.sum(np.diff(shortest_path_xyz, axis=0)**2, axis=1))
+
+        # Calculate cumulative distance
+        cumulative_distance = np.insert(np.cumsum(distances), 0, 0)
+        print("Spline length", cumulative_distance[-1])
+        return cumulative_distance[-1]
     
     def generate_inital_placement(self, mesh, spline):
         """
@@ -28,7 +43,9 @@ class Optimizer3d:
 
         returns a SuturePlacement3d object with spline and points
         """
-        num_sutures_initial = 5 #TODO: modify later based on spline length
+        spline_length = self.calculate_spline_length(spline, mesh)
+        num_sutures_initial = int(spline_length / (self.suture_width * 3)) #TODO: modify later 
+        print("Num sutures initial", num_sutures_initial)
         points_t_initial = np.linspace(0, 1, int(num_sutures_initial))
         return self.generate_placement(mesh, spline, points_t_initial)
         
@@ -98,7 +115,7 @@ class Optimizer3d:
         plt.title("Mesh and Spline")
 
         mesh_coords = mesh.vertex_coordinates
-        #ax.scatter3D(mesh_coords[::5, 0], mesh_coords[::5, 1], mesh_coords[::5, 2], color='red', alpha=0.01)
+        ax.scatter3D(mesh_coords[::5, 0], mesh_coords[::5, 1], mesh_coords[::5, 2], color='red', alpha=0.01)
 
 
         spline_x = spline[0]
@@ -116,7 +133,7 @@ class Optimizer3d:
 
         ax.plot(spline_coords_x, spline_coords_y, spline_coords_z, color='green')
         ax.scatter([suturePlacement3d.insertion_pts[i][0] for i in range(num_pts)], [suturePlacement3d.insertion_pts[i][1] for i in range(num_pts)], [suturePlacement3d.insertion_pts[i][2] for i in range(num_pts)], c="black", s=5)
-        ax.scatter([suturePlacement3d.center_pts[i][0] for i in range(num_pts)], [suturePlacement3d.center_pts[i][1] for i in range(num_pts)], [suturePlacement3d.center_pts[i][2] for i in range(num_pts)], c="red", s=5)
+        ax.scatter([suturePlacement3d.center_pts[i][0] for i in range(num_pts)], [suturePlacement3d.center_pts[i][1] for i in range(num_pts)], [suturePlacement3d.center_pts[i][2] for i in range(num_pts)], c="blue", s=5)
         ax.scatter([suturePlacement3d.extraction_pts[i][0] for i in range(num_pts)], [suturePlacement3d.extraction_pts[i][1] for i in range(num_pts)], [suturePlacement3d.extraction_pts[i][2] for i in range(num_pts)], c="purple", s=5)
        
         # ax.quiver([normal_vectors[i][0] + suturePlacement3d.center_pts[i][0] for i in range(num_pts)], [normal_vectors[i][1] + suturePlacement3d.center_pts[i][1] for i in range(num_pts)], [normal_vectors[i][2] + suturePlacement3d.center_pts[i][2] for i in range(num_pts)], [normal_vectors[i][0] for i in range(num_pts)], [normal_vectors[i][1] for i in range(num_pts)], [normal_vectors[i][2] for i in range(num_pts)])
@@ -166,8 +183,9 @@ if __name__ == '__main__':
     mesh.generate_mesh()
 
     # pick two random points for testing purposes
-    #num1, num2 = random.randrange(0, len(mesh.vertex_coordinates)), random.randrange(0, len(mesh.vertex_coordinates))
-    num1, num2 = 21695, 8695
+    num1, num2 = random.randrange(0, len(mesh.vertex_coordinates)), random.randrange(0, len(mesh.vertex_coordinates))
+    #num1, num2 = 21695, 8695
+    #num1, num2 = 20000, 18000
     rand_start_pt = mesh.get_point_location(num1)
     rand_wound_pt = mesh.get_point_location(num2)
     print("hello")
@@ -190,17 +208,15 @@ if __name__ == '__main__':
     y = shortest_path_xyz[:, 1]
     z = shortest_path_xyz[:, 2]
 
-    print(t,x)
-    print(len(t), len(x))
-
     s_factor = len(x)/5.0 # A starting point for the smoothing factor; adjust based on noise level
     #s_factor = 0.1
     x_smooth = inter.UnivariateSpline(t, x, s=s_factor)
     y_smooth = inter.UnivariateSpline(t, y, s=s_factor)
     z_smooth = inter.UnivariateSpline(t, z, s=s_factor)
     spline = [x_smooth, y_smooth, z_smooth]
-    optim3d = Optimizer3d(mesh, spline, 0.002)
+    suture_width = 0.002# 0.002 
+    optim3d = Optimizer3d(mesh, spline, suture_width)
     suturePlacement3d, normal_vectors, derivative_vectors = optim3d.generate_inital_placement(mesh, spline)
-    print("Normal vector", normal_vectors)
+    #print("Normal vector", normal_vectors)
     optim3d.plot_mesh_path_and_spline(mesh, spline, suturePlacement3d, normal_vectors, derivative_vectors)
 
