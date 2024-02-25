@@ -326,6 +326,82 @@ def compute_felt_force(mesh, insertion_pt, wound_pt, insertion_force_vec, ellips
     return wound_force_vec
 
 
+def compute_total_force(mesh, suture_pts, suture_force_vecs, wound_pt, ellipse_ecc, points_to_sample, ep, force_decay=1, verbose=0):
+    total_force = np.array([0, 0, 0])
+    for i in range(len(suture_pts)):
+        insertion_pt = suture_pts[i]
+        insertion_force_vec = suture_force_vecs[i]
+        if np.linalg.norm(insertion_pt, wound_pt) <= 1/force_decay:   #TODO: double check the distance
+            felt_force = compute_felt_force(mesh, insertion_pt, wound_pt, insertion_force_vec, ellipse_ecc, points_to_sample, ep, force_decay, verbose)
+            total_force += felt_force
+
+    return total_force
+
+def compute_closure_shear_force(mesh, insertion_pts, extraction_pts, wound_pt, wound_derivative, ellipse_ecc, points_to_sample, ep, force_decay=1, verbose=0):
+
+    force_vecs = extraction_pts - insertion_pts
+
+    wound_plane = get_plane_estimation(mesh, wound_pt)
+    wound_derivative_proj = project_vector_onto_plane(wound_derivative, wound_plane)
+    wound_derivative_proj = wound_derivative_proj / np.linalg.norm(wound_derivative_proj)
+
+    wound_line_normal = np.cross(wound_derivative_proj, wound_plane)
+    if verbose > 0:
+        print("sanity check: magnitude of wound line normal (should be equal to 1): ", np.linalg.norm(wound_line_normal))
+    wound_line_normal = wound_line_normal / np.linalg.norm(wound_line_normal)
+
+    total_insertion_force = compute_total_force(mesh, insertion_pts, force_vecs, wound_pt, ellipse_ecc, points_to_sample, ep, force_decay, verbose)
+    total_extraction_force = compute_total_force(mesh, extraction_pts, -force_vecs, wound_pt, ellipse_ecc, points_to_sample, ep, force_decay, verbose)
+
+    insertion_closure_force = np.dot(total_insertion_force, wound_line_normal)
+    extraction_closure_force = np.dot(total_extraction_force, wound_line_normal)
+
+    closure_force = np.abs(insertion_closure_force - extraction_closure_force)
+
+    insertion_shear_force = np.dot(total_insertion_force, wound_derivative_proj)
+    extraction_shear_force = np.dot(total_extraction_force, wound_derivative_proj)
+
+    shear_force = np.abs(insertion_shear_force - extraction_shear_force)
+
+    return closure_force, shear_force
+
+
+def compute_closure_shear_loss(mesh, insertion_pts, extraction_pts, wound_spline, granularity, ellipse_ecc, points_to_sample, ep, force_decay=1, closure_force_ideal=1, verbose=0):
+    # granularity is the number of points to sample on the wound spline
+    # TODO: step-out function inside here (i.e. get wound_suture_pts, then compute insertion_pts and extraction_pts from that)
+
+    x_spline = wound_spline[0]
+    y_spline = wound_spline[1]
+    z_spline = wound_spline[2]
+
+    t = np.linspace(0, 1, granularity)
+
+    dx_spline = x_spline.derivative()
+    dy_spline = y_spline.derivative()
+    dz_spline = z_spline.derivative()
+
+    closure_loss = 0
+    shear_loss = 0
+
+    for i in range(granularity):
+        x = x_spline(t[i])
+        y = y_spline(t[i])
+        z = z_spline(t[i])
+
+        dx = dx_spline(t[i])
+        dy = dy_spline(t[i])
+        dz = dz_spline(t[i])
+
+        wound_pt = np.array([x, y, z])
+        wound_derivative = np.array([dx, dy, dz])
+
+        closure_force, shear_force = compute_closure_shear_force(mesh, insertion_pts, extraction_pts, wound_pt, wound_derivative, ellipse_ecc, points_to_sample, ep, force_decay, verbose)
+
+        closure_loss += (closure_force - closure_force_ideal)**2/granularity
+        shear_loss += shear_force**2/granularity
+
+    return closure_loss, shear_loss
+
 
 def generate_random_force_vector():
     return np.array([random.random(), random.random(), random.random()])
@@ -337,7 +413,7 @@ def plot_mesh_path_and_spline(mesh, path, spline, normals, insertion_force_vec, 
     plt.title("Mesh and Spline")
 
     mesh_coords = mesh.vertex_coordinates
-    ax.scatter3D(mesh_coords[::5, 0], mesh_coords[::5, 1], mesh_coords[::5, 2], color='red', alpha=0.01)
+    ax.scatter3D(mesh_coords[::5, 0], mesh_coords[::5, 1], mesh_coords[::5, 2], color='red', alpha=0.1)
 
 
     spline_x = spline[0]

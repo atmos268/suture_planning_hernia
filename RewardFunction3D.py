@@ -3,15 +3,17 @@ import math
 import numpy as np
 import numpy.linalg as LA
 
-class RewardFunction():
-    def __init__(self, wound_width, SuturePlacer):
+class RewardFunction3D():
+    def __init__(self, wound_width, mesh, SuturePlacer3D):
         self.insert_dists = []
         self.center_dists = []
         self.extract_dists = []
         self.wound_parametric = None
         self.suture_points = None
         self.wound_points = None
-        self.SuturePlacer = SuturePlacer
+
+        # It just imports parameters from SuturePlacer3D
+        self.SuturePlacer3D = SuturePlacer3D
 
         # Closure Force
         self.closure_forces = None
