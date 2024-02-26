@@ -4,6 +4,7 @@ from MeshIngestor import MeshIngestor
 from test_force_model import get_plane_estimation, project_vector_onto_plane
 import scipy.interpolate as inter
 import random
+import scipy.optimize as optim
 import matplotlib.pyplot as plt
 class Optimizer3d:
     """
@@ -139,13 +140,34 @@ class Optimizer3d:
         # ax.quiver([normal_vectors[i][0] + suturePlacement3d.center_pts[i][0] for i in range(num_pts)], [normal_vectors[i][1] + suturePlacement3d.center_pts[i][1] for i in range(num_pts)], [normal_vectors[i][2] + suturePlacement3d.center_pts[i][2] for i in range(num_pts)], [normal_vectors[i][0] for i in range(num_pts)], [normal_vectors[i][1] for i in range(num_pts)], [normal_vectors[i][2] for i in range(num_pts)])
         # ax.quiver([derivative_vectors[i][0] + suturePlacement3d.center_pts[i][0] for i in range(num_pts)], [derivative_vectors[i][1] + suturePlacement3d.center_pts[i][1] for i in range(num_pts)], [derivative_vectors[i][2] + suturePlacement3d.center_pts[i][2] for i in range(num_pts)], [derivative_vectors[i][0] for i in range(num_pts)], [derivative_vectors[i][1] for i in range(num_pts)], [derivative_vectors[i][2] for i in range(num_pts)], color="red")
         
-        
-
-
-
         plt.show()
 
+    def optimize(self, placement):
 
+        # extract the current info from the placement object
+        insert_dists, center_dists, extract_dists, insert_pts, center_pts, extract_pts = self.DistanceCalculator.calculate_distances(wound_points)
+        self.RewardFunction.insert_dists = insert_dists
+        self.RewardFunction.center_dists = center_dists
+        self.RewardFunction.extract_dists = extract_dists
+
+        # set up all of the losses
+
+        # set up all of the constraints
+        self.Constraints.wound_points = wound_points
+        
+        def jac(t):
+            return optim.approx_fprime(t, final_loss)
+
+        # def final_loss(t):
+        #     self.RewardFunction.insert_dists, self.RewardFunction.center_dists, self.RewardFunction.extract_dists, insert_pts, center_pts, extract_pts = self.DistanceCalculator.calculate_distances(t)    
+        #     self.RewardFunction.wound_points = t
+        #     self.RewardFunction.suture_points = list(zip(insert_pts, center_pts, extract_pts))
+        #     return self.RewardFunction.final_loss(c_lossMin=self.c_lossMin, c_lossIdeal = self.c_lossIdeal, c_lossVarCenter = self.c_lossVarCenter, c_lossVarInsExt=self.c_lossVarInsExt, c_lossClosure = self.c_lossClosure, c_lossShear = self.c_lossShear)
+
+        # run optimizer
+        result = optim.minimize(final_loss, wound_points, constraints = self.Constraints.constraints(), options={"maxiter":200}, method = 'SLSQP', tol=1e-2, jac = jac)
+        
+        return result # return the placement object
 
     def loss(mesh, placement):
         """
