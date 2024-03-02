@@ -9,6 +9,9 @@ from heapq import heappop, heappush
 from itertools import count
 from MeshIngestor import MeshIngestor
 
+from Optimizer3d import *
+from SuturePlacement3d import *
+
 from utils import euclidean_dist
 
 def get_neighbors(x, y, size):
@@ -206,7 +209,7 @@ def get_path_xyz(mesh,path):
     path_xyz = np.array(path_xyz)
     return path_xyz
 
-def compute_felt_force(mesh, insertion_pt, wound_pt, insertion_force_vec, ellipse_ecc, points_to_sample, ep, force_decay=1, verbose=10):
+def compute_felt_force(mesh, insertion_pt, wound_pt, insertion_force_vec, ellipse_ecc, points_to_sample, ep, force_decay=1, verbose=0):
     
     # insertion_plane = get_plane_estimation_chatgpt(insertion_pt, points_array)
     # wound_plane = get_plane_estimation_chatgpt(wound_pt, points_array)
@@ -327,13 +330,14 @@ def compute_felt_force(mesh, insertion_pt, wound_pt, insertion_force_vec, ellips
 
 
 def compute_total_force(mesh, suture_pts, suture_force_vecs, wound_pt, ellipse_ecc, points_to_sample, ep, force_decay=1, verbose=0):
-    total_force = np.array([0, 0, 0])
+    total_force = np.array([0.0, 0.0, 0.0])
     for i in range(len(suture_pts)):
         insertion_pt = suture_pts[i]
         insertion_force_vec = suture_force_vecs[i]
-        if np.linalg.norm(insertion_pt, wound_pt) <= 1/force_decay:   #TODO: double check the distance
+        if np.linalg.norm(insertion_pt - wound_pt) <= 1/force_decay:   #TODO: double check the distance
             felt_force = compute_felt_force(mesh, insertion_pt, wound_pt, insertion_force_vec, ellipse_ecc, points_to_sample, ep, force_decay, verbose)
-            total_force += felt_force
+            print('felt force: ', felt_force)
+            total_force = felt_force + total_force
 
     return total_force
 
@@ -498,5 +502,75 @@ def test_real_mesh(vis = False):
     felt_force = compute_felt_force(mesh, rand_start_pt, rand_wound_pt, force_vec, 2, 10, 10, verbose=10)
     print("felt force: ", felt_force)
 
+
+def test_force_loss():
+    
+    # Specify the path to your text file
+    adj_path = 'adjacency_matrix.txt'
+    loc_path = 'vertex_lookup.txt'
+
+
+    mesh = MeshIngestor(adj_path, loc_path)
+
+    # Create the graph
+    mesh.generate_mesh()
+
+    # pick two random points for testing purposes
+    num1, num2 = random.randrange(0, len(mesh.vertex_coordinates)), random.randrange(0, len(mesh.vertex_coordinates))
+    #num1, num2 = 21695, 8695
+    #num1, num2 = 20000, 18000
+    rand_start_pt = mesh.get_point_location(num1)
+    rand_wound_pt = mesh.get_point_location(num2)
+    print("hello")
+    print(num1)
+    print(num2)
+    shortest_path = mesh.get_a_star_path(rand_start_pt, rand_wound_pt)
+    shortest_path_xyz = np.array([mesh.get_point_location(pt_idx) for pt_idx in shortest_path])
+    
+    # Calculate distances between consecutive points
+    distances = np.sqrt(np.sum(np.diff(shortest_path_xyz, axis=0)**2, axis=1))
+
+    # Calculate cumulative distance
+    cumulative_distance = np.insert(np.cumsum(distances), 0, 0)
+
+    # Normalize t to range from 0 to 1
+    t = cumulative_distance / cumulative_distance[-1]
+
+    # FIT SPLINE TO SHORTEST PATH
+    x = shortest_path_xyz[:, 0] # x-coordinates of the shortest path
+    y = shortest_path_xyz[:, 1]
+    z = shortest_path_xyz[:, 2]
+
+    s_factor = len(x)/5.0 # A starting point for the smoothing factor; adjust based on noise level
+    #s_factor = 0.1
+    x_smooth = inter.UnivariateSpline(t, x, s=s_factor)
+    y_smooth = inter.UnivariateSpline(t, y, s=s_factor)
+    z_smooth = inter.UnivariateSpline(t, z, s=s_factor)
+    spline = [x_smooth, y_smooth, z_smooth]
+    suture_width = 0.002# 0.002 
+    optim3d = Optimizer3d(mesh, spline, suture_width)
+    suturePlacement3d, normal_vectors, derivative_vectors = optim3d.generate_inital_placement(mesh, spline)
+    #print("Normal vector", normal_vectors)
+    #optim3d.plot_mesh_path_and_spline(mesh, spline, suturePlacement3d, normal_vectors, derivative_vectors)
+
+    granularity = 20
+    ellipse_ecc = 2
+    points_to_sample = 100
+    ep = 20
+
+    insertion_pts = np.array(suturePlacement3d.insertion_pts)
+    extraction_pts = np.array(suturePlacement3d.extraction_pts)
+
+    closure_loss, shear_loss = compute_closure_shear_loss(mesh, insertion_pts, extraction_pts, spline, granularity, ellipse_ecc, points_to_sample, ep, force_decay=1, closure_force_ideal=1, verbose=0)
+
+    print("closure loss: ", closure_loss)
+    print("shear loss: ", shear_loss)
+
+    optim3d.plot_mesh_path_and_spline(mesh, spline, suturePlacement3d, normal_vectors, derivative_vectors)
+
+
+
+
 if __name__ == '__main__':
-    test_real_mesh()
+    #test_real_mesh()
+    test_force_loss()
