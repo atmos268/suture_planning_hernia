@@ -122,6 +122,8 @@ class Optimizer3d:
         # print("Center points", center_points)
         # print("Insertion points", insertion_points)
         # print("Extraction points", extraction_points)
+
+        self.suture_placement = placement
         return placement, normal_vectors, derivative_vectors
     
     def normalize_vector(self, vector):
@@ -760,7 +762,7 @@ if __name__ == '__main__':
 
     hyperparams = [c_ideal, gamma, c_var, c_shear, c_closure]
 
-    force_model_parameters = {'ellipse_ecc': 1.0, 'force_decay': 0.5/suture_width, 'verbose': 1, 'ideal_closure_force': None, 'imparted_force': None}
+    force_model_parameters = {'ellipse_ecc': 1.0, 'force_decay': 0.5/suture_width, 'verbose': 0, 'ideal_closure_force': None, 'imparted_force': None}
 
     optim3d = Optimizer3d(mesh, spline, suture_width, hyperparams, force_model_parameters)
     suturePlacement3d, normal_vectors, derivative_vectors = optim3d.generate_inital_placement(mesh, spline)

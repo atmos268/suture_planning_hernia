@@ -158,18 +158,19 @@ def get_transformed_points(image_path, disp_path, sam_mask):
 
     return overhead_wound_points
 
-disp_path = "RAFT/disp.npy"
+if __name__ == "__main__":
+    disp_path = "RAFT/disp.npy"
 
-img_path = "image_left_001.png"
+    img_path = "chicken_images/image_left_001.png"
 
-# get the mask, save it
-dilation = 100
-get_dilated_mask(img_path, dilation)
+    # get the mask, save it
+    dilation = 100
+    get_dilated_mask(img_path, dilation)
 
-sam_mask = cv2.imread("original_mask.jpg", cv2.IMREAD_GRAYSCALE)
-mask_pts = get_transformed_points(img_path, disp_path, sam_mask)
+    sam_mask = cv2.imread("original_mask.jpg", cv2.IMREAD_GRAYSCALE)
+    mask_pts = get_transformed_points(img_path, disp_path, sam_mask)
 
-dilated_sam_mask = cv2.imread("dilated_mask.jpg", cv2.IMREAD_GRAYSCALE)
-surrounding_pts = get_transformed_points(img_path, disp_path, dilated_sam_mask)
+    dilated_sam_mask = cv2.imread("dilated_mask.jpg", cv2.IMREAD_GRAYSCALE)
+    surrounding_pts = get_transformed_points(img_path, disp_path, dilated_sam_mask)
 
-np.save('surrounding_pts.npy', surrounding_pts)
+    np.save('surrounding_pts.npy', surrounding_pts)

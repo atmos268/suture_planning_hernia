@@ -140,7 +140,7 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
     if viz:
         plt.show()
     
-    return ordered_points
+    return ordered_points, numpydata
 
 def line_to_spline(line, img_path, mm_per_pixel):
 
@@ -193,7 +193,7 @@ if __name__ == "__main__":
     box_method = True
     img_path = 'chicken_images/image_left_001.png'
 
-    line = img_to_line(img_path, box_method, viz=True)
+    line, mask = img_to_line(img_path, box_method, viz=True)
 
     spline, tck = line_to_spline(line, img_path)
 
