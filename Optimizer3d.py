@@ -36,6 +36,9 @@ class Optimizer3d:
         if self.force_model['verbose'] > 0:
             print("Ideal closure force: ", self.force_model['ideal_closure_force'])
 
+        if self.force_model['imparted_force'] is None:
+            self.force_model['imparted_force'] = 1.0
+
 
     def calculate_spline_length(self, spline, mesh):
         spline_x, spline_y, spline_z = spline[0], spline[1], spline[2]
@@ -64,7 +67,7 @@ class Optimizer3d:
 
         new_placement = SuturePlacement3d(spline, None, None, None, None)
         spline_length = self.calculate_spline_length(spline, mesh)
-        num_sutures_initial = int(spline_length / (self.suture_width * 3)) #TODO: modify later 
+        num_sutures_initial = int(1.5 * spline_length / (self.suture_width)) #TODO: modify later 
         print("Num sutures initial", num_sutures_initial)
         points_t_initial = np.linspace(0, 1, int(num_sutures_initial))
         _, normals, derivs = self.update_placement(new_placement, mesh, spline, points_t_initial)
@@ -168,6 +171,52 @@ class Optimizer3d:
         
         plt.show()
 
+
+    def plot_mesh_path_spline_and_forces(self, mesh, spline, suturePlacement3d, wound_pt, tot_insertion_force, tot_extraction_force, spline_segments=100):
+        num_pts = len(suturePlacement3d.insertion_pts)
+        fig = plt.figure()
+        ax = plt.axes(projection='3d')
+        plt.title("Mesh and Spline")
+
+        mesh_coords = mesh.vertex_coordinates
+        ax.scatter3D(mesh_coords[::5, 0], mesh_coords[::5, 1], mesh_coords[::5, 2], color='red', alpha=0.01)
+
+
+        spline_x = spline[0]
+        spline_y = spline[1]
+        spline_z = spline[2]
+
+        spline_coords_x = []
+        spline_coords_y = []
+        spline_coords_z = []
+
+        for t in np.linspace(0, 1, spline_segments):
+            spline_coords_x.append(spline_x(t))
+            spline_coords_y.append(spline_y(t))
+            spline_coords_z.append(spline_z(t))
+
+        ax.plot(spline_coords_x, spline_coords_y, spline_coords_z, color='green')
+        ax.scatter([suturePlacement3d.insertion_pts[i][0] for i in range(num_pts)], [suturePlacement3d.insertion_pts[i][1] for i in range(num_pts)], [suturePlacement3d.insertion_pts[i][2] for i in range(num_pts)], c="green", s=10)
+        ax.scatter([suturePlacement3d.center_pts[i][0] for i in range(num_pts)], [suturePlacement3d.center_pts[i][1] for i in range(num_pts)], [suturePlacement3d.center_pts[i][2] for i in range(num_pts)], c="blue", s=5)
+        ax.scatter([suturePlacement3d.extraction_pts[i][0] for i in range(num_pts)], [suturePlacement3d.extraction_pts[i][1] for i in range(num_pts)], [suturePlacement3d.extraction_pts[i][2] for i in range(num_pts)], c="purple", s=10)
+       
+        ax.scatter(wound_pt[0], wound_pt[1], wound_pt[2], c="orange", s=5)
+
+        arrow_rescaling = 0.03
+
+        tot_insertion_force_scaled = arrow_rescaling * tot_insertion_force
+        tot_extraction_force_scaled = arrow_rescaling * tot_extraction_force
+
+        ax.quiver(wound_pt[0], wound_pt[1], wound_pt[2], tot_insertion_force_scaled[0], tot_insertion_force_scaled[1], tot_insertion_force_scaled[2], color="green")
+        ax.quiver(wound_pt[0], wound_pt[1], wound_pt[2], tot_extraction_force_scaled[0], tot_extraction_force_scaled[1], tot_extraction_force_scaled[2], color="purple")
+
+        # ax.quiver([normal_vectors[i][0] + suturePlacement3d.center_pts[i][0] for i in range(num_pts)], [normal_vectors[i][1] + suturePlacement3d.center_pts[i][1] for i in range(num_pts)], [normal_vectors[i][2] + suturePlacement3d.center_pts[i][2] for i in range(num_pts)], [normal_vectors[i][0] for i in range(num_pts)], [normal_vectors[i][1] for i in range(num_pts)], [normal_vectors[i][2] for i in range(num_pts)])
+        # ax.quiver([derivative_vectors[i][0] + suturePlacement3d.center_pts[i][0] for i in range(num_pts)], [derivative_vectors[i][1] + suturePlacement3d.center_pts[i][1] for i in range(num_pts)], [derivative_vectors[i][2] + suturePlacement3d.center_pts[i][2] for i in range(num_pts)], [derivative_vectors[i][0] for i in range(num_pts)], [derivative_vectors[i][1] for i in range(num_pts)], [derivative_vectors[i][2] for i in range(num_pts)], color="red")
+        
+        plt.show()
+
+
+
     def optimize(self, placement: SuturePlacement3d):
 
         wound_points = placement.t
@@ -228,6 +277,42 @@ class Optimizer3d:
         
         def jac(t):
             return optim.approx_fprime(t, loss)
+
+        def get_force_angle(normal_plane, force_vector, path_vector):
+            """
+            This function should calculate the angle between the force vector and the path vector in the plane normal_plane
+            IT IS IMPORTANT THAT THIS ANGLE HAVE THE RIGHT SIGN
+            """
+            
+            force_vector_proj = project_vector_onto_plane(force_vector, normal_plane)
+            path_vector_proj = project_vector_onto_plane(path_vector, normal_plane)
+
+            force_vector_proj = force_vector_proj / np.linalg.norm(force_vector_proj)
+            path_vector_proj = path_vector_proj / np.linalg.norm(path_vector_proj)
+            normal_plane_norm = normal_plane / np.linalg.norm(normal_plane)
+
+            angle_magnitude = np.arccos(np.dot(force_vector_proj, path_vector_proj))
+            
+            force_cross = np.cross(normal_plane_norm, force_vector_proj)
+            angle_sign = np.sign(np.dot(force_cross, path_vector_proj))
+
+            force_angle = angle_sign * angle_magnitude
+
+            return force_angle
+
+        def get_force_direction(normal_plane, force_angle, path_vector):
+            '''
+            normal_plane = tangent plane at the wound point (expressed via normal vector)
+            force_angle = angle between the force_vector and the path_vector in the plane normal_plane
+            path_vector = the path vector at the wound point
+            '''
+
+            path_vector_proj = project_vector_onto_plane(path_vector, normal_plane)
+            path_vector_proj = path_vector_proj / np.linalg.norm(path_vector_proj)
+
+            force_direction = np.cos(force_angle) * path_vector_proj + np.sin(force_angle) * np.cross(normal_plane, path_vector_proj)
+
+            return force_direction
 
 
         def compute_felt_force(in_ex_pt, in_ex_force_vec, point, num_nearest = 20):
@@ -314,9 +399,9 @@ class Optimizer3d:
             # Calculate the length of the spline
             ## TEST : SUBSTITUTE A* LENGTH FOR SPLINE LENGTH
             
-            spline_length = a_star_distance
+            #spline_length = a_star_distance
 
-            #spline_length = np.trapz(np.sqrt(x_smooth_deriv(t)**2 + y_smooth_deriv(t)**2 + z_smooth_deriv(t)**2), t)
+            spline_length = np.trapz(np.sqrt(x_smooth_deriv(t)**2 + y_smooth_deriv(t)**2 + z_smooth_deriv(t)**2), t)
             #if verbose > 0:
             #    print("spline length: ", spline_length)
 
@@ -347,14 +432,34 @@ class Optimizer3d:
 
             normals = [in_ex_plane_normal, wound_plane_normal]
 
-            in_ex_force =  np.linalg.norm(in_ex_force_vec)
-            force_angle = np.arccos(np.dot(in_ex_path_vec_proj_normalized, in_ex_force_vec) / (np.linalg.norm(in_ex_path_vec_proj_normalized) * in_ex_force))
-            wound_force = in_ex_force - force_decay * spline_length * np.sqrt((np.sin(force_angle) / ellipse_ecc) ** 2 + (np.cos(force_angle)) ** 2)
+            in_ex_force_vec_proj = project_vector_onto_plane(in_ex_force_vec, in_ex_plane_normal)
+            in_ex_force_vec_proj_normalized = in_ex_force_vec_proj / np.linalg.norm(in_ex_force_vec_proj)
+
+            force_angle = get_force_angle(in_ex_plane_normal, in_ex_force_vec, in_ex_path_vec)
+
+            ellipse_dist_factor = np.sqrt((np.sin(force_angle) * ellipse_ecc) ** 2 + (np.cos(force_angle)) ** 2)
+
+            wound_force = self.force_model['imparted_force'] - force_decay * spline_length * ellipse_dist_factor
+
+            if verbose > 10:
+                print('in_ex force: ', self.force_model['imparted_force'])
+                print('force decay: ', force_decay)
+                print('force angle: ', force_angle)
+                print('suture width: ', self.suture_width)
+                print('spline length: ', spline_length)
+                print('euclidean distance: ', np.linalg.norm(in_ex_pt - point))
+                print('distance on mesh path: ', a_star_distance)
+                print('ellipse eccentricity: ', ellipse_ecc)
+                print('elliptical distance compensation factor: ', ellipse_dist_factor)
+                print('wound force: ', wound_force)
+
             wound_force = max(0, wound_force)
 
             # wound_direction is the direction of the wound on the plane wound_plane from wound_path_vec_proj_normalized by angle force_angle
-            wound_cross_prod = np.cross(wound_plane_normal, wound_path_vec_proj_normalized)
-            wound_direction = np.cos(force_angle) * wound_path_vec_proj_normalized + np.sin(force_angle) * wound_cross_prod
+            #wound_cross_prod = np.cross(wound_plane_normal, wound_path_vec_proj_normalized)
+            #wound_direction = np.cos(force_angle) * wound_path_vec_proj_normalized - np.sin(force_angle) * wound_cross_prod
+
+            wound_direction = get_force_direction(wound_plane_normal, force_angle, wound_path_vec_proj_normalized)
 
             wound_force_vec = wound_force * wound_direction
 
@@ -378,13 +483,13 @@ class Optimizer3d:
             for i in range(len(in_ex_pts)):
                 in_ex_pt = in_ex_pts[i]
                 in_ex_force_vec = in_ex_force_vecs[i]
-                if np.linalg.norm(in_ex_pt - point) >= 1/self.force_model['force_decay']:   #TODO: double check the distance
+                if np.linalg.norm(in_ex_pt - point) <= 1/self.force_model['force_decay']:   #TODO: double check the distance
                     felt_force = compute_felt_force(in_ex_pt, in_ex_force_vec, point)
                     if self.force_model['verbose'] > 10:
                         print('felt force: ', felt_force)
                     total_force = felt_force + total_force
 
-            if self.force_model['verbose'] > 0:
+            if self.force_model['verbose'] > 10:
                 print('total force: ', total_force)
 
             return total_force
@@ -457,7 +562,7 @@ class Optimizer3d:
 
             shear_force = np.abs(insertion_shear_force - extraction_shear_force)
 
-            if self.force_model['verbose'] > 1:
+            if self.force_model['verbose'] > 0:
                 print("Total insertion force: ", total_insertion_force)
                 print("Total extraction force: ", total_extraction_force)
                 print("Insertion closure force: ", insertion_closure_force)
@@ -469,7 +574,33 @@ class Optimizer3d:
 
             return closure_force, shear_force
 
-        def compute_closure_shear_loss(granularity=20):
+        def plot_closure_shear_force(t, wound_derivative):
+
+            # t is location of the point on the wound (in spline parameterization)
+
+            mesh = self.mesh
+            point = np.array([self.spline[0](t), self.spline[1](t), self.spline[2](t)])
+
+            insertion_pts = np.array(placement.insertion_pts)
+            extraction_pts = np.array(placement.extraction_pts)
+
+            # forces are exerted by the suture from extraction to insertion points (and vice versa)
+            force_vecs = extraction_pts - insertion_pts
+            for i in range(len(force_vecs)):
+                force_vecs[i] = force_vecs[i] / np.linalg.norm(force_vecs[i])
+
+            #dist_to_nearest_insertion_point = np.min(np.linalg.norm(insertion_pts - point, axis=1))
+            #dist_to_nearest_extraction_point = np.min(np.linalg.norm(extraction_pts - point, axis=1))
+
+            tot_insertion_force = compute_total_force(insertion_pts, force_vecs, point)
+            tot_extraction_force = compute_total_force(extraction_pts, -force_vecs, point)
+
+            self.plot_mesh_path_spline_and_forces(mesh, spline, suturePlacement3d, point, tot_insertion_force, tot_extraction_force, spline_segments=100)
+
+
+
+
+        def compute_closure_shear_loss(granularity=5):
             # granularity is the number of points to sample on the wound spline
 
             wound_spline = self.spline
@@ -499,10 +630,15 @@ class Optimizer3d:
                 wound_pt = np.array([x, y, z])
                 wound_derivative = np.array([dx, dy, dz])
 
+                wound_derivative = wound_derivative / np.linalg.norm(wound_derivative)
+
                 closure_force, shear_force = compute_closure_shear_force(wound_pt, wound_derivative)
 
-                closure_loss += (closure_force - self.force_model['ideal_closure_force'])**2/granularity
-                shear_loss += shear_force**2/granularity
+                if self.force_model['verbose'] > 0:
+                    plot_closure_shear_force(t[i], wound_derivative)
+
+                closure_loss += ((closure_force - self.force_model['ideal_closure_force'])**2)/granularity
+                shear_loss += (shear_force**2)/granularity
 
             if self.force_model['verbose'] > 0:
                 print("Closure loss", closure_loss)
@@ -624,7 +760,7 @@ if __name__ == '__main__':
 
     hyperparams = [c_ideal, gamma, c_var, c_shear, c_closure]
 
-    force_model_parameters = {'ellipse_ecc': 1.0, 'force_decay': 0.5/suture_width, 'verbose': 1, 'ideal_closure_force': None}
+    force_model_parameters = {'ellipse_ecc': 1.0, 'force_decay': 0.5/suture_width, 'verbose': 1, 'ideal_closure_force': None, 'imparted_force': None}
 
     optim3d = Optimizer3d(mesh, spline, suture_width, hyperparams, force_model_parameters)
     suturePlacement3d, normal_vectors, derivative_vectors = optim3d.generate_inital_placement(mesh, spline)
