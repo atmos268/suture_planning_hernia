@@ -135,7 +135,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "generate_mesh;generate_mesh"
+			"value" : "generate_mesh;generate_mesh;generate_mesh;generate_mesh"
 		},
 		{
 			"name" : "CGAL_TEST_DRAW_FUNCTIONS",

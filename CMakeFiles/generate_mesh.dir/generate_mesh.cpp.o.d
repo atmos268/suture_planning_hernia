@@ -1,9 +1,13 @@
 CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o: \
 <<<<<<< HEAD
+<<<<<<< HEAD
   /Users/juliaisaac/Suture-Placement/generate_mesh.cpp \
 =======
   /Users/virajramakrishnan/Desktop/Uni/AUTOLab/Suture-Placement/generate_mesh.cpp \
 >>>>>>> 6bb2e7a (add CGAL mesh functionality)
+=======
+  /Users/virajramakrishnan/Desktop/Uni/AUTOLab/Suture-Placement/generate_mesh.cpp \
+>>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0
   /opt/homebrew/include/CGAL/Exact_predicates_inexact_constructions_kernel.h \
   /opt/homebrew/include/CGAL/Simple_cartesian.h \
   /opt/homebrew/include/CGAL/Cartesian/Cartesian_base.h \
@@ -12,6 +16,7 @@ CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o: \
   /opt/homebrew/include/boost/config/user.hpp \
   /opt/homebrew/include/boost/config/detail/select_compiler_config.hpp \
   /opt/homebrew/include/boost/config/compiler/clang.hpp \
+<<<<<<< HEAD
 <<<<<<< HEAD
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/stdint.h \
   /opt/homebrew/include/boost/config/compiler/clang_version.hpp \
@@ -83,6 +88,8 @@ CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o: \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/sys/_types/_uuid_t.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/gethostuuid.h \
 =======
+=======
+>>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/stdint.h \
   /opt/homebrew/include/boost/config/compiler/clang_version.hpp \
   /opt/homebrew/include/boost/config/detail/select_stdlib_config.hpp \
@@ -152,7 +159,10 @@ CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/sys/_types/_mode_t.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/sys/_types/_uuid_t.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/gethostuuid.h \
+<<<<<<< HEAD
 >>>>>>> 6bb2e7a (add CGAL mesh functionality)
+=======
+>>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0
   /opt/homebrew/include/boost/config/detail/suffix.hpp \
   /opt/homebrew/include/boost/config/helper_macros.hpp \
   /opt/homebrew/include/boost/config/detail/cxx_composite.hpp \
@@ -236,6 +246,7 @@ CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o: \
   /opt/homebrew/include/boost/predef/library/c/_prefix.h \
   /opt/homebrew/include/boost/predef/detail/_cassert.h \
 <<<<<<< HEAD
+<<<<<<< HEAD
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/cassert \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/assert.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/stdlib.h \
@@ -277,6 +288,8 @@ CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o: \
   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/14.0.0/include/__stddef_max_align_t.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/__nullptr \
 =======
+=======
+>>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/cassert \
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/assert.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/stdlib.h \
@@ -317,13 +330,17 @@ CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o: \
   /Library/Developer/CommandLineTools/usr/lib/clang/14.0.0/include/stddef.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/14.0.0/include/__stddef_max_align_t.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/__nullptr \
+<<<<<<< HEAD
 >>>>>>> 6bb2e7a (add CGAL mesh functionality)
+=======
+>>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0
   /opt/homebrew/include/boost/predef/library/c/uc.h \
   /opt/homebrew/include/boost/predef/library/c/vms.h \
   /opt/homebrew/include/boost/predef/library/c/zos.h \
   /opt/homebrew/include/boost/predef/library/std.h \
   /opt/homebrew/include/boost/predef/library/std/_prefix.h \
   /opt/homebrew/include/boost/predef/detail/_exception.h \
+<<<<<<< HEAD
 <<<<<<< HEAD
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/exception \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/__availability \
@@ -335,6 +352,8 @@ CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o: \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/__utility/forward.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/__utility/move.h \
 =======
+=======
+>>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/exception \
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/__availability \
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/__memory/addressof.h \
@@ -344,7 +363,10 @@ CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/type_traits \
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/__utility/forward.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/__utility/move.h \
+<<<<<<< HEAD
 >>>>>>> 6bb2e7a (add CGAL mesh functionality)
+=======
+>>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0
   /opt/homebrew/include/boost/predef/library/std/cxx.h \
   /opt/homebrew/include/boost/predef/library/std/dinkumware.h \
   /opt/homebrew/include/boost/predef/library/std/libcomo.h \
@@ -408,6 +430,7 @@ CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o: \
   /opt/homebrew/include/boost/predef/hardware/simd/ppc.h \
   /opt/homebrew/include/boost/predef/hardware/simd/ppc/versions.h \
   /opt/homebrew/include/boost/predef/version.h \
+<<<<<<< HEAD
 <<<<<<< HEAD
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/algorithm \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/__debug \
@@ -743,6 +766,8 @@ CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o: \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/iomanip \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/iostream \
 =======
+=======
+>>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/algorithm \
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/__debug \
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/iosfwd \
@@ -1076,7 +1101,10 @@ CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/__split_buffer \
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/iomanip \
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/iostream \
+<<<<<<< HEAD
 >>>>>>> 6bb2e7a (add CGAL mesh functionality)
+=======
+>>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0
   /opt/homebrew/include/CGAL/assertions.h \
   /opt/homebrew/include/CGAL/Uncertain.h \
   /opt/homebrew/include/CGAL/enum.h \
@@ -1084,6 +1112,7 @@ CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o: \
   /opt/homebrew/include/CGAL/Origin.h \
   /opt/homebrew/include/CGAL/Origin_impl.h \
   /opt/homebrew/include/CGAL/Profile_counter.h \
+<<<<<<< HEAD
 <<<<<<< HEAD
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/sstream \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/map \
@@ -1093,6 +1122,11 @@ CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/map \
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/__tree \
 >>>>>>> 6bb2e7a (add CGAL mesh functionality)
+=======
+  /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/sstream \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/map \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/__tree \
+>>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0
   /opt/homebrew/include/CGAL/disable_warnings.h \
   /opt/homebrew/include/CGAL/enable_warnings.h \
   /opt/homebrew/include/CGAL/assertions_impl.h \
@@ -1347,6 +1381,7 @@ CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o: \
   /opt/homebrew/include/CGAL/is_convertible.h \
   /opt/homebrew/include/gmpxx.h \
 <<<<<<< HEAD
+<<<<<<< HEAD
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/cfloat \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/float.h \
   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/14.0.0/include/float.h \
@@ -1355,6 +1390,8 @@ CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o: \
   /opt/homebrew/include/CGAL/Algebraic_extension_traits.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/numeric \
 =======
+=======
+>>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/cfloat \
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/float.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/14.0.0/include/float.h \
@@ -1362,7 +1399,10 @@ CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o: \
   /opt/homebrew/include/CGAL/Scalar_factor_traits.h \
   /opt/homebrew/include/CGAL/Algebraic_extension_traits.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/numeric \
+<<<<<<< HEAD
 >>>>>>> 6bb2e7a (add CGAL mesh functionality)
+=======
+>>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0
   /opt/homebrew/include/CGAL/Needs_parens_as_product.h \
   /opt/homebrew/include/CGAL/IO/io.h \
   /opt/homebrew/include/CGAL/IO/Color.h \
@@ -1370,12 +1410,17 @@ CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o: \
   /opt/homebrew/include/CGAL/utils_classes.h \
   /opt/homebrew/include/CGAL/utils.h /opt/homebrew/include/CGAL/FPU.h \
 <<<<<<< HEAD
+<<<<<<< HEAD
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/fenv.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/fenv.h \
 =======
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/fenv.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/fenv.h \
 >>>>>>> 6bb2e7a (add CGAL mesh functionality)
+=======
+  /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/fenv.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/fenv.h \
+>>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0
   /opt/homebrew/include/CGAL/test_FPU_rounding_mode_impl.h \
   /opt/homebrew/include/CGAL/float.h /opt/homebrew/include/CGAL/double.h \
   /opt/homebrew/include/CGAL/number_utils.h \
@@ -1418,12 +1463,17 @@ CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o: \
   /opt/homebrew/include/boost/cstdint.hpp \
   /opt/homebrew/include/boost/core/demangle.hpp \
 <<<<<<< HEAD
+<<<<<<< HEAD
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/cxxabi.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/__cxxabi_config.h \
 =======
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/cxxabi.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/__cxxabi_config.h \
 >>>>>>> 6bb2e7a (add CGAL mesh functionality)
+=======
+  /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/cxxabi.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/__cxxabi_config.h \
+>>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0
   /opt/homebrew/include/boost/container_hash/hash.hpp \
   /opt/homebrew/include/boost/container_hash/detail/requires_cxx11.hpp \
   /opt/homebrew/include/boost/container_hash/is_range.hpp \
@@ -1477,12 +1527,17 @@ CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o: \
   /opt/homebrew/include/boost/type_traits/add_volatile.hpp \
   /opt/homebrew/include/boost/type_traits/conjunction.hpp \
 <<<<<<< HEAD
+<<<<<<< HEAD
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/complex \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/typeindex \
 =======
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/complex \
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/typeindex \
 >>>>>>> 6bb2e7a (add CGAL mesh functionality)
+=======
+  /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/complex \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/typeindex \
+>>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0
   /opt/homebrew/include/boost/variant/detail/config.hpp \
   /opt/homebrew/include/boost/variant/variant_fwd.hpp \
   /opt/homebrew/include/boost/blank_fwd.hpp \
@@ -1733,10 +1788,14 @@ CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o: \
   /opt/homebrew/include/boost/math/special_functions/next.hpp \
   /opt/homebrew/include/boost/math/special_functions/math_fwd.hpp \
 <<<<<<< HEAD
+<<<<<<< HEAD
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/vector \
 =======
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/vector \
 >>>>>>> 6bb2e7a (add CGAL mesh functionality)
+=======
+  /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/vector \
+>>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0
   /opt/homebrew/include/boost/math/special_functions/detail/round_fwd.hpp \
   /opt/homebrew/include/boost/math/tools/config.hpp \
   /opt/homebrew/include/boost/math/tools/is_standalone.hpp \
@@ -2075,10 +2134,14 @@ CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o: \
   /opt/homebrew/include/CGAL/predicates_on_points_2.h \
   /opt/homebrew/include/CGAL/Intersections_2/Line_2_Line_2.h \
 <<<<<<< HEAD
+<<<<<<< HEAD
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/list \
 =======
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/list \
 >>>>>>> 6bb2e7a (add CGAL mesh functionality)
+=======
+  /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/list \
+>>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0
   /opt/homebrew/include/CGAL/Intersections_2/Line_2_Point_2.h \
   /opt/homebrew/include/CGAL/Intersections_2/Line_2_Ray_2.h \
   /opt/homebrew/include/CGAL/Intersections_2/Line_2_Segment_2.h \
@@ -2202,10 +2265,14 @@ CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o: \
   /opt/homebrew/include/CGAL/Intersections_3/internal/Plane_3_Tetrahedron_3_do_intersect.h \
   /opt/homebrew/include/CGAL/Intersections_3/internal/Plane_3_Tetrahedron_3_intersection.h \
 <<<<<<< HEAD
+<<<<<<< HEAD
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/set \
 =======
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/set \
 >>>>>>> 6bb2e7a (add CGAL mesh functionality)
+=======
+  /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/set \
+>>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0
   /opt/homebrew/include/CGAL/Intersections_3/Plane_3_Triangle_3.h \
   /opt/homebrew/include/CGAL/Intersections_3/internal/Plane_3_Triangle_3_intersection.h \
   /opt/homebrew/include/CGAL/Intersections_3/Point_3_Point_3.h \
@@ -2491,10 +2558,14 @@ CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o: \
   /opt/homebrew/include/boost/multiprecision/cpp_int/add_unsigned.hpp \
   /opt/homebrew/include/boost/multiprecision/cpp_int/intel_intrinsics.hpp \
 <<<<<<< HEAD
+<<<<<<< HEAD
   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/14.0.0/include/immintrin.h \
 =======
   /Library/Developer/CommandLineTools/usr/lib/clang/14.0.0/include/immintrin.h \
 >>>>>>> 6bb2e7a (add CGAL mesh functionality)
+=======
+  /Library/Developer/CommandLineTools/usr/lib/clang/14.0.0/include/immintrin.h \
+>>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0
   /opt/homebrew/include/boost/multiprecision/cpp_int/multiply.hpp \
   /opt/homebrew/include/boost/multiprecision/integer.hpp \
   /opt/homebrew/include/boost/multiprecision/detail/bitscan.hpp \
@@ -2511,10 +2582,14 @@ CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o: \
   /opt/homebrew/include/boost/multiprecision/detail/atomic.hpp \
   /opt/homebrew/include/boost/multiprecision/detail/string_helpers.hpp \
 <<<<<<< HEAD
+<<<<<<< HEAD
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/clocale \
 =======
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/clocale \
 >>>>>>> 6bb2e7a (add CGAL mesh functionality)
+=======
+  /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/clocale \
+>>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0
   /opt/homebrew/include/boost/math/special_functions/asinh.hpp \
   /opt/homebrew/include/boost/math/special_functions/sqrt1pm1.hpp \
   /opt/homebrew/include/boost/math/special_functions/log1p.hpp \
@@ -3076,6 +3151,7 @@ CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o: \
   /opt/homebrew/include/CGAL/jet_estimate_normals.h \
   /opt/homebrew/include/CGAL/Memory_sizer.h \
 <<<<<<< HEAD
+<<<<<<< HEAD
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/mach/task.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/mach/ndr.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/libkern/OSByteOrder.h \
@@ -3148,6 +3224,8 @@ CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o: \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/mach/mach_init.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/mach/mach_traps.h \
 =======
+=======
+>>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/mach/task.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/mach/ndr.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/libkern/OSByteOrder.h \
@@ -3219,7 +3297,10 @@ CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/mach_debug/lockgroup_info.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/mach/mach_init.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/mach/mach_traps.h \
+<<<<<<< HEAD
 >>>>>>> 6bb2e7a (add CGAL mesh functionality)
+=======
+>>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0
   /opt/homebrew/include/CGAL/mst_orient_normals.h \
   /opt/homebrew/include/CGAL/Index_property_map.h \
   /opt/homebrew/include/boost/graph/adjacency_list.hpp \
@@ -3797,10 +3878,14 @@ CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o: \
   /opt/homebrew/include/CGAL/Implicit_surface_3.h \
   /opt/homebrew/include/CGAL/Surface_mesher/Implicit_surface_oracle_3.h \
 <<<<<<< HEAD
+<<<<<<< HEAD
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/queue \
 =======
   /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/queue \
 >>>>>>> 6bb2e7a (add CGAL mesh functionality)
+=======
+  /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1/queue \
+>>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0
   /opt/homebrew/include/CGAL/IO/facets_in_complex_2_to_triangle_mesh.h \
   /opt/homebrew/include/CGAL/boost/graph/Euler_operations.h \
   /opt/homebrew/include/CGAL/boost/graph/helpers.h \

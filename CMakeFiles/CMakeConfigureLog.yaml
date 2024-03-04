@@ -437,6 +437,7 @@ events:
       exitCode: 0
 ...
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 ---
 events:
@@ -882,3 +883,5 @@ events:
 ...
 =======
 >>>>>>> 6bb2e7a (add CGAL mesh functionality)
+=======
+>>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0

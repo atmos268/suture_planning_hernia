@@ -1,8 +1,12 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 # Install script for directory: /Users/juliaisaac/Suture-Placement
 =======
 # Install script for directory: /Users/virajramakrishnan/Desktop/Uni/AUTOLab/Suture-Placement
 >>>>>>> 6bb2e7a (add CGAL mesh functionality)
+=======
+# Install script for directory: /Users/virajramakrishnan/Desktop/Uni/AUTOLab/Suture-Placement
+>>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -17,10 +21,14 @@ if(NOT DEFINED CMAKE_INSTALL_CONFIG_NAME)
            CMAKE_INSTALL_CONFIG_NAME "${BUILD_TYPE}")
   else()
 <<<<<<< HEAD
+<<<<<<< HEAD
     set(CMAKE_INSTALL_CONFIG_NAME "")
 =======
     set(CMAKE_INSTALL_CONFIG_NAME "Release")
 >>>>>>> 6bb2e7a (add CGAL mesh functionality)
+=======
+    set(CMAKE_INSTALL_CONFIG_NAME "Release")
+>>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0
   endif()
   message(STATUS "Install configuration: \"${CMAKE_INSTALL_CONFIG_NAME}\"")
 endif()
@@ -43,10 +51,14 @@ endif()
 # Set default install directory permissions.
 if(NOT DEFINED CMAKE_OBJDUMP)
 <<<<<<< HEAD
+<<<<<<< HEAD
   set(CMAKE_OBJDUMP "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/objdump")
 =======
   set(CMAKE_OBJDUMP "/Library/Developer/CommandLineTools/usr/bin/objdump")
 >>>>>>> 6bb2e7a (add CGAL mesh functionality)
+=======
+  set(CMAKE_OBJDUMP "/Library/Developer/CommandLineTools/usr/bin/objdump")
+>>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0
 endif()
 
 if(CMAKE_INSTALL_COMPONENT)
@@ -58,8 +70,12 @@ endif()
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
 <<<<<<< HEAD
+<<<<<<< HEAD
 file(WRITE "/Users/juliaisaac/Suture-Placement/${CMAKE_INSTALL_MANIFEST}"
 =======
 file(WRITE "/Users/virajramakrishnan/Desktop/Uni/AUTOLab/Suture-Placement/${CMAKE_INSTALL_MANIFEST}"
 >>>>>>> 6bb2e7a (add CGAL mesh functionality)
+=======
+file(WRITE "/Users/virajramakrishnan/Desktop/Uni/AUTOLab/Suture-Placement/${CMAKE_INSTALL_MANIFEST}"
+>>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
