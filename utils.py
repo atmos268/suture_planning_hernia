@@ -24,9 +24,6 @@ def get_mm_per_pixel(start_pt, end_pt, mm_indicated):
     
     pix_dist = math.sqrt((start_pt[0] - end_pt[0])**2 + (start_pt[1] - end_pt[1])**2)
     return mm_indicated / pix_dist
-<<<<<<< HEAD
-    
-=======
     
 # gets the euclidian distance from any two points in any dimension
 def euclidean_dist(pt1, pt2):
@@ -40,4 +37,3 @@ def euclidean_dist(pt1, pt2):
     
     return math.sqrt(total)
 
->>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0

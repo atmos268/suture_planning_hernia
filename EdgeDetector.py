@@ -39,10 +39,6 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
 
     if not os.path.isdir("temp_images"):
         os.mkdir('temp_images')
-<<<<<<< HEAD
-    print("made temp_images")
-=======
->>>>>>> 40274453b0eae72feed463be84f86d0ba2006db0
     
     # load the image and convert into
     # numpy array

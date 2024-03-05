@@ -268,7 +268,7 @@ class Optimizer3d:
 
             self.update_placement(placement, self.mesh, placement.spline, wound_points)
 
-            print("Updated placement")
+            # print("Updated placement")
             closure_loss, shear_loss = compute_closure_shear_loss()
             #shear_loss = 0 # TODO: calculate
             #closure_loss = 0 # TODO: calculate
