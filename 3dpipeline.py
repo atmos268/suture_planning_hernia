@@ -55,7 +55,7 @@ if __name__ == "__main__":
         enhanced = adjust_contrast_saturation(img, 3, 1)
         enhanced.save(left_img_path_enhanced)
 
-        scaled_spline, tck = line_to_spline(scaled_line, left_img_path_enhanced, mm_per_pixel)
+        scaled_spline, tck = line_to_spline(scaled_line, left_img_path_enhanced, mm_per_pixel, viz=True)
 
         plt.show()
 
@@ -96,10 +96,21 @@ if __name__ == "__main__":
         surrounding_pts = get_transformed_points(left_mask, disp_path, dilated_mask)
         np.save('surrounding_pts.npy', surrounding_pts)
 
-        # get the spline from the left image
+        # covert line into mask
+        img_width, img_height = Image.open(left_img_path).size
+        line_mask = np.zeros((img_width, img_height))
 
-
+        for row, col in left_line:
+            line_mask[row,col] = 1
+        
         # convert the spline to 3d using raft
+        get_transformed_points(left_img_path, disp_path, line_mask)
+
+        # get the spline from the left image
+        # since we are not visualizing here, no need for scaling info
+        left_spline = line_to_spline(left_line, None, None, viz=False)
+        # will actually need to use line_to_spline_3d (expect 3d points)
+        
 
         # get mesh from the surrounding points
 
