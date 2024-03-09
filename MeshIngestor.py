@@ -25,7 +25,7 @@ class MeshIngestor:
         with open(self.adj_file, 'r') as file:
             lines = file.read().split('\n\n')  # Split the file into sections separated by two newlines
 
-            for curr_vertex in lines:
+            for curr_vertex in lines[:-1]: # last line is newline
                 adj_vertices = curr_vertex.strip().split('\n')
 
                 # Extract the main vertex (first line) and add it to the graph

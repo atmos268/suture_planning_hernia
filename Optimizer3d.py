@@ -262,20 +262,22 @@ class Optimizer3d:
             
             # recalculate all point locations
             
-            closure_loss, shear_loss = compute_closure_shear_loss()
+            # closure_loss, shear_loss = compute_closure_shear_loss()
             #print("Closure loss", closure_loss)
             #print("Shear loss", shear_loss)
 
             self.update_placement(placement, self.mesh, placement.spline, wound_points)
 
             # print("Updated placement")
-            closure_loss, shear_loss = compute_closure_shear_loss()
-            #shear_loss = 0 # TODO: calculate
-            #closure_loss = 0 # TODO: calculate
             var_loss = self.get_point_dist_var_loss(placement)
+            print(placement.wound_points)
             ideal_loss = self.get_ideal_loss(placement)
 
-            return shear_loss * self.c_shear + closure_loss * self.c_closure + var_loss * self.c_var + ideal_loss * self.c_ideal  
+            # curr_loss = shear_loss * self.c_shear + closure_loss * self.c_closure + var_loss * self.c_var + ideal_loss * self.c_ideal
+            curr_loss = var_loss * self.c_var + ideal_loss * self.c_ideal
+            print("current_loss: " + str(curr_loss))
+
+            return curr_loss
         
         def jac(t):
             return optim.approx_fprime(t, loss)
@@ -599,9 +601,6 @@ class Optimizer3d:
 
             self.plot_mesh_path_spline_and_forces(mesh, spline, suturePlacement3d, point, tot_insertion_force, tot_extraction_force, spline_segments=100)
 
-
-
-
         def compute_closure_shear_loss(granularity=5):
             # granularity is the number of points to sample on the wound spline
 
@@ -647,10 +646,9 @@ class Optimizer3d:
                 print("Shear loss", shear_loss)
 
             return closure_loss, shear_loss
-
-
+        
         # run optimizer
-        result = optim.minimize(loss, wound_points, constraints = constraints, options={"maxiter":200}, method = 'SLSQP', tol=1e-2, jac = jac)
+        result = optim.minimize(loss, wound_points, constraints = constraints, options={"maxiter":100, "disp":True}, method = 'SLSQP', tol=1e-2, jac = jac)
         
         return result 
 

@@ -1,6 +1,8 @@
 from EdgeDetector import img_to_line, line_to_spline, line_to_spline_3d, click_points_simple
 from main import suture_display_adj_pipeline
 from SuturePlacer import SuturePlacer
+from Optimizer3d import Optimizer3d
+from MeshIngestor import MeshIngestor
 import math
 import scipy.interpolate as inter
 import cv2
@@ -10,6 +12,7 @@ import matplotlib.pyplot as plt
 from enhance_image import adjust_contrast_saturation
 from image_transform import get_transformed_points
 from utils import get_mm_per_pixel
+import subprocess
 
 if __name__ == "__main__":
     
@@ -80,6 +83,7 @@ if __name__ == "__main__":
     elif mode == '3d':
 
         use_prev = True
+        suture_width = 0.005
         
         # get the masks
         # save left and right masks
@@ -144,10 +148,35 @@ if __name__ == "__main__":
                 f.write(f"{point[0]} {point[1]} {point[2]}\n")
 
         
-        # subprocess.run(["ls", "-l"])
+        subprocess.run(["./generate_mesh"])
 
-        # run optimizer
-        pass
+        # get the saved mesh data
+        adj_path = 'adjacency_matrix.txt'
+        loc_path = 'vertex_lookup.txt'
+
+        mesh = MeshIngestor(adj_path, loc_path)
+
+        # Create the graph
+        mesh.generate_mesh()
+        
+        c_ideal = 1000
+        gamma = suture_width # TODO: Change once scaling is sorted
+        c_var = 1000
+        c_shear = 1
+        c_closure = 1
+
+        hyperparams = [c_ideal, gamma, c_var, c_shear, c_closure]
+
+        force_model_parameters = {'ellipse_ecc': 1.0, 'force_decay': 0.5/suture_width, 'verbose': 0, 'ideal_closure_force': None, 'imparted_force': None}
+
+        optim3d = Optimizer3d(mesh, left_spline, suture_width, hyperparams, force_model_parameters)
+        suturePlacement3d, normal_vectors, derivative_vectors = optim3d.generate_inital_placement(mesh, left_spline)
+        #print("Normal vector", normal_vectors)
+        optim3d.plot_mesh_path_and_spline(mesh, left_spline, suturePlacement3d, normal_vectors, derivative_vectors)
+
+        optim3d.optimize(suturePlacement3d)
+
+        optim3d.plot_mesh_path_and_spline(mesh, left_spline, suturePlacement3d, normal_vectors, derivative_vectors)
 
     else:
         print("invalid mode")
