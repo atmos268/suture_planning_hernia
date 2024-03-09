@@ -69,7 +69,7 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
         plt.show()
 
         box = left_coords[0] + left_coords[1]
-        mask = create_mask(img_path, box, [], 'huge', box_method=True)
+        mask = create_mask(img_path, box, [], 'base', box_method=True)
 
         # make the mask into an image and save
         im = Image.fromarray(mask)
@@ -188,64 +188,31 @@ def line_to_spline(line, img_path, mm_per_pixel, viz=False):
 
     return sampled_spline_pts, sampled_tck
 
-def line_to_spline_3d(line, viz=False):
+def line_to_spline_3d(line, sample_ratio=30, viz=False):
+
 
     x = line[:, 0] # x-coordinates of the shortest path
     y = line[:, 1]
     z = line[:, 2]
 
+
     # define t based on cumulative dists
-    t = 0
-    
+    distances = np.sqrt(np.sum(np.diff(line, axis=0)**2, axis=1))
+
+    # Calculate cumulative distance
+    cumulative_distance = np.insert(np.cumsum(distances), 0, 0)
+
+    # Normalize t to range from 0 to 1
+    t = cumulative_distance / cumulative_distance[-1]
+
     s_factor = len(x)/5
     # get spline in each dimension
-    inter.UnivariateSpline(t, x, s=s_factor)
-    inter.UnivariateSpline(t, y, s=s_factor)
-    inter.UnivariateSpline(t, z, s=s_factor)
+    x_spline = inter.UnivariateSpline(t, x, s=s_factor)
+    y_spline = inter.UnivariateSpline(t, y, s=s_factor)
+    z_spline = inter.UnivariateSpline(t, z, s=s_factor)
 
-    # fit spline to points
-    exact_tck, u = inter.splprep([[pt[0] for pt in line], [pt[1] for pt in line]], k=3, s=0)
-    exact_wound_parametric = lambda t, d: inter.splev(t, exact_tck, der = d)
+    return [x_spline, y_spline, z_spline]
 
-    # from our ordered set of points, what fraction we pick: we will pick 1 in every sample_ratio points
-    sample_ratio = 30
-
-    sampled_pts = [line[i * sample_ratio] for i in range(len(line) // sample_ratio)] + [line[-1]]
-
-    sampled_tck, u = inter.splprep([[pt[0] for pt in sampled_pts], [pt[1] for pt in sampled_pts]], k=3, s=0)
-    sampled_wound_parametric = lambda t, d: inter.splev(t, sampled_tck, der = d)
-
-    smoothed_tck, u = inter.splprep([[pt[0] for pt in line], [pt[1] for pt in line]], k=3)
-    smoothed_wound_parametric = lambda t, d: inter.splev(t, smoothed_tck, der = d)
-
-    # plot spline
-    exact_spline_pts = []
-    sampled_spline_pts = []
-    smoothed_spline_pts = []
-
-    for t_step in np.linspace(0, 1, 500):
-        exact_spline_pts.append(exact_wound_parametric(t_step, 0))
-        sampled_spline_pts.append(sampled_wound_parametric(t_step, 0))
-        smoothed_spline_pts.append(smoothed_wound_parametric(t_step, 0))
-    
-    if viz:
-        img = Image.open(img_path)
-        img_np = np.asarray(img)
-        plt.imshow(img_np)
-
-        fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
-        # plt.plot([pt[1] for pt in spline_pts], [pt[0] for pt in spline_pts], color='r')
-        ax1.imshow(img_np)
-        ax1.plot([pt[1]/mm_per_pixel for pt in exact_spline_pts], [pt[0]/mm_per_pixel for pt in exact_spline_pts])
-        ax2.imshow(img_np)
-        ax2.plot([pt[1]/mm_per_pixel for pt in sampled_spline_pts], [pt[0]/mm_per_pixel for pt in sampled_spline_pts])
-        ax3.imshow(img_np)
-        ax3.plot([pt[1]/mm_per_pixel for pt in smoothed_spline_pts], [pt[0]/mm_per_pixel for pt in smoothed_spline_pts])
-        
-        # plot side by side
-        plt.savefig("spline.png")
-
-    return sampled_spline_pts, sampled_tck
 if __name__ == "__main__":
     
     box_method = True

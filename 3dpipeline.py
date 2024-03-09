@@ -1,4 +1,4 @@
-from EdgeDetector import img_to_line, line_to_spline, click_points_simple
+from EdgeDetector import img_to_line, line_to_spline, line_to_spline_3d, click_points_simple
 from main import suture_display_adj_pipeline
 from SuturePlacer import SuturePlacer
 import math
@@ -24,7 +24,7 @@ if __name__ == "__main__":
     right_img_path = 'chicken_images/' + right_file
     right_img_path_enhanced = 'chicken_images/enhanced/' + right_file
 
-    mode = '2d' # 3d
+    mode = '3d' # 3d
 
     if mode == '2d':
 
@@ -79,10 +79,33 @@ if __name__ == "__main__":
 
     elif mode == '3d':
 
+        use_prev = True
+        
         # get the masks
-        left_line, left_mask = img_to_line(left_img_path, box_method, viz=True, save_figs=save_figs)
-        right_line, right_mask = img_to_line(right_img_path, box_method, viz=True, save_figs=save_figs)
+        # save left and right masks
 
+        left_mask_path = 'temp_images/left_mask.npy'
+        right_mask_path = 'temp_images/right_mask.npy'
+        left_line_path = 'temp_images/left_line.npy'
+        right_line_path = 'temp_images/right_line.npy'
+        left_dilated_mask_path = 'temp_images/left_dilated_mask.jpg'
+
+        if use_prev:
+            left_line = np.load(left_line_path)
+            left_mask = np.load(left_mask_path)
+
+            right_line = np.load(right_line_path)
+            right_mask = np.load(right_mask_path)
+
+        else:
+
+            left_line, left_mask = img_to_line(left_img_path, box_method, viz=True, save_figs=save_figs)
+            np.save(left_mask_path, left_mask)
+            np.save(left_line_path, left_line)
+            right_line, right_mask = img_to_line(right_img_path, box_method, viz=True, save_figs=save_figs)
+            np.save(right_mask_path, right_mask)
+            np.save(right_line_path, right_line)
+        
         # do raft, no need to do rn, as we are using the existing RAFT output
         disp_path = "RAFT/disp.npy"
 
@@ -91,28 +114,37 @@ if __name__ == "__main__":
 
         kernel = np.ones((dilation, dilation), np.uint8)
         dilated_mask = cv2.dilate(left_mask, kernel, iterations=1) 
+        cv2.imwrite(left_dilated_mask_path, dilated_mask) 
 
         # write out points to a file
-        surrounding_pts = get_transformed_points(left_mask, disp_path, dilated_mask)
+        surrounding_pts = get_transformed_points(left_img_path, disp_path, dilated_mask)
         np.save('surrounding_pts.npy', surrounding_pts)
 
         # covert line into mask
         img_width, img_height = Image.open(left_img_path).size
-        line_mask = np.zeros((img_width, img_height))
+        line_mask = np.zeros((img_height, img_width))
 
         for row, col in left_line:
             line_mask[row,col] = 1
         
         # convert the spline to 3d using raft
-        get_transformed_points(left_img_path, disp_path, line_mask)
+        line_pts_3d = get_transformed_points(left_img_path, disp_path, line_mask)
+        np.save('line_pts_3d.npy', surrounding_pts)
 
         # get the spline from the left image
         # since we are not visualizing here, no need for scaling info
-        left_spline = line_to_spline(left_line, None, None, viz=False)
+        # left_spline = line_to_spline(left_line, None, None, viz=False)
         # will actually need to use line_to_spline_3d (expect 3d points)
-        
+        left_spline = line_to_spline_3d(line_pts_3d, sample_ratio=30, viz=False)
 
         # get mesh from the surrounding points
+                    
+        with open("pipeline_xyz_pts.xyz", "w") as f:
+            for point in surrounding_pts:
+                f.write(f"{point[0]} {point[1]} {point[2]}\n")
+
+        
+        # subprocess.run(["ls", "-l"])
 
         # run optimizer
         pass
