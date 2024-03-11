@@ -60,7 +60,7 @@ def get_dilated_mask(img_path, dilation):
     img_dilated = new_edge_detector.dilate_to_line(mask, dilation)
     cv2.imwrite("dilated_mask.jpg", img_dilated)
 
-def get_transformed_points(image_path, disp_path, sam_mask):
+def get_transformed_points(image_path, disp_path, sam_mask, viz=False):
     transformation_matrix = getTransformationMatrix()
 
     # disparity_map from raft (for testing used google colab)
@@ -105,8 +105,9 @@ def get_transformed_points(image_path, disp_path, sam_mask):
     cleaned_Z = [flat_Z[include_idx] for include_idx in include_indices]
 
     wound_points = np.column_stack((cleaned_X, cleaned_Y, cleaned_Z))
-    fig = plt.figure()
-    ax = plt.axes(projection='3d')
+    if viz:
+        fig = plt.figure()
+        ax = plt.axes(projection='3d')
     # ax.scatter3D(X_wound.flatten(), Y_wound.flatten(), Z_wound.flatten())
     # plt.title("Allied Points")
     # plt.show()
@@ -137,11 +138,12 @@ def get_transformed_points(image_path, disp_path, sam_mask):
             if 0 <= x < image_width and 0 <= y < image_height:
                 left_image[y, x] = 255
     # Visualizing the projection on the image
-    cv2.namedWindow('Projected Points', cv2.WINDOW_NORMAL)  # Create a resizable window
-    cv2.imshow('Projected Points', left_image)  # Show the modified image
+    if viz:
+        cv2.namedWindow('Projected Points', cv2.WINDOW_NORMAL)  # Create a resizable window
+        cv2.imshow('Projected Points', left_image)  # Show the modified image
 
-    cv2.waitKey(0)  # Wait for any key press
-    cv2.destroyAllWindows()  # Close all OpenCV windows
+        cv2.waitKey(0)  # Wait for any key press
+        cv2.destroyAllWindows()  # Close all OpenCV windows
 
 
     #convert point cloud to overhead coordinates
@@ -151,10 +153,12 @@ def get_transformed_points(image_path, disp_path, sam_mask):
         overhead_wound_points.append(R @ pt + t) 
     overhead_wound_points = np.array(overhead_wound_points)
     overhead_wound_points_transpose = overhead_wound_points.T
-    ax.scatter3D(overhead_wound_points_transpose[0], overhead_wound_points_transpose[1], overhead_wound_points_transpose[2])
-    plt.title("overhead points")
-    plt.show()
-    print("selected points: ", overhead_wound_points.shape)
+    
+    if viz:
+        ax.scatter3D(overhead_wound_points_transpose[0], overhead_wound_points_transpose[1], overhead_wound_points_transpose[2])
+        plt.title("overhead points")
+        plt.show()
+        print("selected points: ", overhead_wound_points.shape)
 
     #return overhead_wound_points
     R, t = transformation_matrix[1:], transformation_matrix[0]
@@ -177,18 +181,19 @@ def get_transformed_points(image_path, disp_path, sam_mask):
                 print("original", wound_points[i])
 
 
-disp_path = "RAFT/disp.npy"
+if __name__ == "__main__":
+    disp_path = "RAFT/disp.npy"
 
-img_path = "chicken_images/image_left_001.png"
+    img_path = "chicken_images/image_left_001.png"
 
-# get the mask, save it
-dilation = 100
-get_dilated_mask(img_path, dilation)
+    # get the mask, save it
+    dilation = 100
+    get_dilated_mask(img_path, dilation)
 
-sam_mask = cv2.imread("original_mask.jpg", cv2.IMREAD_GRAYSCALE)
-mask_pts = get_transformed_points(img_path, disp_path, sam_mask)
+    sam_mask = cv2.imread("original_mask.jpg", cv2.IMREAD_GRAYSCALE)
+    mask_pts = get_transformed_points(img_path, disp_path, sam_mask)
 
-# dilated_sam_mask = cv2.imread("dilated_mask.jpg", cv2.IMREAD_GRAYSCALE)
-# surrounding_pts = get_transformed_points(img_path, disp_path, dilated_sam_mask)
+    dilated_sam_mask = cv2.imread("dilated_mask.jpg", cv2.IMREAD_GRAYSCALE)
+    surrounding_pts = get_transformed_points(img_path, disp_path, dilated_sam_mask)
 
-# np.save('surrounding_pts.npy', surrounding_pts)
+    np.save('surrounding_pts.npy', surrounding_pts)
