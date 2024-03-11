@@ -85,14 +85,8 @@ if __name__ == "__main__":
             suture_width = 0.005
             # project points onto xy plane
             avg_z = np.mean(shortest_path_xyz[:, 2])
-            # normal_vector = get_plane_estimation(mesh, [np.mean(shortest_path_xyz[:, 0]), np.mean(shortest_path_xyz[:, 1]), avg_z])
-
-            # # project points onto the tangent plane
-            # projected_points = [project_vector_onto_plane(pt, normal_vector) for pt in shortest_path_xyz]
-        
-
-
             shortest_path_xy = [[shortest_path_xyz[i][0], shortest_path_xyz[i][1]]for i in range(len(shortest_path_xyz))]
+            
             spline2d, tck = line_to_spline(shortest_path_xy, "", 1, viz=False)
 
             suture_placer = SuturePlacer(suture_width, mm_per_pixel)
