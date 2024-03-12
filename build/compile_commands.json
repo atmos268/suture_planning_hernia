@@ -1,0 +1,8 @@
+[
+{
+  "directory": "/Users/juliaisaac/Suture-Placement/build",
+  "command": "/usr/bin/clang++ -DCGAL_USE_GMPXX=1 -isystem /opt/homebrew/include -g -std=gnu++14 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5 -o CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o -c /Users/juliaisaac/Suture-Placement/generate_mesh.cpp",
+  "file": "/Users/juliaisaac/Suture-Placement/generate_mesh.cpp",
+  "output": "CMakeFiles/generate_mesh.dir/generate_mesh.cpp.o"
+}
+]

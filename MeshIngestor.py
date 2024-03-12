@@ -25,7 +25,7 @@ class MeshIngestor:
         with open(self.adj_file, 'r') as file:
             lines = file.read().split('\n\n')  # Split the file into sections separated by two newlines
 
-            for curr_vertex in lines:
+            for curr_vertex in lines[:-1]: # last line is newline
                 adj_vertices = curr_vertex.strip().split('\n')
 
                 # Extract the main vertex (first line) and add it to the graph
@@ -50,9 +50,10 @@ class MeshIngestor:
                 coordinates = list(map(float, parts[1:]))
                 self.vertex_coordinates.append(coordinates)
 
-        self.vertex_coordinates = np.array(self.vertex_coordinates)
         # Create a KD tree
         self.kd_tree = cKDTree(self.vertex_coordinates)
+
+        self.vertex_coordinates = np.array(self.vertex_coordinates)
 
         # indicate that mesh made
         self.is_mesh = True
@@ -90,42 +91,42 @@ class MeshIngestor:
         # run networkx a*
         return nx.astar_path(self.graph, start_vtx, end_vtx)
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
 
-    # Specify the path to your text file
-    adj_path = 'adjacency_matrix.txt'
-    loc_path = 'vertex_lookup.txt'
+#     # Specify the path to your text file
+#     adj_path = 'adjacency_matrix.txt'
+#     loc_path = 'vertex_lookup.txt'
 
 
-    mesh = MeshIngestor(adj_path, loc_path)
+#     mesh = MeshIngestor(adj_path, loc_path)
 
-    # Create the graph
-    mesh.generate_mesh()
+#     # Create the graph
+#     mesh.generate_mesh()
 
-    # Print the nodes and edges of the graph
+#     # Print the nodes and edges of the graph
 
-    # Example: Find the nearest neighbor to a specific point (e.g., the first vertex)
-    nearest_neighbor_distance, nearest_neighbor_index = mesh.kd_tree.query([0,0,0])
+#     # Example: Find the nearest neighbor to a specific point (e.g., the first vertex)
+#     nearest_neighbor_distance, nearest_neighbor_index = mesh.kd_tree.query([0,0,0])
 
-    # Print the results
-    print("Nearest Neighbor:", nearest_neighbor_index)
-    print("Nearest Neighbor Location:", mesh.vertex_coordinates[nearest_neighbor_index])
-    print("Distance:", nearest_neighbor_distance)
+#     # Print the results
+#     print("Nearest Neighbor:", nearest_neighbor_index)
+#     print("Nearest Neighbor Location:", mesh.vertex_coordinates[nearest_neighbor_index])
+#     print("Distance:", nearest_neighbor_distance)
 
-    # get a random point
-    rand_idx = random.randrange(0, len(mesh.vertex_coordinates))
-    rand_pt = mesh.get_point_location(rand_idx)
-    print(rand_idx, rand_pt)
-    nn_dists, nn_pts = mesh.get_nearest_k_points(rand_pt, 10)
-    print(nn_dists, nn_pts)
+#     # get a random point
+#     rand_idx = random.randrange(0, len(mesh.vertex_coordinates))
+#     rand_pt = mesh.get_point_location(rand_idx)
+#     print(rand_idx, rand_pt)
+#     nn_dists, nn_pts = mesh.get_nearest_k_points(rand_pt, 10)
+#     print(nn_dists, nn_pts)
 
-    # test astar
-    rand_start_pt = mesh.get_point_location(random.randrange(0, len(mesh.vertex_coordinates)))
-    rand_end_pt = mesh.get_point_location(random.randrange(0, len(mesh.vertex_coordinates)))
+#     # test astar
+#     rand_start_pt = mesh.get_point_location(random.randrange(0, len(mesh.vertex_coordinates)))
+#     rand_end_pt = mesh.get_point_location(random.randrange(0, len(mesh.vertex_coordinates)))
 
-    astar_path = mesh.get_a_star_path(rand_start_pt, rand_end_pt)
+#     astar_path = mesh.get_a_star_path(rand_start_pt, rand_end_pt)
 
-    print(astar_path[:10])
+#     print(astar_path[:10])
 
 
 
