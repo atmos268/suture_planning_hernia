@@ -13,9 +13,23 @@ from enhance_image import adjust_contrast_saturation
 from image_transform import get_transformed_points
 from utils import get_mm_per_pixel
 import subprocess
-from test_force_model import get_plane_estimation, project_vector_onto_plane
 import random
 from SuturePlacement3d import SuturePlacement3d
+
+def calculate_z(mesh, point, smallest_z, largest_z):
+    z_arr = np.linspace(smallest_z, largest_z, num=10000)
+    min_dist = float('inf')
+    min_z = 0
+    for z in z_arr:
+        dist, idx = mesh.get_nearest_point([point[0], point[1], z])
+        if dist < min_dist:
+            min_dist = dist
+            min_z = z
+
+    return min_z
+
+
+    
     
 
 if __name__ == "__main__":
@@ -55,7 +69,7 @@ if __name__ == "__main__":
         wound_pt = mesh.get_point_location(num2)
         shortest_path = mesh.get_a_star_path(start_pt, wound_pt)
         shortest_path_xyz = np.array([mesh.get_point_location(pt_idx) for pt_idx in shortest_path])
-        print("shortest path shape", shortest_path_xyz.shape)
+        smallest_z, largest_z = min(shortest_path_xyz[:, 2]), max(shortest_path_xyz[:, 2])
 
         spline3d = line_to_spline_3d(shortest_path_xyz, sample_ratio=30, viz=False)
         suture_width = 0.005 
@@ -100,23 +114,20 @@ if __name__ == "__main__":
             newSuturePlacer.DistanceCalculator.wound_parametric = wound_parametric
             newSuturePlacer.RewardFunction.wound_parametric = wound_parametric
             newSuturePlacer.image = left_img_path
+            
+            # Running 2d algorithm
+            b_insert_pts, b_center_pts, b_extract_pts = newSuturePlacer.place_sutures(save_figs=False)
 
-            #convert points back to 3d and find closest mesh points
-            def twoD_to_3d(points):
-                points = [pt + [avg_z] for pt in points]
+            # helper function to convert points back to 3d and find closest mesh points
+            def twoD_to_3D(points):
+                points = [pt + [calculate_z(mesh, pt, smallest_z, largest_z)] for pt in points]
                 print(points)
                 #return np.array(points)
                 points_mesh = np.array([mesh.get_point_location(mesh.get_nearest_point(pt)[1]) for pt in points])
                 return points_mesh
 
-            b_insert_pts, b_center_pts, b_extract_pts = newSuturePlacer.place_sutures(save_figs=False)
-            print("center_pts", b_center_pts)
-            print("insert_pts", b_insert_pts)
-            print("extract pts", b_extract_pts)
-            b_center_pts, b_insert_pts, b_extract_pts = twoD_to_3d(b_center_pts), twoD_to_3d(b_insert_pts), twoD_to_3d(b_extract_pts)
-            print("center_pts", b_center_pts)
-            print("insert_pts", b_insert_pts)
-            print("extract pts", b_extract_pts)
+            # converting points to 3d and plotting
+            b_center_pts, b_insert_pts, b_extract_pts = twoD_to_3D(b_center_pts), twoD_to_3D(b_insert_pts), twoD_to_3D(b_extract_pts)
             center_pts_spline = line_to_spline_3d(b_center_pts, sample_ratio=30, viz=False)
             suturePlacement3dNew = SuturePlacement3d(center_pts_spline, b_center_pts, b_insert_pts, b_extract_pts, [])
             optim3d.plot_mesh_path_and_spline(mesh, spline3d, suturePlacement3dNew, [], [])
