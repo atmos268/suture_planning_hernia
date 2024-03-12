@@ -27,7 +27,7 @@ class Optimizer3d:
         self.c_shear = hyperparameters[3]
         self.c_closure = hyperparameters[4]
         self.force_model = force_model_parameters #Force model parameters are a dictionary 
-        self.num_points_for_plane = 50
+        self.num_points_for_plane = 1000
 
         # Ideal closure force calculated according to properties of the original diamond force model
         # If you want, can specify ideal_closure_force yourself, otherwise set to None and this calculation will be done
@@ -73,8 +73,9 @@ class Optimizer3d:
 
         points_t_initial = np.linspace(0, 1, int(num_sutures_initial))
 
+        # the below is for generating deliberately bad warm starts, to see whether loss function is functioning properly
+
         """
-        
         
         for i in range(1,len(points_t_initial) - 1):
 
@@ -123,11 +124,14 @@ class Optimizer3d:
         derivative_vectors = [self.normalize_vector(derivative_vectors[i]) for i in range(num_points)]
 
         # Insertion points = cross product 
-        insertion_points = [center_points[i] + self.suture_width * np.cross(normal_vectors[i], derivative_vectors[i]) for i in range(num_points)]
+        insertion_points = [mesh.get_point_location(mesh.get_nearest_point(center_points[i] + self.suture_width * np.cross(normal_vectors[i], derivative_vectors[i]))[1]) for i in range(num_points)]
+
+        # get the closest point on the mesh to that point
+        insertion_points 
         # print("magnitude insertion points", [np.linalg.norm(insertion_points[i]) for i in range(num_points)])
 
         # Extraction points = - cross product
-        extraction_points = [center_points[i] + self.suture_width * (-np.cross(normal_vectors[i], derivative_vectors[i])) for i in range(num_points)]
+        extraction_points = [mesh.get_point_location(mesh.get_nearest_point(center_points[i] + self.suture_width * (-np.cross(normal_vectors[i], derivative_vectors[i])))[1]) for i in range(num_points)]
 
         # update suture placement 3d object
         placement.center_pts = center_points

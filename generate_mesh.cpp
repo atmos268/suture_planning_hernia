@@ -34,7 +34,7 @@ int main(int argc, char*argv[])
   Point_set points;
 
   // desired file
-  std::string fname = argc==1?CGAL::data_file_path("xyz_pts.xyz") : argv[1];
+  std::string fname = argc==1?CGAL::data_file_path("pipeline_xyz_pts.xyz") : argv[1];
 
   if (argc < 2)
   {

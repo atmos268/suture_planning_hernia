@@ -160,25 +160,28 @@ def get_transformed_points(image_path, disp_path, sam_mask, viz=False):
         plt.show()
         print("selected points: ", overhead_wound_points.shape)
 
-    #return overhead_wound_points
-    R, t = transformation_matrix[1:], transformation_matrix[0]
-    left_wound_points = []
-    for pt in overhead_wound_points:
-        left_wound_points.append(np.linalg.inv(R) @ (pt - t))
-    left_wound_points = np.array(left_wound_points)
-    left_wound_points_transpose = left_wound_points.T
-    # print("Overhead wound points shape", overhead_wound_points_transpose.shape)
-    # print("Left wound points shape", left_wound_points_transpose.shape)
-    # print(left_wound_points.shape == wound_points.shape)
-    # print(type(wound_points))
-    # print("left wound points", left_wound_points[0:10])
-    # print("wound points", wound_points[0:10])
-    #print(np.array_equal(np.array(wound_points), left_wound_points))
-    for i in range(wound_points.shape[0]):
-        for j in range(wound_points.shape[1]):
-            if wound_points[i][j] != left_wound_points[i][j]:
-                print("left", left_wound_points[i])
-                print("original", wound_points[i])
+    return overhead_wound_points
+    
+    # R, t = transformation_matrix[1:], transformation_matrix[0]
+    # left_wound_points = []
+    # for pt in overhead_wound_points:
+    #     left_wound_points.append(np.linalg.inv(R) @ (pt - t))
+    # left_wound_points = np.array(left_wound_points)
+    # left_wound_points_transpose = left_wound_points.T
+    # # print("Overhead wound points shape", overhead_wound_points_transpose.shape)
+    # # print("Left wound points shape", left_wound_points_transpose.shape)
+    # # print(left_wound_points.shape == wound_points.shape)
+    # # print(type(wound_points))
+    # # print("left wound points", left_wound_points[0:10])
+    # # print("wound points", wound_points[0:10])
+    # #print(np.array_equal(np.array(wound_points), left_wound_points))
+    # for i in range(wound_points.shape[0]):
+    #     for j in range(wound_points.shape[1]):
+    #         if wound_points[i][j] != left_wound_points[i][j]:
+    #             print("left", left_wound_points[i])
+    #             print("original", wound_points[i])
+
+    # return left_wound_points
 
 
 if __name__ == "__main__":

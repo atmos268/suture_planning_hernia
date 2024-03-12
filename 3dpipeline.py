@@ -22,7 +22,6 @@ if __name__ == "__main__":
     left_img_path = 'chicken_images/' + left_file
     left_img_path_enhanced = 'chicken_images/enhanced/' + left_file
 
-
     right_file = 'image_right_001.png'
     right_img_path = 'chicken_images/' + right_file
     right_img_path_enhanced = 'chicken_images/enhanced/' + right_file
@@ -82,7 +81,7 @@ if __name__ == "__main__":
 
     elif mode == '3d':
 
-        use_prev = True
+        use_prev = False
         suture_width = 0.01
         
         # get the masks
@@ -111,7 +110,7 @@ if __name__ == "__main__":
             np.save(right_line_path, right_line)
         
         # do raft, no need to do rn, as we are using the existing RAFT output
-        disp_path = "RAFT/disp.npy"
+        disp_path = "RAFT/disp1.npy"
 
         # dilate to get region
         dilation = 100
@@ -133,7 +132,7 @@ if __name__ == "__main__":
         
         # convert the spline to 3d using raft
         line_pts_3d = get_transformed_points(left_img_path, disp_path, line_mask)
-        np.save('line_pts_3d.npy', surrounding_pts)
+        np.save('line_pts_3d.npy', line_pts_3d)
 
         # get the spline from the left image
         # since we are not visualizing here, no need for scaling info
