@@ -27,6 +27,7 @@ class Optimizer3d:
         self.c_shear = hyperparameters[3]
         self.c_closure = hyperparameters[4]
         self.force_model = force_model_parameters #Force model parameters are a dictionary 
+        self.num_points_for_plane = 50
 
         # Ideal closure force calculated according to properties of the original diamond force model
         # If you want, can specify ideal_closure_force yourself, otherwise set to None and this calculation will be done
@@ -67,9 +68,24 @@ class Optimizer3d:
 
         new_placement = SuturePlacement3d(spline, None, None, None, None)
         spline_length = self.calculate_spline_length(spline, mesh)
-        num_sutures_initial = int(1.5 * spline_length / (self.suture_width)) #TODO: modify later 
+        num_sutures_initial = int(spline_length / (self.gamma)) #TODO: modify later 
         print("Num sutures initial", num_sutures_initial)
+
         points_t_initial = np.linspace(0, 1, int(num_sutures_initial))
+
+        """
+        
+        
+        for i in range(1,len(points_t_initial) - 1):
+
+            cand_rand = np.random.normal(0, 0.1)
+            while points_t_initial[i] + cand_rand >= 1 and points_t_initial[i]  + cand_rand <= 0:
+                cand_rand = np.random.normal(0, 0.05)
+            points_t_initial[i] += cand_rand
+            points_t_initial.sort()
+
+        """
+
         _, normals, derivs = self.update_placement(new_placement, mesh, spline, points_t_initial)
 
         return new_placement, normals, derivs
@@ -97,7 +113,7 @@ class Optimizer3d:
         derivative_points = [[derivative_x(t), derivative_y(t), derivative_z(t)] for t in points_t]
 
         #get tangent plane normal vectors
-        normal_vectors = [get_plane_estimation(mesh, center_points[i]) for i in range(num_points)]
+        normal_vectors = [get_plane_estimation(mesh, center_points[i], self.num_points_for_plane) for i in range(num_points)]
 
         # project derivatives onto the tangent plane
         derivative_vectors = [project_vector_onto_plane(derivative_points[i], normal_vectors[i]) for i in range(num_points)]
@@ -224,8 +240,6 @@ class Optimizer3d:
         wound_points = placement.t
 
         # set up all of the constraints
-        start = wound_points[0]
-        end = wound_points[-1]
 
         def min_suture_dist(t):
 
@@ -234,22 +248,47 @@ class Optimizer3d:
             insert_dists, center_dists, extract_dists = self.get_dists(insert_pts), self.get_dists(center_pts), self.get_dists(extract_pts)
 
             # get distances
-            h = self.suture_width * (1/5)
-            return [i - h for i in insert_dists] + [i - h for i in center_dists] + [i - h for i in extract_dists]
+            h = self.gamma * (1/5)
+            return min([i - h for i in insert_dists] + [i - h for i in center_dists] + [i - h for i in extract_dists])
     
         def max_suture_dist(t): # max distance b/w 2 sutures
             insert_pts, center_pts, extract_pts = placement.insertion_pts, placement.center_pts, placement.extraction_pts
             insert_dists, center_dists, extract_dists = self.get_dists(insert_pts), self.get_dists(center_pts), self.get_dists(extract_pts)
             
-            h = self.suture_width * 4
-            return [h - i for i in insert_dists] + [h - i for i in center_dists] + [h - i for i in extract_dists]
+            h = self.gamma * 4
+            return max([h - i for i in insert_dists] + [h - i for i in center_dists] + [h - i for i in extract_dists])
+        
+        insert_pts, center_pts, extract_pts = placement.insertion_pts, placement.center_pts, placement.extraction_pts
+        insert_dists, center_dists, extract_dists = self.get_dists(insert_pts), self.get_dists(center_pts), self.get_dists(extract_pts)
 
-        constraints = [{'type': 'eq', 'fun': lambda t: t[-1] - end}, 
-                       {'type': 'eq', 'fun': lambda t: t[0] - start}, 
+        # make min/max constraints for every suture gap
+        def get_ith_max_constraint(dist_list, i):
+            return (self.gamma * 4) - dist_list[i]
+        
+        def get_ith_min_constraint(dist_list, i):
+            return dist_list[i] -  (self.gamma * 0.2)
+        
+
+        def is_ordered(t):
+            for i in range(len(t) - 1):
+                if t[i + 1] - t[i] <= 0:
+                    return - 1
+            return 1
+        
+        constraints = [{'type': 'eq', 'fun': lambda t: 1 - t[-1]}, 
+                       {'type': 'eq', 'fun': lambda t: t[0]},
                        {'type': 'ineq', 'fun': lambda t: min_suture_dist(t)},
                        {'type': 'ineq', 'fun': lambda t: max_suture_dist(t)},
-                       {'type': 'ineq', 'fun': lambda t: t - start},
-                       {'type': 'ineq', 'fun': lambda t: end - t}]
+                       ]
+        
+        # for i in range(len(t) - 1):
+        #     constraints.append({'type': 'ineq', 'fun': lambda t: get_ith_max_constraint(insert_dists, i)})
+        #     constraints.append({'type': 'ineq', 'fun': lambda t: get_ith_max_constraint(center_dists, i)})
+        #     constraints.append({'type': 'ineq', 'fun': lambda t: get_ith_max_constraint(extract_dists, i)})
+        #     constraints.append({'type': 'ineq', 'fun': lambda t: get_ith_min_constraint(insert_dists, i)})
+        #     constraints.append({'type': 'ineq', 'fun': lambda t: get_ith_min_constraint(center_dists, i)})
+        #     constraints.append({'type': 'ineq', 'fun': lambda t: get_ith_min_constraint(extract_dists, i)})
+
 
         def loss(wound_points):
             """
@@ -259,6 +298,8 @@ class Optimizer3d:
             t values for each point. This is what we are optimizing over (we want to find the 
             best values of t).
             """
+
+            self.update_placement(placement, self.mesh, placement.spline, wound_points)
             
             # recalculate all point locations
             
@@ -266,16 +307,13 @@ class Optimizer3d:
             #print("Closure loss", closure_loss)
             #print("Shear loss", shear_loss)
 
-            self.update_placement(placement, self.mesh, placement.spline, wound_points)
-
             # print("Updated placement")
             var_loss = self.get_point_dist_var_loss(placement)
-            print(placement.wound_points)
             ideal_loss = self.get_ideal_loss(placement)
 
             # curr_loss = shear_loss * self.c_shear + closure_loss * self.c_closure + var_loss * self.c_var + ideal_loss * self.c_ideal
             curr_loss = var_loss * self.c_var + ideal_loss * self.c_ideal
-            print("current_loss: " + str(curr_loss))
+            print("current_loss:" + str(curr_loss))
 
             return curr_loss
         
@@ -648,7 +686,7 @@ class Optimizer3d:
             return closure_loss, shear_loss
         
         # run optimizer
-        result = optim.minimize(loss, wound_points, constraints = constraints, options={"maxiter":100, "disp":True}, method = 'SLSQP', tol=1e-2, jac = jac)
+        result = optim.minimize(loss, wound_points, constraints = constraints, options={"maxiter":10, "disp":True}, method = 'SLSQP', tol=1e-3, jac = jac)
         
         return result 
 
@@ -684,14 +722,12 @@ class Optimizer3d:
         return insertion_loss + center_loss + extraction_loss
 
     def get_diff_var(self, points): 
-        sum_sq = 0
-        sum_total = 0
-        for i in range(len(points) - 1):
-            dist = euclidean_dist(points[i], points[i+1])
-            sum_total += dist
-            sum_sq += dist**2
+        dists = np.zeros(len(points) - 1)
 
-        return sum_sq/(len(points) - 1) - (sum_total/(len(points) - 1))**2
+        for i in range(len(points) - 1):
+            dists[i] = euclidean_dist(points[i], points[i+1])
+
+        return np.var(dists)
     
     def get_me_opt(self, points, gamma):
         error = 0

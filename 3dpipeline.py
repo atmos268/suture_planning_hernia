@@ -83,7 +83,7 @@ if __name__ == "__main__":
     elif mode == '3d':
 
         use_prev = True
-        suture_width = 0.005
+        suture_width = 0.01
         
         # get the masks
         # save left and right masks
@@ -159,9 +159,9 @@ if __name__ == "__main__":
         # Create the graph
         mesh.generate_mesh()
         
-        c_ideal = 1000
-        gamma = suture_width # TODO: Change once scaling is sorted
-        c_var = 1000
+        c_ideal = 0
+        gamma = suture_width
+        c_var = 5000
         c_shear = 1
         c_closure = 1
 
