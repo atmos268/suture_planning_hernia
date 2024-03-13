@@ -16,7 +16,7 @@ class Optimizer3d:
     suture_width: how far, in mm, the insertion and extraction points should be from the wound line
     hyperparameters: hyperparameters for our optimization
     """
-    def __init__(self, mesh, spline, suture_width, hyperparameters, force_model_parameters):
+    def __init__(self, mesh: MeshIngestor, spline, suture_width, hyperparameters, force_model_parameters):
         self.mesh = mesh
         self.spline = spline
         self.suture_width = suture_width 
@@ -56,7 +56,7 @@ class Optimizer3d:
         print("Spline length", cumulative_distance[-1])
         return cumulative_distance[-1]
     
-    def generate_inital_placement(self, mesh, spline):
+    def generate_inital_placement(self, mesh, spline, num_sutures):
         """
         This function should take in a mesh and a spline and output an initial placement of center, 
         insertion and extraction points (equally spaced works)
@@ -67,25 +67,18 @@ class Optimizer3d:
         """
 
         new_placement = SuturePlacement3d(spline, None, None, None, None)
-        spline_length = self.calculate_spline_length(spline, mesh)
-        num_sutures_initial = int(spline_length / (self.gamma)) #TODO: modify later 
-        print("Num sutures initial", num_sutures_initial)
 
-        points_t_initial = np.linspace(0, 1, int(num_sutures_initial))
+        points_t_initial = np.linspace(0, 1, int(num_sutures))
 
         # the below is for generating deliberately bad warm starts, to see whether loss function is functioning properly
-
-        """
         
-        for i in range(1,len(points_t_initial) - 1):
+        # for i in range(1,len(points_t_initial) - 1):
 
-            cand_rand = np.random.normal(0, 0.1)
-            while points_t_initial[i] + cand_rand >= 1 and points_t_initial[i]  + cand_rand <= 0:
-                cand_rand = np.random.normal(0, 0.05)
-            points_t_initial[i] += cand_rand
-            points_t_initial.sort()
-
-        """
+        #     cand_rand = np.random.normal(0, 0.1)
+        #     while points_t_initial[i] + cand_rand >= 1 and points_t_initial[i]  + cand_rand <= 0:
+        #         cand_rand = np.random.normal(0, 0.05)
+        #     points_t_initial[i] += cand_rand
+        #     points_t_initial.sort()
 
         _, normals, derivs = self.update_placement(new_placement, mesh, spline, points_t_initial)
 
@@ -127,7 +120,6 @@ class Optimizer3d:
         insertion_points = [mesh.get_point_location(mesh.get_nearest_point(center_points[i] + self.suture_width * np.cross(normal_vectors[i], derivative_vectors[i]))[1]) for i in range(num_points)]
 
         # get the closest point on the mesh to that point
-        insertion_points 
         # print("magnitude insertion points", [np.linalg.norm(insertion_points[i]) for i in range(num_points)])
 
         # Extraction points = - cross product
@@ -160,11 +152,15 @@ class Optimizer3d:
         normalized_vector = [component / magnitude for component in vector]
         return normalized_vector
     
-    def plot_mesh_path_and_spline(self, mesh, spline, suturePlacement3d, normal_vectors, derivative_vectors, spline_segments=100):
+    def plot_mesh_path_and_spline(self, mesh, spline, suturePlacement3d, normal_vectors, derivative_vectors, spline_segments=100, viz=True, results_pth=None):
+        
+        # visaulize by default, save otherwise)
+        
         num_pts = len(suturePlacement3d.insertion_pts)
         fig = plt.figure()
         ax = plt.axes(projection='3d')
-        plt.title("Mesh and Spline")
+        ax.view_init(elev=90, azim=0)
+        plt.title(f"Surface and Spline for {num_pts} points")
 
         mesh_coords = mesh.vertex_coordinates
         ax.scatter3D(mesh_coords[::5, 0], mesh_coords[::5, 1], mesh_coords[::5, 2], color='red', alpha=0.01)
@@ -190,11 +186,15 @@ class Optimizer3d:
        
         # ax.quiver([normal_vectors[i][0] + suturePlacement3d.center_pts[i][0] for i in range(num_pts)], [normal_vectors[i][1] + suturePlacement3d.center_pts[i][1] for i in range(num_pts)], [normal_vectors[i][2] + suturePlacement3d.center_pts[i][2] for i in range(num_pts)], [normal_vectors[i][0] for i in range(num_pts)], [normal_vectors[i][1] for i in range(num_pts)], [normal_vectors[i][2] for i in range(num_pts)])
         # ax.quiver([derivative_vectors[i][0] + suturePlacement3d.center_pts[i][0] for i in range(num_pts)], [derivative_vectors[i][1] + suturePlacement3d.center_pts[i][1] for i in range(num_pts)], [derivative_vectors[i][2] + suturePlacement3d.center_pts[i][2] for i in range(num_pts)], [derivative_vectors[i][0] for i in range(num_pts)], [derivative_vectors[i][1] for i in range(num_pts)], [derivative_vectors[i][2] for i in range(num_pts)], color="red")
-        
-        plt.show()
+        if viz:
+            plt.show()
+        else:
+            # save images and losses
+            save_str = results_pth + str(num_pts) + ".png"
+            plt.savefig(save_str)
+            plt.close()
 
-
-    def plot_mesh_path_spline_and_forces(self, mesh, spline, suturePlacement3d, wound_pt, tot_insertion_force, tot_extraction_force, spline_segments=100):
+    def plot_mesh_path_spline_and_forces(self, mesh, spline, suturePlacement3d, wound_pt, tot_insertion_force, tot_extraction_force, spline_segments=100,in_ex_pt=None, grad_start=None, grad_end=None, shortest_path=None):
         num_pts = len(suturePlacement3d.insertion_pts)
         fig = plt.figure()
         ax = plt.axes(projection='3d')
@@ -212,22 +212,43 @@ class Optimizer3d:
         spline_coords_y = []
         spline_coords_z = []
 
+        spline_x = shortest_path[0]
+        spline_y = shortest_path[1]
+        spline_z = shortest_path[2]
+
+        shortest_path_coords_x = []
+        shortest_path_coords_y = []
+        shortest_path_coords_z = []
+
         for t in np.linspace(0, 1, spline_segments):
             spline_coords_x.append(spline_x(t))
             spline_coords_y.append(spline_y(t))
             spline_coords_z.append(spline_z(t))
 
+            shortest_path_coords_x.append(spline_x(t))
+            shortest_path_coords_y.append(spline_y(t))
+            shortest_path_coords_z.append(spline_z(t))
+            
+
         ax.plot(spline_coords_x, spline_coords_y, spline_coords_z, color='green')
+        ax.plot(shortest_path_coords_x, shortest_path_coords_y, shortest_path_coords_z, color='green')
+
         ax.scatter([suturePlacement3d.insertion_pts[i][0] for i in range(num_pts)], [suturePlacement3d.insertion_pts[i][1] for i in range(num_pts)], [suturePlacement3d.insertion_pts[i][2] for i in range(num_pts)], c="green", s=10)
         ax.scatter([suturePlacement3d.center_pts[i][0] for i in range(num_pts)], [suturePlacement3d.center_pts[i][1] for i in range(num_pts)], [suturePlacement3d.center_pts[i][2] for i in range(num_pts)], c="blue", s=5)
         ax.scatter([suturePlacement3d.extraction_pts[i][0] for i in range(num_pts)], [suturePlacement3d.extraction_pts[i][1] for i in range(num_pts)], [suturePlacement3d.extraction_pts[i][2] for i in range(num_pts)], c="purple", s=10)
        
         ax.scatter(wound_pt[0], wound_pt[1], wound_pt[2], c="orange", s=5)
 
+
+        ax.scatter(in_ex_pt[0], in_ex_pt[1], in_ex_pt[2], c="orange", s=5)
+
         arrow_rescaling = 0.03
 
         tot_insertion_force_scaled = arrow_rescaling * tot_insertion_force
         tot_extraction_force_scaled = arrow_rescaling * tot_extraction_force
+
+        ax.quiver(in_ex_pt[0], in_ex_pt[1], in_ex_pt[2], grad_start[0], grad_start[1], grad_start[2], color="red")
+        ax.quiver(wound_pt[0], wound_pt[1], wound_pt[2], grad_end[0], grad_end[1], grad_end[2], color="red")
 
         ax.quiver(wound_pt[0], wound_pt[1], wound_pt[2], tot_insertion_force_scaled[0], tot_insertion_force_scaled[1], tot_insertion_force_scaled[2], color="green")
         ax.quiver(wound_pt[0], wound_pt[1], wound_pt[2], tot_extraction_force_scaled[0], tot_extraction_force_scaled[1], tot_extraction_force_scaled[2], color="purple")
@@ -239,7 +260,7 @@ class Optimizer3d:
 
 
 
-    def optimize(self, placement: SuturePlacement3d):
+    def optimize(self, placement: SuturePlacement3d, eval=False):
 
         wound_points = placement.t
 
@@ -264,20 +285,6 @@ class Optimizer3d:
         
         insert_pts, center_pts, extract_pts = placement.insertion_pts, placement.center_pts, placement.extraction_pts
         insert_dists, center_dists, extract_dists = self.get_dists(insert_pts), self.get_dists(center_pts), self.get_dists(extract_pts)
-
-        # make min/max constraints for every suture gap
-        def get_ith_max_constraint(dist_list, i):
-            return (self.gamma * 4) - dist_list[i]
-        
-        def get_ith_min_constraint(dist_list, i):
-            return dist_list[i] -  (self.gamma * 0.2)
-        
-
-        def is_ordered(t):
-            for i in range(len(t) - 1):
-                if t[i + 1] - t[i] <= 0:
-                    return - 1
-            return 1
         
         constraints = [{'type': 'eq', 'fun': lambda t: 1 - t[-1]}, 
                        {'type': 'eq', 'fun': lambda t: t[0]},
@@ -294,7 +301,7 @@ class Optimizer3d:
         #     constraints.append({'type': 'ineq', 'fun': lambda t: get_ith_min_constraint(extract_dists, i)})
 
 
-        def loss(wound_points):
+        def loss(wound_points, eval=False):
             """
             This function should calculate the loss of a particular placement. As before, the 
             loss is entirely dependent on how far along the curve we are. Let t range from 
@@ -303,23 +310,29 @@ class Optimizer3d:
             best values of t).
             """
 
-            self.update_placement(placement, self.mesh, placement.spline, wound_points)
+            if not eval:
+                self.update_placement(placement, self.mesh, placement.spline, wound_points)
             
             # recalculate all point locations
-            
-            # closure_loss, shear_loss = compute_closure_shear_loss()
-            #print("Closure loss", closure_loss)
-            #print("Shear loss", shear_loss)
 
             # print("Updated placement")
             var_loss = self.get_point_dist_var_loss(placement)
             ideal_loss = self.get_ideal_loss(placement)
+            
+            closure_loss, shear_loss = compute_closure_shear_loss(granularity=20)
+            # print("Closure loss", closure_loss)
+            # print("Shear loss", shear_loss * self.c_shear)
+            # print("var_loss", var_loss)
+            # print("closure_loss", closure_loss)
 
-            # curr_loss = shear_loss * self.c_shear + closure_loss * self.c_closure + var_loss * self.c_var + ideal_loss * self.c_ideal
-            curr_loss = var_loss * self.c_var + ideal_loss * self.c_ideal
-            print("current_loss:" + str(curr_loss))
+            curr_loss = shear_loss * self.c_shear + closure_loss * self.c_closure + var_loss * self.c_var + ideal_loss * self.c_ideal
+            # curr_loss = var_loss * self.c_var + ideal_loss * self.c_ideal
+            # print("current_loss:" + str(curr_loss))
 
-            return curr_loss
+            if not eval:
+                return curr_loss
+            else:
+                return {"var_loss": var_loss, "ideal_loss": ideal_loss, "closure_loss": closure_loss, "shear_loss": shear_loss, "curr_loss": curr_loss}
         
         def jac(t):
             return optim.approx_fprime(t, loss)
@@ -389,9 +402,9 @@ class Optimizer3d:
             in_ex_plane_normal = in_ex_plane_normal / np.linalg.norm(in_ex_plane_normal)
             wound_plane_normal = wound_plane_normal / np.linalg.norm(wound_plane_normal)
 
-            if verbose > 10:
-                print("in_ex plane normal: ", in_ex_plane_normal)
-                print("norm of in_ex plane normal:", np.linalg.norm(in_ex_plane_normal))
+            # if verbose > 10:
+            #     print("in_ex plane normal: ", in_ex_plane_normal)
+            #     print("norm of in_ex plane normal:", np.linalg.norm(in_ex_plane_normal))
 
             # Normalize the normal vectors of the plane
             # in_ex_plane_normal = in_ex_plane_normal / np.linalg.norm(in_ex_plane_normal)
@@ -401,103 +414,114 @@ class Optimizer3d:
             # in_ex_vertex = in_ex_pt #TODO: GET THE VERTEX FROM THE MESH
             # wound_vertex = point #TODO: GET THE VERTEX FROM THE MESH
                 
-            shortest_path = mesh.get_a_star_path(in_ex_pt, point)
-            shortest_path_xyz = np.array([mesh.get_point_location(pt_idx) for pt_idx in shortest_path])
+            # shortest_path = mesh.get_a_star_path(in_ex_pt, point)
+
+            # print("in/ex pt", in_ex_pt, mesh.get_point_location(mesh.get_nearest_point(in_ex_pt)[1]))
+            # print("point", point, mesh.get_point_location(mesh.get_nearest_point(point)[1]))
+
+            # shortest_path_xyz = np.array([mesh.get_point_location(pt_idx) for pt_idx in shortest_path])
+
+            # print(shortest_path_xyz)
             
             # Calculate distances between consecutive points
-            distances = np.sqrt(np.sum(np.diff(shortest_path_xyz, axis=0)**2, axis=1))
+            # distances = np.sqrt(np.sum(np.diff(shortest_path_xyz, axis=0)**2, axis=1))
 
             # Calculate cumulative distance
-            cumulative_distance = np.insert(np.cumsum(distances), 0, 0)
+            # cumulative_distance = np.insert(np.cumsum(distances), 0, 0)
 
             # Normalize t to range from 0 to 1
-            t = cumulative_distance / cumulative_distance[-1]
+            # t = cumulative_distance / cumulative_distance[-1]
 
-            a_star_distance = cumulative_distance[-1]
+            # a_star_distance = cumulative_distance[-1]
 
             # FIT SPLINE TO SHORTEST PATH
-            x = shortest_path_xyz[:, 0] # x-coordinates of the shortest path
-            y = shortest_path_xyz[:, 1]
-            z = shortest_path_xyz[:, 2]
+            # x = shortest_path_xyz[:, 0] # x-coordinates of the shortest path
+            # y = shortest_path_xyz[:, 1]
+            # z = shortest_path_xyz[:, 2]
 
             #print(t,x)
             #print(len(t), len(x))
 
-            s_factor = len(x)/5.0 # A starting point for the smoothing factor; adjust based on noise level
+            # s_factor = len(x) # A starting point for the smoothing factor; adjust based on noise level
             #s_factor = 0.1
-            x_smooth = inter.UnivariateSpline(t, x, s=s_factor)
-            y_smooth = inter.UnivariateSpline(t, y, s=s_factor)
-            z_smooth = inter.UnivariateSpline(t, z, s=s_factor)
+            # x_smooth = inter.UnivariateSpline(t, x, s=s_factor)
+            # y_smooth = inter.UnivariateSpline(t, y, s=s_factor)
+            # z_smooth = inter.UnivariateSpline(t, z, s=s_factor)
             # GET DERIVATIVES OF SPLINE AT in_ex_vertex AND wound_vertex
-            x_smooth_deriv = x_smooth.derivative()
-            y_smooth_deriv = y_smooth.derivative()
-            z_smooth_deriv = z_smooth.derivative()
-            dx_start = x_smooth_deriv(0)
-            dy_start = y_smooth_deriv(0)
-            dz_start = z_smooth_deriv(0)
-            dx_end = x_smooth_deriv(1)
-            dy_end = y_smooth_deriv(1)
-            dz_end = z_smooth_deriv(1)
+            # x_smooth_deriv = x_smooth.derivative()
+            # y_smooth_deriv = y_smooth.derivative()
+            # z_smooth_deriv = z_smooth.derivative()
+            # dx_start = x_smooth_deriv(0)
+            # dy_start = y_smooth_deriv(0)
+            # dz_start = z_smooth_deriv(0)
+            # dx_end = x_smooth_deriv(1)
+            # dy_end = y_smooth_deriv(1)
+            # dz_end = z_smooth_deriv(1)
 
-            if verbose > 10:
-                print('x_smooth: ', x_smooth)
+            # grad_start = [dx_start, dy_start, dz_start]
+            # grad_end = [dx_end, dy_end, dz_end]
+
+            # if verbose > 10:
+            #     print('x_smooth: ', x_smooth)
 
             # Calculate the length of the spline
             ## TEST : SUBSTITUTE A* LENGTH FOR SPLINE LENGTH
             
             #spline_length = a_star_distance
 
-            spline_length = np.trapz(np.sqrt(x_smooth_deriv(t)**2 + y_smooth_deriv(t)**2 + z_smooth_deriv(t)**2), t)
+            # spline_length = np.trapz(np.sqrt(x_smooth_deriv(t)**2 + y_smooth_deriv(t)**2 + z_smooth_deriv(t)**2), t)
             #if verbose > 0:
             #    print("spline length: ", spline_length)
 
             # put together the path vectors at the in_ex and wound points
-            in_ex_path_vec = np.array([dx_start, dy_start, dz_start])
-            in_ex_path_vec = in_ex_path_vec / np.linalg.norm(in_ex_path_vec)
+            # in_ex_path_vec = np.array([dx_start, dy_start, dz_start])
+            # in_ex_path_vec = in_ex_path_vec / np.linalg.norm(in_ex_path_vec)
 
-            wound_path_vec = np.array([dx_end, dy_end, dz_end])    
-            wound_path_vec = wound_path_vec / np.linalg.norm(wound_path_vec)
+            # wound_path_vec = np.array([dx_end, dy_end, dz_end])    
+            # wound_path_vec = wound_path_vec / np.linalg.norm(wound_path_vec)
 
-            if verbose > 10:
-                print("in_ex path vec magnitude: ", np.linalg.norm(in_ex_path_vec))
-                print("wound path vec magnitude: ", np.linalg.norm(wound_path_vec))
+            # if verbose > 10:
+            #     print("in_ex path vec magnitude: ", np.linalg.norm(in_ex_path_vec))
+            #     print("wound path vec magnitude: ", np.linalg.norm(wound_path_vec))
 
-            in_ex_path_vec_proj = project_vector_onto_plane(in_ex_path_vec, in_ex_plane_normal)
-            in_ex_path_vec_proj_normalized = in_ex_path_vec_proj / np.linalg.norm(in_ex_path_vec_proj)
+            # in_ex_path_vec_proj = project_vector_onto_plane(in_ex_path_vec, in_ex_plane_normal)
+            # in_ex_path_vec_proj_normalized = in_ex_path_vec_proj / np.linalg.norm(in_ex_path_vec_proj)
             
-            wound_path_vec_proj = project_vector_onto_plane(wound_path_vec, wound_plane_normal)
-            wound_path_vec_proj_normalized = wound_path_vec_proj / np.linalg.norm(wound_path_vec_proj)
+            # wound_path_vec_proj = project_vector_onto_plane(wound_path_vec, wound_plane_normal)
+            # wound_path_vec_proj_normalized = wound_path_vec_proj / np.linalg.norm(wound_path_vec_proj)
 
-            if verbose > 10:
-                print('sanity check: dot product of projected vector and normal vector: ', np.dot(in_ex_path_vec_proj, in_ex_plane_normal))
-                print('sanity check: dot product of projected vector and normal vector: ', np.dot(wound_path_vec_proj, wound_plane_normal))
-                print('sanity check: projected in_ex path vector difference ', np.linalg.norm(in_ex_path_vec - in_ex_path_vec_proj))
-                print('sanity check: projected wound path vector difference ', np.linalg.norm(wound_path_vec - wound_path_vec_proj))
-                print('sanity check: dot product of in_ex path vector and normal vector: ', np.dot(in_ex_path_vec, in_ex_plane_normal))
-                print('sanity check: dot product of wound path vector and normal vector: ', np.dot(wound_path_vec, wound_plane_normal))
+            # if verbose > 10:
+            #     print('sanity check: dot product of projected vector and normal vector: ', np.dot(in_ex_path_vec_proj, in_ex_plane_normal))
+            #     print('sanity check: dot product of projected vector and normal vector: ', np.dot(wound_path_vec_proj, wound_plane_normal))
+            #     print('sanity check: projected in_ex path vector difference ', np.linalg.norm(in_ex_path_vec - in_ex_path_vec_proj))
+            #     print('sanity check: projected wound path vector difference ', np.linalg.norm(wound_path_vec - wound_path_vec_proj))
+            #     print('sanity check: dot product of in_ex path vector and normal vector: ', np.dot(in_ex_path_vec, in_ex_plane_normal))
+            #     print('sanity check: dot product of wound path vector and normal vector: ', np.dot(wound_path_vec, wound_plane_normal))
 
-            normals = [in_ex_plane_normal, wound_plane_normal]
+            # normals = [in_ex_plane_normal, wound_plane_normal]
 
-            in_ex_force_vec_proj = project_vector_onto_plane(in_ex_force_vec, in_ex_plane_normal)
-            in_ex_force_vec_proj_normalized = in_ex_force_vec_proj / np.linalg.norm(in_ex_force_vec_proj)
+            # in_ex_force_vec_proj = project_vector_onto_plane(in_ex_force_vec, in_ex_plane_normal)
+            # in_ex_force_vec_proj_normalized = in_ex_force_vec_proj / np.linalg.norm(in_ex_force_vec_proj)
 
-            force_angle = get_force_angle(in_ex_plane_normal, in_ex_force_vec, in_ex_path_vec)
+            # measure angle between (vec from in_ex to wound pt) and (in_ex_force_vec)
+
+            force_angle = get_force_angle(in_ex_plane_normal, in_ex_force_vec, point - in_ex_pt)
 
             ellipse_dist_factor = np.sqrt((np.sin(force_angle) * ellipse_ecc) ** 2 + (np.cos(force_angle)) ** 2)
 
-            wound_force = self.force_model['imparted_force'] - force_decay * spline_length * ellipse_dist_factor
+            wound_force = self.force_model['imparted_force'] - force_decay * np.linalg.norm(point - in_ex_pt) * ellipse_dist_factor
 
-            if verbose > 10:
-                print('in_ex force: ', self.force_model['imparted_force'])
-                print('force decay: ', force_decay)
-                print('force angle: ', force_angle)
-                print('suture width: ', self.suture_width)
-                print('spline length: ', spline_length)
-                print('euclidean distance: ', np.linalg.norm(in_ex_pt - point))
-                print('distance on mesh path: ', a_star_distance)
-                print('ellipse eccentricity: ', ellipse_ecc)
-                print('elliptical distance compensation factor: ', ellipse_dist_factor)
-                print('wound force: ', wound_force)
+            # if verbose > 10:
+            #     print('in_ex force: ', self.force_model['imparted_force'])
+            #     print('force decay: ', force_decay)
+            #     print('force angle: ', force_angle)
+            #     print('suture width: ', self.suture_width)
+            #     print('spline length: ', spline_length)
+            #     print('euclidean distance: ', np.linalg.norm(in_ex_pt - point))
+            #     print('distance on mesh path: ', a_star_distance)
+            #     print('ellipse eccentricity: ', ellipse_ecc)
+            #     print('elliptical distance compensation factor: ', ellipse_dist_factor)
+            #     print('wound force: ', wound_force)
 
             wound_force = max(0, wound_force)
 
@@ -505,9 +529,16 @@ class Optimizer3d:
             #wound_cross_prod = np.cross(wound_plane_normal, wound_path_vec_proj_normalized)
             #wound_direction = np.cos(force_angle) * wound_path_vec_proj_normalized - np.sin(force_angle) * wound_cross_prod
 
-            wound_direction = get_force_direction(wound_plane_normal, force_angle, wound_path_vec_proj_normalized)
+            # wound_direction = get_force_direction(wound_plane_normal, force_angle, wound_path_vec_proj_normalized)
 
-            wound_force_vec = wound_force * wound_direction
+            # change the in_ex vector to be the same as the arg
+            # project
+            # return
+
+            in_ex_force_vec = project_vector_onto_plane(in_ex_force_vec, wound_plane_normal)
+            in_ex_force_vec = in_ex_force_vec / np.linalg.norm(in_ex_force_vec)
+
+            wound_force_vec = wound_force * in_ex_force_vec
 
             #if verbose > 1:
                 # TODO: Fix plotting
@@ -517,13 +548,24 @@ class Optimizer3d:
             if self.force_model['verbose'] > 0:
                 print('wound force vec: ', wound_force_vec)
 
+            
+            # plot the wound force from each suture to each point
+            # mesh = self.mesh
+
+            # forces are exerted by the suture from extraction to insertion points (and vice versa)
+
+
+            #dist_to_nearest_insertion_point = np.min(np.linalg.norm(insertion_pts - point, axis=1))
+            #dist_to_nearest_extraction_point = np.min(np.linalg.norm(extraction_pts - point, axis=1))
+
+            # self.plot_mesh_path_spline_and_forces(mesh, spline, suturePlacement3d, point, wound_force_vec, wound_force_vec, spline_segments=100, in_ex_pt=in_ex_pt, grad_start=grad_start, grad_end=grad_end, shortest_path=[x_smooth, y_smooth, z_smooth])
+
             return wound_force_vec
         
         def compute_total_force(in_ex_pts, in_ex_force_vecs, point):
 
             #mesh = self.mesh
             #compute_felt_force(in_ex_pt, point, in_ex_force_vec, num_nearest = 20)
-
 
             total_force = np.array([0.0, 0.0, 0.0])
             for i in range(len(in_ex_pts)):
@@ -554,36 +596,34 @@ class Optimizer3d:
             for i in range(len(force_vecs)):
                 force_vecs[i] = force_vecs[i] / np.linalg.norm(force_vecs[i])
 
-            dist_to_nearest_insertion_point = np.min(np.linalg.norm(insertion_pts - point, axis=1))
-            dist_to_nearest_extraction_point = np.min(np.linalg.norm(extraction_pts - point, axis=1))
+            # dist_to_nearest_insertion_point = np.min(np.linalg.norm(insertion_pts - point, axis=1))
+            # dist_to_nearest_extraction_point = np.min(np.linalg.norm(extraction_pts - point, axis=1))
 
-            
+            # mesh_dist_to_nearest_insertion_point = 1e8
+            # mesh_dist_to_nearest_extraction_point = 1e8
+            # for i in range(len(insertion_pts)):
+                # path_to_insertion_i = mesh.get_a_star_path(insertion_pts[i], point)
+                # path_to_extraction_i = mesh.get_a_star_path(extraction_pts[i], point)
 
-            mesh_dist_to_nearest_insertion_point = 1e8
-            mesh_dist_to_nearest_extraction_point = 1e8
-            for i in range(len(insertion_pts)):
-                path_to_insertion_i = mesh.get_a_star_path(insertion_pts[i], point)
-                path_to_extraction_i = mesh.get_a_star_path(extraction_pts[i], point)
-
-                shortest_path_xyz_to_insertion_i = np.array([mesh.get_point_location(pt_idx) for pt_idx in path_to_insertion_i])
-                shortest_path_xyz_to_extraction_i = np.array([mesh.get_point_location(pt_idx) for pt_idx in path_to_extraction_i])
+                # shortest_path_xyz_to_insertion_i = np.array([mesh.get_point_location(pt_idx) for pt_idx in path_to_insertion_i])
+                # shortest_path_xyz_to_extraction_i = np.array([mesh.get_point_location(pt_idx) for pt_idx in path_to_extraction_i])
     
                 # Calculate distances between consecutive points
-                distances_to_insertion_i = np.sqrt(np.sum(np.diff(shortest_path_xyz_to_insertion_i, axis=0)**2, axis=1))
-                distances_to_extraction_i = np.sqrt(np.sum(np.diff(shortest_path_xyz_to_extraction_i, axis=0)**2, axis=1))
+                # distances_to_insertion_i = np.sqrt(np.sum(np.diff(shortest_path_xyz_to_insertion_i, axis=0)**2, axis=1))
+                # distances_to_extraction_i = np.sqrt(np.sum(np.diff(shortest_path_xyz_to_extraction_i, axis=0)**2, axis=1))
 
                 # Calculate cumulative distance
-                cumulative_distance_to_insertion_i = np.sum(distances_to_insertion_i)
-                cumulative_distance_to_extraction_i = np.sum(distances_to_extraction_i)
+                # cumulative_distance_to_insertion_i = np.sum(distances_to_insertion_i)
+                # cumulative_distance_to_extraction_i = np.sum(distances_to_extraction_i)
 
-                mesh_dist_to_nearest_insertion_point = min(mesh_dist_to_nearest_insertion_point, cumulative_distance_to_insertion_i)
-                mesh_dist_to_nearest_extraction_point = min(mesh_dist_to_nearest_extraction_point, cumulative_distance_to_extraction_i)
+                # mesh_dist_to_nearest_insertion_point = min(mesh_dist_to_nearest_insertion_point, cumulative_distance_to_insertion_i)
+                # mesh_dist_to_nearest_extraction_point = min(mesh_dist_to_nearest_extraction_point, cumulative_distance_to_extraction_i)
 
-            if self.force_model['verbose'] > 0:
-                print("dist to nearest insertion point: ", dist_to_nearest_insertion_point)
-                print("a star dist to nearest insertion point: ", mesh_dist_to_nearest_insertion_point)
-                print("dist to nearest extraction point: ", dist_to_nearest_extraction_point)
-                print("a star dist to nearest extraction point: ", mesh_dist_to_nearest_extraction_point)
+            # if self.force_model['verbose'] > 0:
+            #     print("dist to nearest insertion point: ", dist_to_nearest_insertion_point)
+            #     print("a star dist to nearest insertion point: ", mesh_dist_to_nearest_insertion_point)
+            #     print("dist to nearest extraction point: ", dist_to_nearest_extraction_point)
+            #     print("a star dist to nearest extraction point: ", mesh_dist_to_nearest_extraction_point)
 
             wound_plane = get_plane_estimation(mesh, point)
             wound_plane = wound_plane / np.linalg.norm(wound_plane)
@@ -619,8 +659,9 @@ class Optimizer3d:
                 print("Shear force: ", shear_force)
 
             return closure_force, shear_force
+        
 
-        def plot_closure_shear_force(t, wound_derivative):
+        def plot_insertion_extraction_force(t, wound_derivative):
 
             # t is location of the point on the wound (in spline parameterization)
 
@@ -678,7 +719,7 @@ class Optimizer3d:
                 closure_force, shear_force = compute_closure_shear_force(wound_pt, wound_derivative)
 
                 if self.force_model['verbose'] > 0:
-                    plot_closure_shear_force(t[i], wound_derivative)
+                    plot_insertion_extraction_force(t[i], wound_derivative)
 
                 closure_loss += ((closure_force - self.force_model['ideal_closure_force'])**2)/granularity
                 shear_loss += (shear_force**2)/granularity
@@ -689,8 +730,11 @@ class Optimizer3d:
 
             return closure_loss, shear_loss
         
+        if eval:
+            return loss(wound_points, eval=True)
+        
         # run optimizer
-        result = optim.minimize(loss, wound_points, constraints = constraints, options={"maxiter":10, "disp":True}, method = 'SLSQP', tol=1e-3, jac = jac)
+        result = optim.minimize(loss, wound_points, constraints = constraints, options={"maxiter":100, "disp":True}, method = 'SLSQP', tol=1e-3, jac = jac)
         
         return result 
 
@@ -726,6 +770,7 @@ class Optimizer3d:
         return insertion_loss + center_loss + extraction_loss
 
     def get_diff_var(self, points): 
+        
         dists = np.zeros(len(points) - 1)
 
         for i in range(len(points) - 1):
@@ -803,13 +848,13 @@ if __name__ == '__main__':
     y_smooth = inter.UnivariateSpline(t, y, s=s_factor)
     z_smooth = inter.UnivariateSpline(t, z, s=s_factor)
     spline = [x_smooth, y_smooth, z_smooth]
-    suture_width = 0.002 # 0.002 TODO: Change once scaling is sorted
+    suture_width = 0.005
 
-    c_ideal = 1
-    gamma = suture_width # TODO: Change once scaling is sorted
-    c_var = 1
-    c_shear = 1
-    c_closure = 1
+    c_ideal = 10000
+    gamma = suture_width 
+    c_var = 1000
+    c_shear = 10
+    c_closure = 0.1
 
     hyperparams = [c_ideal, gamma, c_var, c_shear, c_closure]
 
@@ -819,7 +864,6 @@ if __name__ == '__main__':
     suturePlacement3d, normal_vectors, derivative_vectors = optim3d.generate_inital_placement(mesh, spline)
     #print("Normal vector", normal_vectors)
     optim3d.plot_mesh_path_and_spline(mesh, spline, suturePlacement3d, normal_vectors, derivative_vectors)
-
     optim3d.optimize(suturePlacement3d)
 
     optim3d.plot_mesh_path_and_spline(mesh, spline, suturePlacement3d, normal_vectors, derivative_vectors)

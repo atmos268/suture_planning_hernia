@@ -15,6 +15,8 @@ from utils import get_mm_per_pixel
 import subprocess
 import random
 from SuturePlacement3d import SuturePlacement3d
+import json
+import os
 
 def calculate_z(mesh, point, smallest_z, largest_z):
     z_arr = np.linspace(smallest_z, largest_z, num=10000)
@@ -28,10 +30,6 @@ def calculate_z(mesh, point, smallest_z, largest_z):
 
     return min_z
 
-
-    
-    
-
 if __name__ == "__main__":
     
     box_method = True
@@ -44,11 +42,22 @@ if __name__ == "__main__":
     right_img_path = 'chicken_images/' + right_file
     right_img_path_enhanced = 'chicken_images/enhanced/' + right_file
 
-    mode = '2d' # Run 2d vs 3d
-    experiment_mode = "synthetic" # Run synthetic vs physical experiments pipeline
+    experiment_mode = "physical" # Run synthetic vs physical experiments pipeline
     # pick two random points to generate synthetic splines
     #num1, num2 = random.randrange(0, len(mesh.vertex_coordinates)), random.randrange(0, len(mesh.vertex_coordinates))
     num1, num2 = 21695, 8695
+    results_pth = "run_0"
+
+    baseline_pth = "results/" + results_pth + "/baseline/"
+    opt_pth = "results/" + results_pth + "/opt/"
+
+    if not os.path.isdir(baseline_pth):
+        os.mkdir(baseline_pth)
+
+    if not os.path.isdir(opt_pth):
+        os.mkdir(opt_pth)
+
+    mode = '3d' # 3d
 
     if experiment_mode == "synthetic":
         adj_path = 'adjacency_matrix.txt'
@@ -182,11 +191,13 @@ if __name__ == "__main__":
 
         newSuturePlacer.place_sutures(save_figs=save_figs)
 
-
         suture_display_adj_pipeline(newSuturePlacer)
 
     elif mode == '3d' and experiment_mode == "physical":
+        
+        viz = False
         use_prev = True
+        suture_width = 0.005
         
         # get the masks
         # save left and right masks
@@ -261,26 +272,61 @@ if __name__ == "__main__":
 
         # Create the graph
         mesh.generate_mesh()
-        
-        suture_width = 0.005
+
+        gamma = suture_width * 2
         c_ideal = 1000
-        gamma = suture_width # TODO: Change once scaling is sorted
-        c_var = 1000
+        c_var = 5000
         c_shear = 1
-        c_closure = 1
+        c_closure = 0.5
 
         hyperparams = [c_ideal, gamma, c_var, c_shear, c_closure]
 
         force_model_parameters = {'ellipse_ecc': 1.0, 'force_decay': 0.5/suture_width, 'verbose': 0, 'ideal_closure_force': None, 'imparted_force': None}
 
         optim3d = Optimizer3d(mesh, left_spline, suture_width, hyperparams, force_model_parameters)
-        suturePlacement3d, normal_vectors, derivative_vectors = optim3d.generate_inital_placement(mesh, left_spline)
-        #print("Normal vector", normal_vectors)
-        optim3d.plot_mesh_path_and_spline(mesh, left_spline, suturePlacement3d, normal_vectors, derivative_vectors)
+        
+        spline_length = optim3d.calculate_spline_length(left_spline, mesh)
+        num_sutures_initial = int(spline_length / (gamma)) #TODO: modify later 
+        print("Num sutures initial", num_sutures_initial)
+        start_range = int(num_sutures_initial * 0.5)
+        end_range = int(num_sutures_initial * 1.5)
 
-        optim3d.optimize(suturePlacement3d)
+        print("range:", start_range, end_range)
 
-        optim3d.plot_mesh_path_and_spline(mesh, left_spline, suturePlacement3d, normal_vectors, derivative_vectors)
+        equally_spaced_losses = {}
+        post_algorithm_losses = {}
+
+        for num_sutures in range(start_range, end_range + 1):
+
+            print("num sutures:", num_sutures)
+
+            suturePlacement3d, normal_vectors, derivative_vectors = optim3d.generate_inital_placement(mesh, left_spline, num_sutures=num_sutures)
+            #print("Normal vector", normal_vectors)
+
+            optim3d.plot_mesh_path_and_spline(mesh, left_spline, suturePlacement3d, normal_vectors, derivative_vectors, viz=viz, results_pth=baseline_pth)
+            equally_spaced_losses[num_sutures] = optim3d.optimize(suturePlacement3d, eval=True)
+
+            optim3d.optimize(suturePlacement3d)
+
+            optim3d.plot_mesh_path_and_spline(mesh, left_spline, suturePlacement3d, normal_vectors, derivative_vectors, viz=viz, results_pth=opt_pth)
+            post_algorithm_losses[num_sutures] = optim3d.optimize(suturePlacement3d, eval=True)
+
+        # print("equally_spaced_losses", equally_spaced_losses)
+        # print("post_algorithm_losses", post_algorithm_losses)
+
+        json_equal = json.dumps(equally_spaced_losses)
+        json_post = json.dumps(post_algorithm_losses)
+
+        equal_losses_pth = baseline_pth + "losses.json"
+        opt_losses_pth = opt_pth + "losses.json"
+
+        f = open(equal_losses_pth,"w")
+        f.write(json_equal)
+        f.close()
+
+        f = open(opt_losses_pth,"w")
+        f.write(json_post)
+        f.close()
 
     # else:
     #     print("invalid mode")
