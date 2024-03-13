@@ -748,6 +748,19 @@ class Optimizer3d:
             dists[i] = euclidean_dist(points[i], points[i+1])
 
         return dists
+    
+    def loss_placement(self, placement):
+        """
+        This function should calculate the loss of a particular placement. Used for synthetic splines
+        """
+        var_loss = self.get_point_dist_var_loss(placement)
+        ideal_loss = self.get_ideal_loss(placement)
+
+        # curr_loss = shear_loss * self.c_shear + closure_loss * self.c_closure + var_loss * self.c_var + ideal_loss * self.c_ideal
+        curr_loss = var_loss * self.c_var + ideal_loss * self.c_ideal
+        # print("current_loss:" + str(curr_loss))
+
+        return curr_loss
 
 if __name__ == '__main__':
 

@@ -89,6 +89,9 @@ if __name__ == "__main__":
 
             optim3d.plot_mesh_path_and_spline(mesh, spline3d, suturePlacement3d, normal_vectors, derivative_vectors)
 
+            loss3d = optim3d.loss_placement(suturePlacement3d)
+            print("loss of 3d placement", str(loss3d))
+
         elif mode == "2d":
             suture_width = 0.005
             # project points onto xy plane
@@ -123,10 +126,13 @@ if __name__ == "__main__":
             # converting points to 3d and plotting
             b_center_pts, b_insert_pts, b_extract_pts = twoD_to_3D(b_center_pts), twoD_to_3D(b_insert_pts), twoD_to_3D(b_extract_pts)
             center_pts_spline = line_to_spline_3d(b_center_pts, sample_ratio=30, viz=False)
-            suturePlacement3dNew = SuturePlacement3d(center_pts_spline, b_center_pts, b_insert_pts, b_extract_pts, [])
-            optim3d.plot_mesh_path_and_spline(mesh, center_pts_spline, suturePlacement3dNew, [], [])
+            suturePlacement2dIn3d = SuturePlacement3d(center_pts_spline, b_center_pts, b_insert_pts, b_extract_pts, [])
+            optim3d.plot_mesh_path_and_spline(mesh, center_pts_spline, suturePlacement2dIn3d, [], [])
 
-            #TODO: check loss of the 2d placement vs 3d placement
+            #print loss of the 2d placement
+            loss2d = optim3d.loss_placement(suturePlacement2dIn3d)
+            print("loss of 2d placement", str(loss2d))
+
             
     if mode == '2d' and experiment_mode == "physical":
 
