@@ -100,6 +100,8 @@ if __name__ == "__main__":
             # project points onto xy plane
             avg_z = np.mean(shortest_path_xyz[:, 2])
             shortest_path_xy = [[shortest_path_xyz[i][0], shortest_path_xyz[i][1]]for i in range(len(shortest_path_xyz))]
+            print("start before optimization", shortest_path_xyz[0])
+            print("end before optimization", shortest_path_xyz[-1])
             
             spline2d, tck = line_to_spline(shortest_path_xy, "", 1, viz=False)
 
@@ -121,7 +123,7 @@ if __name__ == "__main__":
             # helper function to convert points back to 3d and find closest mesh points
             def twoD_to_3D(points):
                 points = [pt + [calculate_z(mesh, pt, smallest_z, largest_z)] for pt in points]
-                print(points)
+                #print(points)
                 #return np.array(points)
                 points_mesh = np.array([mesh.get_point_location(mesh.get_nearest_point(pt)[1]) for pt in points])
                 return points_mesh
@@ -130,7 +132,9 @@ if __name__ == "__main__":
             b_center_pts, b_insert_pts, b_extract_pts = twoD_to_3D(b_center_pts), twoD_to_3D(b_insert_pts), twoD_to_3D(b_extract_pts)
             center_pts_spline = line_to_spline_3d(b_center_pts, sample_ratio=30, viz=False)
             suturePlacement3dNew = SuturePlacement3d(center_pts_spline, b_center_pts, b_insert_pts, b_extract_pts, [])
-            optim3d.plot_mesh_path_and_spline(mesh, spline3d, suturePlacement3dNew, [], [])
+            optim3d.plot_mesh_path_and_spline(mesh, center_pts_spline, suturePlacement3dNew, [], [])
+            print("start after optimization", b_center_pts[0])
+            print("end after optimization", b_center_pts[-1])
         
     if mode == '2d' and experiment_mode == "physical":
 
