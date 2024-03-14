@@ -88,7 +88,7 @@ class SuturePlacer:
         d = {}
         losses = {}
         points_dict = {}
-        for num_sutures in range(max(2, int(0.5 * num_sutures_initial)), int(2 * num_sutures_initial)): # This should be (0.8 * heuristic to 1.4 * heuristic)
+        for num_sutures in range(max(2, int(0.8 * num_sutures_initial)), int(2 * num_sutures_initial)): # This should be (0.8 * heuristic to 1.4 * heuristic)
             print('NUM SUTURES: ', num_sutures)
             d[num_sutures] = {}
             heuristic = num_sutures

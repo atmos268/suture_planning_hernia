@@ -153,10 +153,10 @@ def line_to_spline(line, img_path, mm_per_pixel, viz=False):
 
     sampled_pts = [line[i * sample_ratio] for i in range(len(line) // sample_ratio)] + [line[-1]]
 
-    sampled_tck, u = inter.splprep([[pt[0] for pt in sampled_pts], [pt[1] for pt in sampled_pts]], k=2, s=0)
+    sampled_tck, u = inter.splprep([[pt[0] for pt in sampled_pts], [pt[1] for pt in sampled_pts]], k=3, s=0)
     sampled_wound_parametric = lambda t, d: inter.splev(t, sampled_tck, der = d)
 
-    smoothed_tck, u = inter.splprep([[pt[0] for pt in line], [pt[1] for pt in line]], k=2)
+    smoothed_tck, u = inter.splprep([[pt[0] for pt in line], [pt[1] for pt in line]], k=3)
     smoothed_wound_parametric = lambda t, d: inter.splev(t, smoothed_tck, der = d)
 
     # plot spline

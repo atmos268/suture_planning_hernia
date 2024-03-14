@@ -1,4 +1,5 @@
 from EdgeDetector import img_to_line, line_to_spline, line_to_spline_3d, click_points_simple
+import tensorflow as tf
 from main import suture_display_adj_pipeline
 from SuturePlacer import SuturePlacer
 from Optimizer3d import Optimizer3d
@@ -30,15 +31,63 @@ def calculate_z(mesh, point, smallest_z, largest_z):
 
     return min_z
 
+
+def getTransformationMatrix():
+    transformation_tensor = tf.io.read_file('transforms/tf_av_left_zivid.tf')
+    print(transformation_tensor)
+    transformation_string = transformation_tensor.numpy().decode('utf-8') # Convert to a Python string
+    # Split the string into individual lines and elements
+    lines = transformation_string.strip().split('\n')[2:]
+    matrix_elements = [list(map(float, line.split())) for line in lines]
+    # Convert the matrix elements to a NumPy array
+    transformation_matrix = np.array(matrix_elements)
+    print(transformation_matrix.shape)
+    print(transformation_matrix)
+    return transformation_matrix
+
+def dragging_helper(points, left_image):
+    transformation_matrix = getTransformationMatrix()
+    R, t = transformation_matrix[1:], transformation_matrix[0]
+    left_center_points = []
+    for pt in points:
+        left_center_points.append(np.linalg.inv(R) @ (pt - t))
+    left_center_points = np.array(left_center_points)
+    # projecting onto left image
+    image_height, image_width, _ = left_image.shape
+    left_camera_matrix = np.array(
+        [[1688.10117, 0, 657.660185], [0, 1688.10117, 411.400296], [0, 0, 1]],
+        dtype=np.float64,
+    )
+    left_dist_coeffs = np.array(
+        [-0.13969738, 0.28183828, -0.00836148, -0.00180531, -1.65874481], dtype=np.float64
+    )
+    if not left_center_points.shape[0] == 0:
+        projected_points_wound, _ = cv2.projectPoints(
+            left_center_points,
+            np.zeros(3),
+            np.zeros(3),
+            left_camera_matrix,
+            distCoeffs=left_dist_coeffs,
+            )
+        image_points_wound = np.squeeze(projected_points_wound, axis=1).astype(int)
+        for i in range(image_points_wound.shape[0]):
+            x = int(image_points_wound[i, 0])
+            y = int(image_points_wound[i, 1])
+            if 0 <= x < image_width and 0 <= y < image_height:
+                for i in range(7):
+                    for j in range(7):
+                        left_image[y+i, x+j] = 0
+    return left_image
+
 if __name__ == "__main__":
     
     box_method = True
     save_figs = True
-    left_file = 'image_left_001.png'
+    left_file = 'left_test_000.png'
     left_img_path = 'chicken_images/' + left_file
     left_img_path_enhanced = 'chicken_images/enhanced/' + left_file
 
-    right_file = 'image_right_001.png'
+    right_file = 'right_test_000.png'
     right_img_path = 'chicken_images/' + right_file
     right_img_path_enhanced = 'chicken_images/enhanced/' + right_file
 
@@ -50,19 +99,28 @@ if __name__ == "__main__":
 
     baseline_pth = "results/" + results_pth + "/baseline/"
     opt_pth = "results/" + results_pth + "/opt/"
+    old_algo_pth = "results/" + results_pth + "/old_algo/"
+
+    if not os.path.isdir("results/"):
+        os.mkdir("results/")
+    
+    if not os.path.isdir("results/" + results_pth):
+        os.mkdir("results/" + results_pth)
 
     if not os.path.isdir(baseline_pth):
         os.mkdir(baseline_pth)
 
     if not os.path.isdir(opt_pth):
         os.mkdir(opt_pth)
+    
+    if not os.path.isdir(old_algo_pth):
+        os.mkdir(old_algo_pth)
 
     mode = '3d' # 3d
 
     if experiment_mode == "synthetic":
         adj_path = 'adjacency_matrix.txt'
         loc_path = 'vertex_lookup.txt'
-
 
         mesh = MeshIngestor(adj_path, loc_path)
 
@@ -144,6 +202,35 @@ if __name__ == "__main__":
 
             
     if mode == '2d' and experiment_mode == "physical":
+        adj_path = 'adjacency_matrix.txt'
+        loc_path = 'vertex_lookup.txt'
+        disp_path = "RAFT/disp_test_000.npy"
+
+        # get the largest and smallest value in the mesh
+
+        mesh = MeshIngestor(adj_path, loc_path)
+
+        # Create the graph
+        mesh.generate_mesh()
+
+        max_z, min_z = mesh.get_point_location(0)[2], mesh.get_point_location(0)[2]
+        for idx in range(mesh.graph.number_of_nodes()):
+            max_z = max(max_z, mesh.get_point_location(idx)[2])
+            min_z = min(min_z, mesh.get_point_location(idx)[2])
+
+        # get reasonable upper and lower bounds on z
+        # use it to convert back to 3d
+
+        suture_width = 0.005 
+        c_ideal = 1000
+        gamma = suture_width 
+        c_var = 1000
+        c_shear = 1
+        c_closure = 1
+
+        hyperparams = [c_ideal, gamma, c_var, c_shear, c_closure]
+
+        force_model_parameters = {'ellipse_ecc': 1.0, 'force_decay': 0.5/suture_width, 'verbose': 0, 'ideal_closure_force': None, 'imparted_force': None}
 
         img = Image.open(left_img_path)
     
@@ -152,7 +239,7 @@ if __name__ == "__main__":
         numpydata = np.asarray(img)
 
         # get scaling information
-        mm_indicated = 50
+        mm_indicated = 10
         wound_width = 5
         left_pts, right_pts = click_points_simple(numpydata)
 
@@ -174,8 +261,6 @@ if __name__ == "__main__":
 
         scaled_spline, tck = line_to_spline(scaled_line, left_img_path_enhanced, mm_per_pixel, viz=True)
 
-        plt.show()
-
         # run suture placement pipeline
         suture_placer = SuturePlacer(wound_width, mm_per_pixel)
         wound_parametric = lambda t, d: inter.splev(t, tck, der = d)
@@ -190,6 +275,56 @@ if __name__ == "__main__":
         newSuturePlacer.image = left_img_path
 
         newSuturePlacer.place_sutures(save_figs=save_figs)
+        b_insert_pts, b_center_pts, b_extract_pts = newSuturePlacer.b_insert_pts, newSuturePlacer.b_center_pts, newSuturePlacer.b_extract_pts 
+
+        smallest_z = min_z
+        largest_z = max_z
+
+        def twoD_to_3D(points):
+
+            # rewrite - use raft disparity map strategy to transfer points to 3d
+
+            # get back to pixels
+            pts_pxl = [[int(float(pt[1]) / mm_per_pixel), int(float(pt[0]) / mm_per_pixel)] for pt in points]
+
+            # make mask
+            width, height = img.size
+
+            point_mask = np.zeros((height, width))
+
+            for col, row in pts_pxl:
+                point_mask[row,col] = 1
+        
+            # convert the spline to 3d using raft
+            pts_3d = get_transformed_points(left_img_path, disp_path, point_mask)
+
+            # return 3d points
+
+            #print(points)
+            #return np.array(points)
+            points_mesh = np.array([mesh.get_point_location(mesh.get_nearest_point(pt)[1]) for pt in pts_3d])
+            return points_mesh
+                
+        b_center_pts, b_insert_pts, b_extract_pts = twoD_to_3D(b_center_pts), twoD_to_3D(b_insert_pts), twoD_to_3D(b_extract_pts)
+        center_pts_spline = line_to_spline_3d(b_center_pts, viz=False)
+        suturePlacement2dIn3d = SuturePlacement3d(center_pts_spline, b_center_pts, b_insert_pts, b_extract_pts, [])
+
+        optim3d = Optimizer3d(mesh, center_pts_spline, suture_width, hyperparams, force_model_parameters)
+        optim3d.plot_mesh_path_and_spline(mesh, center_pts_spline, suturePlacement2dIn3d, [], [])
+
+        # print loss of the 2d placement
+        # loss2d = optim3d.loss_placement(suturePlacement2dIn3d)
+        loss2d = optim3d.optimize(suturePlacement2dIn3d, eval=True)
+        
+        print("loss of 2d placement", str(loss2d))
+        optim3d.plot_mesh_path_and_spline(mesh, center_pts_spline, suturePlacement2dIn3d, [], [], viz=False, results_pth=old_algo_pth)
+
+        json_old = json.dumps(loss2d)
+
+        old_losses_pth = old_algo_pth + "losses.json"
+        f = open(old_losses_pth,"w")
+        f.write(json_old)
+        f.close()
 
         suture_display_adj_pipeline(newSuturePlacer)
 
@@ -225,7 +360,7 @@ if __name__ == "__main__":
             np.save(right_line_path, right_line)
         
         # do raft, no need to do rn, as we are using the existing RAFT output
-        disp_path = "RAFT/disp1.npy"
+        disp_path = "RAFT/disp_test_000.npy"
 
         # dilate to get region
         dilation = 100
@@ -327,6 +462,26 @@ if __name__ == "__main__":
         f = open(opt_losses_pth,"w")
         f.write(json_post)
         f.close()
+
+        print("getting here")
+
+        # dragging codeeee
+        # print(“Overhead center points”, np.array(suturePlacement3d.center_pts.shape))
+        # print(“left center points”, left_center_points.shape)
+        # projecting onto left image
+        left_image = cv2.imread(left_img_path, cv2.IMREAD_COLOR)
+        print(left_image)
+        print(len(suturePlacement3d.center_pts))
+        left_image = dragging_helper(suturePlacement3d.center_pts, left_image)
+        left_image = dragging_helper(suturePlacement3d.insertion_pts, left_image)
+        left_image = dragging_helper(suturePlacement3d.extraction_pts, left_image)
+
+        print(left_image)
+        # # Visualizing the projection on the image
+        cv2.namedWindow('Projected Points', cv2.WINDOW_NORMAL) # Create a resizable window
+        cv2.imshow('Projected Points', left_image) # Show the modified image
+        cv2.waitKey()
+        cv2.destroyAllWindows()
 
     # else:
     #     print("invalid mode")
