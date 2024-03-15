@@ -195,7 +195,6 @@ def line_to_spline_3d(line, sample_ratio=30, viz=False):
     y = line[:, 1]
     z = line[:, 2]
 
-
     # define t based on cumulative dists
     distances = np.sqrt(np.sum(np.diff(line, axis=0)**2, axis=1))
 
@@ -205,11 +204,21 @@ def line_to_spline_3d(line, sample_ratio=30, viz=False):
     # Normalize t to range from 0 to 1
     t = cumulative_distance / cumulative_distance[-1]
 
-    s_factor = len(x)/5
+    print(t)
+
     # get spline in each dimension
-    x_spline = inter.UnivariateSpline(t, x, s=s_factor)
-    y_spline = inter.UnivariateSpline(t, y, s=s_factor)
-    z_spline = inter.UnivariateSpline(t, z, s=s_factor)
+    x_spline = inter.UnivariateSpline(t, x)
+    y_spline = inter.UnivariateSpline(t, y)
+    z_spline = inter.UnivariateSpline(t, z)
+
+    print("plotting x")
+    print(x)
+    print(x.shape)
+    # plt.close()
+    print([i / len(x) for i in range(len(x))])
+    plt.plot(np.array([i / len(x) for i in range(len(x))]), np.array(x))
+    plt.plot([i / 100 for i in range(100)], [x_spline(i/100) for i in range(100)])
+    plt.show()
 
     return [x_spline, y_spline, z_spline]
 

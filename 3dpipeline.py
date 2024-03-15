@@ -18,6 +18,7 @@ import random
 from SuturePlacement3d import SuturePlacement3d
 import json
 import os
+import copy
 
 def calculate_z(mesh, point, smallest_z, largest_z):
     z_arr = np.linspace(smallest_z, largest_z, num=10000)
@@ -83,11 +84,11 @@ if __name__ == "__main__":
     
     box_method = True
     save_figs = True
-    left_file = 'left_test_000.png'
+    left_file = 'left_test_001.png'
     left_img_path = 'chicken_images/' + left_file
     left_img_path_enhanced = 'chicken_images/enhanced/' + left_file
 
-    right_file = 'right_test_000.png'
+    right_file = 'right_test_001.png'
     right_img_path = 'chicken_images/' + right_file
     right_img_path_enhanced = 'chicken_images/enhanced/' + right_file
 
@@ -95,7 +96,7 @@ if __name__ == "__main__":
     # pick two random points to generate synthetic splines
     #num1, num2 = random.randrange(0, len(mesh.vertex_coordinates)), random.randrange(0, len(mesh.vertex_coordinates))
     num1, num2 = 21695, 8695
-    results_pth = "run_0"
+    results_pth = "run_1"
 
     baseline_pth = "results/" + results_pth + "/baseline/"
     opt_pth = "results/" + results_pth + "/opt/"
@@ -204,7 +205,7 @@ if __name__ == "__main__":
     if mode == '2d' and experiment_mode == "physical":
         adj_path = 'adjacency_matrix.txt'
         loc_path = 'vertex_lookup.txt'
-        disp_path = "RAFT/disp_test_000.npy"
+        disp_path = "RAFT/disp_test_001.npy"
 
         # get the largest and smallest value in the mesh
 
@@ -330,7 +331,7 @@ if __name__ == "__main__":
 
     elif mode == '3d' and experiment_mode == "physical":
         
-        viz = False
+        viz = True
         use_prev = True
         suture_width = 0.005
         
@@ -360,7 +361,7 @@ if __name__ == "__main__":
             np.save(right_line_path, right_line)
         
         # do raft, no need to do rn, as we are using the existing RAFT output
-        disp_path = "RAFT/disp_test_000.npy"
+        disp_path = "RAFT/disp_test_001.npy"
 
         # dilate to get region
         dilation = 100
@@ -381,8 +382,13 @@ if __name__ == "__main__":
             line_mask[row,col] = 1
         
         # convert the spline to 3d using raft
-        line_pts_3d = get_transformed_points(left_img_path, disp_path, line_mask)
+        line_pts_3d = get_transformed_points(left_img_path, disp_path, line_mask, viz=True)
         np.save('line_pts_3d.npy', line_pts_3d)
+
+        fig = plt.figure()
+        ax = plt.axes(projection='3d')
+
+        ax.scatter3D([point[0] for point in line_pts_3d], [point[1] for point in line_pts_3d], [point[2] for point in line_pts_3d])
 
         # get the spline from the left image
         # since we are not visualizing here, no need for scaling info
@@ -390,6 +396,16 @@ if __name__ == "__main__":
         # will actually need to use line_to_spline_3d (expect 3d points)
         left_spline = line_to_spline_3d(line_pts_3d, sample_ratio=30, viz=False)
 
+        granularity = 100
+
+
+        x_pts = [left_spline[0](t/granularity) for t in range(granularity)]
+        y_pts = [left_spline[1](t/granularity) for t in range(granularity)]
+        z_pts = [left_spline[2](t/granularity) for t in range(granularity)]
+
+        ax.scatter3D(x_pts, y_pts, z_pts)
+
+        plt.show()
         # get mesh from the surrounding points
                     
         with open("pipeline_xyz_pts.xyz", "w") as f:
@@ -423,13 +439,20 @@ if __name__ == "__main__":
         spline_length = optim3d.calculate_spline_length(left_spline, mesh)
         num_sutures_initial = int(spline_length / (gamma)) #TODO: modify later 
         print("Num sutures initial", num_sutures_initial)
-        start_range = int(num_sutures_initial * 0.5)
+        start_range = max(int(num_sutures_initial * 0.5), 2)
         end_range = int(num_sutures_initial * 1.5)
 
         print("range:", start_range, end_range)
 
         equally_spaced_losses = {}
         post_algorithm_losses = {}
+
+
+        best_baseline_loss = 1e8
+        best_baseline_placement = None
+
+        best_opt_loss = 1e8
+        best_opt_placement = None
 
         for num_sutures in range(start_range, end_range + 1):
 
@@ -440,14 +463,47 @@ if __name__ == "__main__":
 
             optim3d.plot_mesh_path_and_spline(mesh, left_spline, suturePlacement3d, normal_vectors, derivative_vectors, viz=viz, results_pth=baseline_pth)
             equally_spaced_losses[num_sutures] = optim3d.optimize(suturePlacement3d, eval=True)
+            if equally_spaced_losses[num_sutures]["curr_loss"] < best_baseline_loss:
+                best_baseline_loss = equally_spaced_losses[num_sutures]["curr_loss"]
+                best_baseline_placement = copy.deepcopy(suturePlacement3d)
 
             optim3d.optimize(suturePlacement3d)
 
             optim3d.plot_mesh_path_and_spline(mesh, left_spline, suturePlacement3d, normal_vectors, derivative_vectors, viz=viz, results_pth=opt_pth)
             post_algorithm_losses[num_sutures] = optim3d.optimize(suturePlacement3d, eval=True)
 
+            if post_algorithm_losses[num_sutures]["curr_loss"] < best_opt_loss:
+                best_opt_loss = post_algorithm_losses[num_sutures]["curr_loss"]
+                best_opt_placement = copy.deepcopy(suturePlacement3d)
+
         # print("equally_spaced_losses", equally_spaced_losses)
         # print("post_algorithm_losses", post_algorithm_losses)
+        print("baseline")
+        left_image = cv2.imread(left_img_path, cv2.IMREAD_COLOR)
+        print(left_image)
+        print(len(best_baseline_placement.center_pts))
+        left_image = dragging_helper(best_baseline_placement.center_pts, left_image)
+        left_image = dragging_helper(best_baseline_placement.insertion_pts, left_image)
+        left_image = dragging_helper(best_baseline_placement.extraction_pts, left_image)
+
+        # # Visualizing the projection on the image
+        cv2.namedWindow('Projected Points', cv2.WINDOW_NORMAL) # Create a resizable window
+        cv2.imshow('Projected Points', left_image) # Show the modified image
+        cv2.waitKey()
+
+
+        print("optimized")
+        left_image = cv2.imread(left_img_path, cv2.IMREAD_COLOR)
+        print(left_image)
+        print(len(best_opt_placement.center_pts))
+        left_image = dragging_helper(best_opt_placement.center_pts, left_image)
+        left_image = dragging_helper(best_opt_placement.insertion_pts, left_image)
+        left_image = dragging_helper(best_opt_placement.extraction_pts, left_image)
+
+        # # Visualizing the projection on the image
+        cv2.namedWindow('Projected Points', cv2.WINDOW_NORMAL) # Create a resizable window
+        cv2.imshow('Projected Points', left_image) # Show the modified image
+        cv2.waitKey()
 
         json_equal = json.dumps(equally_spaced_losses)
         json_post = json.dumps(post_algorithm_losses)
@@ -463,25 +519,11 @@ if __name__ == "__main__":
         f.write(json_post)
         f.close()
 
-        print("getting here")
-
         # dragging codeeee
         # print(“Overhead center points”, np.array(suturePlacement3d.center_pts.shape))
         # print(“left center points”, left_center_points.shape)
         # projecting onto left image
-        left_image = cv2.imread(left_img_path, cv2.IMREAD_COLOR)
-        print(left_image)
-        print(len(suturePlacement3d.center_pts))
-        left_image = dragging_helper(suturePlacement3d.center_pts, left_image)
-        left_image = dragging_helper(suturePlacement3d.insertion_pts, left_image)
-        left_image = dragging_helper(suturePlacement3d.extraction_pts, left_image)
-
-        print(left_image)
-        # # Visualizing the projection on the image
-        cv2.namedWindow('Projected Points', cv2.WINDOW_NORMAL) # Create a resizable window
-        cv2.imshow('Projected Points', left_image) # Show the modified image
-        cv2.waitKey()
-        cv2.destroyAllWindows()
+        
 
     # else:
     #     print("invalid mode")

@@ -43,18 +43,24 @@ class Optimizer3d:
 
     def calculate_spline_length(self, spline, mesh):
         spline_x, spline_y, spline_z = spline[0], spline[1], spline[2]
+
+        # get an interpolated version of path
+
+        granularity = 100
+        x_pts = [spline_x(i / granularity) for i in range(100)]
+        y_pts = [spline_y(i / granularity) for i in range(100)]
+        z_pts = [spline_z(i / granularity) for i in range(100)]
         start = [spline_x(0), spline_y(0), spline_z(0)]
         end = [spline_x(1), spline_y(1), spline_z(1)]
-        shortest_path = mesh.get_a_star_path(start, end)
-        shortest_path_xyz = np.array([mesh.get_point_location(pt_idx) for pt_idx in shortest_path])
-        
+        path = np.array([x_pts, y_pts, z_pts])
+        print(path)
         # Calculate distances between consecutive points
-        distances = np.sqrt(np.sum(np.diff(shortest_path_xyz, axis=0)**2, axis=1))
+        distances = np.sqrt(np.sum(np.diff(path, axis=0)**2, axis=1))
 
         # Calculate cumulative distance
-        cumulative_distance = np.insert(np.cumsum(distances), 0, 0)
-        print("Spline length", cumulative_distance[-1])
-        return cumulative_distance[-1]
+        
+        print("Spline length", np.sum(distances))
+        return np.sum(distances)
     
     def generate_inital_placement(self, mesh, spline, num_sutures):
         """

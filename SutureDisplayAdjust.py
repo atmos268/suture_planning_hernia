@@ -136,7 +136,6 @@ class SutureDisplayAdjust:
         cv2.setMouseCallback('Adjustment Visualizer', self.__on_mouse_event)  # fills pnts array
         cv2.waitKey(0)
         self.scale_found = True
-        cv2.destroyAllWindows()
         # print('after create window')
         # print('self.pnts before waitkey', self.pnts)
         # cv2.waitKey(0)
