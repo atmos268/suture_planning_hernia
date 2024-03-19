@@ -373,16 +373,22 @@ if __name__ == "__main__":
         # write out points to a file
         surrounding_pts = get_transformed_points(left_img_path, disp_path, dilated_mask)
         np.save('surrounding_pts.npy', surrounding_pts)
-
-        # covert line into mask
-        img_width, img_height = Image.open(left_img_path).size
-        line_mask = np.zeros((img_height, img_width))
-
-        for row, col in left_line:
-            line_mask[row,col] = 1
         
         # convert the spline to 3d using raft
-        line_pts_3d = get_transformed_points(left_img_path, disp_path, line_mask, viz=True)
+        # TODO: convert points to 3d one by one to preserve ordering
+        
+        line_pts_3d = []
+        print("Left line shape", len(left_line))
+        for row, col in left_line[::50]:
+            # create mask with 1 point 
+            img_width, img_height = Image.open(left_img_path).size
+            line_mask = np.zeros((img_height, img_width))
+            line_mask[row, col] = 1
+            pt_3d = get_transformed_points(left_img_path, disp_path, line_mask, viz=False)
+            line_pts_3d.append(pt_3d[0])
+        line_pts_3d = np.array(line_pts_3d)
+        print(line_pts_3d)
+
         np.save('line_pts_3d.npy', line_pts_3d)
 
         fig = plt.figure()
