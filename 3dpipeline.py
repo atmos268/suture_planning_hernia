@@ -333,7 +333,7 @@ if __name__ == "__main__":
         
         viz = True
         use_prev = True
-        suture_width = 0.005
+        suture_width = 0.007
         
         # get the masks
         # save left and right masks
@@ -379,7 +379,7 @@ if __name__ == "__main__":
         
         line_pts_3d = []
         print("Left line shape", len(left_line))
-        for row, col in left_line[::50]:
+        for row, col in left_line[::30]:
             # create mask with 1 point 
             img_width, img_height = Image.open(left_img_path).size
             line_mask = np.zeros((img_height, img_width))
@@ -404,13 +404,12 @@ if __name__ == "__main__":
 
         granularity = 100
 
-
         x_pts = [left_spline[0](t/granularity) for t in range(granularity)]
         y_pts = [left_spline[1](t/granularity) for t in range(granularity)]
         z_pts = [left_spline[2](t/granularity) for t in range(granularity)]
 
         ax.scatter3D(x_pts, y_pts, z_pts)
-
+        plt.title("Spline points")
         plt.show()
         # get mesh from the surrounding points
                     

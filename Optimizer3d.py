@@ -55,8 +55,7 @@ class Optimizer3d:
         path = np.array([x_pts, y_pts, z_pts])
         print(path)
         # Calculate distances between consecutive points
-        distances = np.sqrt(np.sum(np.diff(path, axis=0)**2, axis=1))
-
+        distances = np.sqrt(np.sum(np.diff(path, axis=1)**2, axis=0))
         # Calculate cumulative distance
         
         print("Spline length", np.sum(distances))
