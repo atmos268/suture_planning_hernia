@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import time
+import tensorflow as tf
 import scipy.interpolate as inter
 # from vision.ZividUtils import ZividUtils as ZU
 import multiprocessing as mp
@@ -13,23 +14,17 @@ cnt = 0
 
 
 class SutureDisplayAdjust:
-    def __init__(self, insert_pts, center_pts, extract_pts, mm_per_pixel, desired_compute_time=3.):
-
-        self.insert_pts = insert_pts
-        self.center_pts = center_pts
-        self.extract_pts = extract_pts
+    def __init__(self, insert_pts, center_pts, extract_pts, left_image):
 
         self.x_sut = -1
         self.y_sut = -1
 
-        self.mm_per_pixel = mm_per_pixel
+        self.left_image = left_image
 
+        self.center_pts_pxl = insert_pts
+        self.insertion_pts_pxl = center_pts
+        self.extraction_pts_pxl = extract_pts
 
-        self.center_pts_pxl = [[int(float(pt[1]) / self.mm_per_pixel), int(float(pt[0]) / self.mm_per_pixel)] for pt in self.center_pts]
-        self.insertion_pts_pxl = [[int(float(pt[1]) / self.mm_per_pixel), int(float(pt[0]) / self.mm_per_pixel)] for pt in self.insert_pts]
-        self.extraction_pts_pxl = [[int(float(pt[1]) / self.mm_per_pixel), int(float(pt[0]) / self.mm_per_pixel)] for pt in self.extract_pts]
-
-        print(self.center_pts_pxl)
         # convert back to pixel, and round
 
         # self.ZU = ZU('inclined')
@@ -42,7 +37,7 @@ class SutureDisplayAdjust:
         # self.Tcr1 = np.linalg.inv(self.Trc1)
         # Setting to tiny number (<<1) is undefined behavior.
 
-        self.desired_compute_time = desired_compute_time
+        # self.desired_compute_time = desired_compute_time
 
         # needed to set above value. printed after any run.
         # self.iters_per_second = 90000 # MacBook Pro (15-inch, 2018)
@@ -50,9 +45,20 @@ class SutureDisplayAdjust:
 
         self.use_multiprocessing = False  # super super buggy on dvrk, not sure why
 
+    def draw_initial(self):
+        blue, red, green = (255, 0, 0), (0, 0, 255), (0, 255, 0)
+        img_draw = self.left_image.copy()
+        for i, txt in enumerate(self.insertion_pts_pxl[::-1]):
+            cv2.circle(img_draw, (self.insertion_pts_pxl[i][0], self.insertion_pts_pxl[i][1]), 5, red, -1)
+        for i, txt in enumerate(self.center_pts_pxl[::-1]):
+            cv2.circle(img_draw, (self.center_pts_pxl[i][0], self.center_pts_pxl[i][1]), 5, green, -1)
+        for i, txt in enumerate(self.extraction_pts_pxl[::-1]):
+            cv2.circle(img_draw, (self.extraction_pts_pxl[i][0], self.extraction_pts_pxl[i][1]), 5, blue, -1)
+        cv2.imshow("Adjustment Visualizer", img_draw)
+
     def __on_mouse_event(self, event, x, y, flags, param):
         blue, red, green = (255, 0, 0), (0, 0, 255), (0, 255, 0)
-        img_draw = self.img_color.copy()
+        img_draw = self.left_image.copy()
 
         def find_closest_suture(x, y):
             minDistance = 5 # won't detect suture if farther than 5 pixels
@@ -91,7 +97,7 @@ class SutureDisplayAdjust:
                     color = green
                 elif self.suture_type == 'extract':
                     color = blue
-                cv2.circle(img_draw, (self.x_sut, self.y_sut), 3, color, -1)
+                cv2.circle(img_draw, (self.x_sut, self.y_sut), 5, color, -1)
         elif event == cv2.EVENT_LBUTTONUP:
             if self.is_dragging:
                 self.x_sut, self.y_sut = x, y
@@ -105,13 +111,12 @@ class SutureDisplayAdjust:
                 self.is_dragging = False
         else:
             return
-        
         for i, txt in enumerate(self.insertion_pts_pxl[::-1]):
-            cv2.circle(img_draw, (self.insertion_pts_pxl[i][0], self.insertion_pts_pxl[i][1]), 3, red, -1)
+            cv2.circle(img_draw, (self.insertion_pts_pxl[i][0], self.insertion_pts_pxl[i][1]), 5, red, -1)
         for i, txt in enumerate(self.center_pts_pxl[::-1]):
-            cv2.circle(img_draw, (self.center_pts_pxl[i][0], self.center_pts_pxl[i][1]), 3, green, -1)
+            cv2.circle(img_draw, (self.center_pts_pxl[i][0], self.center_pts_pxl[i][1]), 5, green, -1)
         for i, txt in enumerate(self.extraction_pts_pxl[::-1]):
-            cv2.circle(img_draw, (self.extraction_pts_pxl[i][0], self.extraction_pts_pxl[i][1]), 3, blue, -1)
+            cv2.circle(img_draw, (self.extraction_pts_pxl[i][0], self.extraction_pts_pxl[i][1]), 5, blue, -1)
         cv2.imshow("Adjustment Visualizer", img_draw)
 
     def adjust_points(self, img_color, img_point):
@@ -126,21 +131,17 @@ class SutureDisplayAdjust:
 
         return self.pnts
 
-    def __user_display_pnts(self):
+    def user_display_pnts(self):
         # user specify points on the image
         self.pnts = []
         self.is_dragging = False
         self.px, self.py = -1, -1
-        cv2.imshow("Adjustment Visualizer", self.img_color)
-        # print('self.pnts before mousecallback', self.pnts)
+        cv2.imshow("Adjustment Visualizer", self.left_image)
+        self.draw_initial()
         cv2.setMouseCallback('Adjustment Visualizer', self.__on_mouse_event)  # fills pnts array
         cv2.waitKey(0)
         self.scale_found = True
-        # print('after create window')
-        # print('self.pnts before waitkey', self.pnts)
-        # cv2.waitKey(0)
-        # print('self.pnts before destory', self.pnts)
-        # print('self.pnts after destroy', self.pnts)
+        cv2.destroyAllWindows()
 
     def __get_curve(self, pnts):
         ord_dict = {ord(str(i)): i for i in [1, 3, 5, 7]}

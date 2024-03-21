@@ -4,6 +4,7 @@ from main import suture_display_adj_pipeline
 from SuturePlacer import SuturePlacer
 from Optimizer3d import Optimizer3d
 from MeshIngestor import MeshIngestor
+from SutureDisplayAdjust import SutureDisplayAdjust
 import math
 import scipy.interpolate as inter
 import cv2
@@ -46,13 +47,15 @@ def getTransformationMatrix():
     print(transformation_matrix)
     return transformation_matrix
 
-def dragging_helper(points, left_image):
+def project3d_to_2d(left_image, points):
+    lst = []
+    # blue, red, green = (255, 0, 0), (0, 0, 255), (0, 255, 0)
     transformation_matrix = getTransformationMatrix()
     R, t = transformation_matrix[1:], transformation_matrix[0]
-    left_center_points = []
+    left_points = []
     for pt in points:
-        left_center_points.append(np.linalg.inv(R) @ (pt - t))
-    left_center_points = np.array(left_center_points)
+        left_points.append(np.linalg.inv(R) @ (pt - t))
+    left_points = np.array(left_points)
     # projecting onto left image
     image_height, image_width, _ = left_image.shape
     left_camera_matrix = np.array(
@@ -62,9 +65,9 @@ def dragging_helper(points, left_image):
     left_dist_coeffs = np.array(
         [-0.13969738, 0.28183828, -0.00836148, -0.00180531, -1.65874481], dtype=np.float64
     )
-    if not left_center_points.shape[0] == 0:
+    if not left_points.shape[0] == 0:
         projected_points_wound, _ = cv2.projectPoints(
-            left_center_points,
+            left_points,
             np.zeros(3),
             np.zeros(3),
             left_camera_matrix,
@@ -75,10 +78,9 @@ def dragging_helper(points, left_image):
             x = int(image_points_wound[i, 0])
             y = int(image_points_wound[i, 1])
             if 0 <= x < image_width and 0 <= y < image_height:
-                for i in range(7):
-                    for j in range(7):
-                        left_image[y+i, x+j] = 0
-    return left_image
+                lst.append([x, y])
+    return lst
+
 
 if __name__ == "__main__":
     
@@ -483,32 +485,25 @@ if __name__ == "__main__":
 
         # print("equally_spaced_losses", equally_spaced_losses)
         # print("post_algorithm_losses", post_algorithm_losses)
+                
+
         print("baseline")
         left_image = cv2.imread(left_img_path, cv2.IMREAD_COLOR)
-        print(left_image)
-        print(len(best_baseline_placement.center_pts))
-        left_image = dragging_helper(best_baseline_placement.center_pts, left_image)
-        left_image = dragging_helper(best_baseline_placement.insertion_pts, left_image)
-        left_image = dragging_helper(best_baseline_placement.extraction_pts, left_image)
-
-        # # Visualizing the projection on the image
-        cv2.namedWindow('Projected Points', cv2.WINDOW_NORMAL) # Create a resizable window
-        cv2.imshow('Projected Points', left_image) # Show the modified image
-        cv2.waitKey()
-
+        insertion_pts_base = project3d_to_2d(left_image, best_baseline_placement.insertion_pts)
+        center_pts_base = project3d_to_2d(left_image, best_baseline_placement.center_pts)
+        extraction_base = project3d_to_2d(left_image, best_baseline_placement.extraction_pts)
+        suture_display_adjust = SutureDisplayAdjust(insertion_pts_base, center_pts_base, extraction_base, left_image)
+        suture_display_adjust.user_display_pnts()
 
         print("optimized")
         left_image = cv2.imread(left_img_path, cv2.IMREAD_COLOR)
-        print(left_image)
-        print(len(best_opt_placement.center_pts))
-        left_image = dragging_helper(best_opt_placement.center_pts, left_image)
-        left_image = dragging_helper(best_opt_placement.insertion_pts, left_image)
-        left_image = dragging_helper(best_opt_placement.extraction_pts, left_image)
 
-        # # Visualizing the projection on the image
-        cv2.namedWindow('Projected Points', cv2.WINDOW_NORMAL) # Create a resizable window
-        cv2.imshow('Projected Points', left_image) # Show the modified image
-        cv2.waitKey()
+        insertion_pts = project3d_to_2d(left_image, best_opt_placement.insertion_pts)
+        center_pts = project3d_to_2d(left_image, best_opt_placement.center_pts)
+        extraction_pts = project3d_to_2d(left_image, best_opt_placement.extraction_pts)
+
+        suture_display_adjust_optim = SutureDisplayAdjust(insertion_pts, center_pts, extraction_pts, left_image)
+        suture_display_adjust_optim.user_display_pnts()
 
         json_equal = json.dumps(equally_spaced_losses)
         json_post = json.dumps(post_algorithm_losses)
