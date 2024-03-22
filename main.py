@@ -3,7 +3,7 @@ import scipy.interpolate as inter
 from SuturePlacer import SuturePlacer
 from InsertionPointGenerator import InsertionPointGenerator
 from ScaleGenerator import ScaleGenerator
-from SutureDisplayAdjust import SutureDisplayAdjust
+from SutureDisplayAdjust2D import SutureDisplayAdjust2D
 import numpy as np
 import cv2
 import math
@@ -91,13 +91,12 @@ def suture_placing_pipeline(sample_spline=None, image=None):
     return newSuturePlacer
 
 def suture_display_adj_pipeline(newSuturePlacer):
-    
     insert_pts = newSuturePlacer.b_insert_pts
     center_pts = newSuturePlacer.b_center_pts
     extract_pts = newSuturePlacer.b_extract_pts
     mm_per_pixel = newSuturePlacer.mm_per_pixel
 
-    newSutureDisAdj = SutureDisplayAdjust(insert_pts, center_pts, extract_pts, mm_per_pixel)
+    newSutureDisAdj = SutureDisplayAdjust2D(insert_pts, center_pts, extract_pts, mm_per_pixel)
     
     # display
     img_color = cv2.imread(newSuturePlacer.image)
