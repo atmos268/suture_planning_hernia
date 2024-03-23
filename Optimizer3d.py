@@ -142,7 +142,54 @@ class Optimizer3d:
 
         self.suture_placement = placement
         return placement, normal_vectors, derivative_vectors
-    
+    def create_insertion_extraction_spline(self, wound_spline, mesh, points_t):
+
+        num_points = len(points_t)
+        spline_x, spline_y, spline_z = wound_spline[0], wound_spline[1], wound_spline[2]
+        derivative_x, derivative_y, derivative_z = spline_x.derivative(), spline_y.derivative(), spline_z.derivative()
+
+        # get center points
+        center_points = [[spline_x(t), spline_y(t), spline_z(t)] for t in points_t]
+        # print("magnitude center points", [np.linalg.norm(center_points[i]) for i in range(num_points)])
+
+
+        # get derivative points
+        derivative_points = [[derivative_x(t), derivative_y(t), derivative_z(t)] for t in points_t]
+
+        #get tangent plane normal vectors
+        normal_vectors = [get_plane_estimation(mesh, center_points[i], self.num_points_for_plane) for i in range(num_points)]
+
+        # project derivatives onto the tangent plane
+        derivative_vectors = [project_vector_onto_plane(derivative_points[i], normal_vectors[i]) for i in range(num_points)]
+
+        # normalize normal vectors and derivative vectors
+        normal_vectors = [self.normalize_vector(normal_vectors[i]) for i in range(num_points)]
+        derivative_vectors = [self.normalize_vector(derivative_vectors[i]) for i in range(num_points)]
+
+        # Insertion points = cross product 
+        insertion_points_floating = [center_points[i] + self.suture_width * np.cross(normal_vectors[i], derivative_vectors[i]) for i in range(num_points)]
+        # print("magnitude insertion points", [np.linalg.norm(insertion_points[i]) for i in range(num_points)])
+
+        # Extraction points = - cross product
+        extraction_points_floating = [center_points[i] + self.suture_width * (-np.cross(normal_vectors[i], derivative_vectors[i])) for i in range(num_points)]
+
+        #place points on the surface
+        insertion_points = [mesh.get_point_location(mesh.get_nearest_point(i)[1]) for i in insertion_points_floating]
+        extraction_points = [mesh.get_point_location(mesh.get_nearest_point(i)[1]) for i in extraction_points_floating]
+
+        print(insertion_points)
+        def fit_spline(points):
+            s_factor = len(points)/5.0 # A starting point for the smoothing factor; adjust based on noise level
+            print(points[0], '\n\n\n\n')
+            x_points = [i[0] for i in points]
+            y_points = [i[1] for i in points]
+            z_points = [i[2] for i in points]
+            x_spline = inter.UnivariateSpline(t, x_points, s=s_factor)
+            y_spline = inter.UnivariateSpline(t, y_points, s=s_factor)
+            z_spline = inter.UnivariateSpline(t, z_points, s=s_factor)
+            return (x_spline, y_spline, z_spline)    
+        return fit_spline(insertion_points),fit_spline(extraction_points)
+            
     def normalize_vector(self, vector):
         """
         Normalize a vector to have a unit length.
