@@ -327,7 +327,15 @@ class Optimizer3d:
             # get distances
             h = self.gamma * (1/5)
             return min([i - h for i in insert_dists] + [i - h for i in center_dists] + [i - h for i in extract_dists])
-    
+        
+        def min_all_suture_dist(t):
+            insert_pts, center_pts, extract_pts = placement.insertion_pts, placement.center_pts, placement.extraction_pts
+            insert_dists, center_dists, extract_dists = self.get_all_dists(insert_pts), self.get_all_dists(center_pts), self.get_all_dists(extract_pts)
+
+            # get distances
+            h = self.gamma * (1/2)
+            return min([i - h for i in insert_dists] + [i - h for i in center_dists] + [i - h for i in extract_dists])
+
         def max_suture_dist(t): # max distance b/w 2 sutures
             insert_pts, center_pts, extract_pts = placement.insertion_pts, placement.center_pts, placement.extraction_pts
             insert_dists, center_dists, extract_dists = self.get_dists(insert_pts), self.get_dists(center_pts), self.get_dists(extract_pts)
@@ -340,7 +348,7 @@ class Optimizer3d:
         
         constraints = [{'type': 'eq', 'fun': lambda t: 1 - t[-1]}, 
                        {'type': 'eq', 'fun': lambda t: t[0]},
-                       {'type': 'ineq', 'fun': lambda t: min_suture_dist(t)},
+                       {'type': 'ineq', 'fun': lambda t: min_all_suture_dist(t)},
                        {'type': 'ineq', 'fun': lambda t: max_suture_dist(t)},
                        ]
         
@@ -843,6 +851,18 @@ class Optimizer3d:
         dists = [0 for i in range(len(points) -1)]
         for i in range(len(points) - 1):
             dists[i] = euclidean_dist(points[i], points[i+1])
+
+        return dists
+    
+    def get_all_dists(self, points):
+
+        counter = 0
+        dists = [0 for i in range((len(points) * (len(points) -1)) // 2)]
+
+        for i in range(len(points) - 1):
+            for j in range(i + 1, len(points)):
+                dists[counter] = euclidean_dist(points[i], points[j])
+                counter += 1
 
         return dists
     

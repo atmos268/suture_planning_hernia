@@ -86,11 +86,11 @@ if __name__ == "__main__":
     
     box_method = True
     save_figs = True
-    left_file = 'left_test_001.png'
+    left_file = 'left_exp_007.png'
     left_img_path = 'chicken_images/' + left_file
     left_img_path_enhanced = 'chicken_images/enhanced/' + left_file
 
-    right_file = 'right_test_001.png'
+    right_file = 'right_exp_007.png'
     right_img_path = 'chicken_images/' + right_file
     right_img_path_enhanced = 'chicken_images/enhanced/' + right_file
 
@@ -98,7 +98,7 @@ if __name__ == "__main__":
     # pick two random points to generate synthetic splines
     #num1, num2 = random.randrange(0, len(mesh.vertex_coordinates)), random.randrange(0, len(mesh.vertex_coordinates))
     num1, num2 = 21695, 8695
-    results_pth = "run_1"
+    results_pth = "exp_007"
 
     baseline_pth = "results/" + results_pth + "/baseline/"
     opt_pth = "results/" + results_pth + "/opt/"
@@ -207,7 +207,7 @@ if __name__ == "__main__":
     if mode == '2d' and experiment_mode == "physical":
         adj_path = 'adjacency_matrix.txt'
         loc_path = 'vertex_lookup.txt'
-        disp_path = "RAFT/disp_test_001.npy"
+        disp_path = "RAFT/disparity_007.npy"
 
         # get the largest and smallest value in the mesh
 
@@ -297,9 +297,19 @@ if __name__ == "__main__":
 
             for col, row in pts_pxl:
                 point_mask[row,col] = 1
+
+            pts_3d = []
+            
+            for col, row in pts_pxl:
+                # create mask with 1 point 
+                img_width, img_height = Image.open(left_img_path).size
+                line_mask = np.zeros((img_height, img_width))
+                line_mask[row, col] = 1
+                pt_3d = get_transformed_points(left_img_path, disp_path, line_mask, viz=False)
+                pts_3d.append(pt_3d[0])
+            pts_3d = np.array(pts_3d)
         
             # convert the spline to 3d using raft
-            pts_3d = get_transformed_points(left_img_path, disp_path, point_mask)
 
             # return 3d points
 
@@ -313,14 +323,19 @@ if __name__ == "__main__":
         suturePlacement2dIn3d = SuturePlacement3d(center_pts_spline, b_center_pts, b_insert_pts, b_extract_pts, [])
 
         optim3d = Optimizer3d(mesh, center_pts_spline, suture_width, hyperparams, force_model_parameters)
-        optim3d.plot_mesh_path_and_spline(mesh, center_pts_spline, suturePlacement2dIn3d, [], [])
+        optim3d.plot_mesh_path_and_spline(mesh, center_pts_spline, suturePlacement2dIn3d, [], [], viz=True)
+
+        left_image_adjust = cv2.imread(left_img_path, cv2.IMREAD_COLOR)
+
+        insertion_pts = project3d_to_2d(left_image_adjust, suturePlacement2dIn3d.insertion_pts)
+        center_pts = project3d_to_2d(left_image_adjust, suturePlacement2dIn3d.center_pts)
+        extraction_pts = project3d_to_2d(left_image_adjust, suturePlacement2dIn3d.extraction_pts)
+        suture_display = SutureDisplayAdjust(insertion_pts, center_pts, extraction_pts, left_image_adjust)
+        suture_display.user_display_pnts()
 
         # print loss of the 2d placement
         # loss2d = optim3d.loss_placement(suturePlacement2dIn3d)
         loss2d = optim3d.optimize(suturePlacement2dIn3d, eval=True)
-        
-        print("loss of 2d placement", str(loss2d))
-        optim3d.plot_mesh_path_and_spline(mesh, center_pts_spline, suturePlacement2dIn3d, [], [], viz=False, results_pth=old_algo_pth)
 
         json_old = json.dumps(loss2d)
 
@@ -328,13 +343,18 @@ if __name__ == "__main__":
         f = open(old_losses_pth,"w")
         f.write(json_old)
         f.close()
+        
+        print("loss of 2d placement", str(loss2d))
+        optim3d.plot_mesh_path_and_spline(mesh, center_pts_spline, suturePlacement2dIn3d, [], [], viz=False, results_pth=old_algo_pth)
 
-        suture_display_adj_pipeline(newSuturePlacer)
+        
+
+        # suture_display_adj_pipeline(newSuturePlacer)
 
     elif mode == '3d' and experiment_mode == "physical":
         
         viz = True
-        use_prev = True
+        use_prev = False
         suture_width = 0.007
         
         # get the masks
@@ -363,7 +383,7 @@ if __name__ == "__main__":
             np.save(right_line_path, right_line)
         
         # do raft, no need to do rn, as we are using the existing RAFT output
-        disp_path = "RAFT/disp_test_001.npy"
+        disp_path = "RAFT/disparity_007.npy"
 
         # dilate to get region
         dilation = 100
@@ -381,7 +401,7 @@ if __name__ == "__main__":
         
         line_pts_3d = []
         print("Left line shape", len(left_line))
-        for row, col in left_line[::30]:
+        for row, col in left_line[::10]:
             # create mask with 1 point 
             img_width, img_height = Image.open(left_img_path).size
             line_mask = np.zeros((img_height, img_width))
@@ -431,7 +451,7 @@ if __name__ == "__main__":
         # Create the graph
         mesh.generate_mesh()
 
-        gamma = suture_width * 2
+        gamma = suture_width * 1.5
         c_ideal = 1000
         c_var = 5000
         c_shear = 1
@@ -486,6 +506,22 @@ if __name__ == "__main__":
         # print("equally_spaced_losses", equally_spaced_losses)
         # print("post_algorithm_losses", post_algorithm_losses)
                 
+        # save data
+                
+        json_equal = json.dumps(equally_spaced_losses)
+        json_post = json.dumps(post_algorithm_losses)
+
+        equal_losses_pth = baseline_pth + "losses.json"
+        opt_losses_pth = opt_pth + "losses.json"
+
+        f = open(equal_losses_pth,"w")
+        f.write(json_equal)
+        f.close()
+
+        f = open(opt_losses_pth,"w")
+        f.write(json_post)
+        f.close()
+                
 
         print("baseline")
         left_image = cv2.imread(left_img_path, cv2.IMREAD_COLOR)
@@ -505,19 +541,7 @@ if __name__ == "__main__":
         suture_display_adjust_optim = SutureDisplayAdjust(insertion_pts, center_pts, extraction_pts, left_image)
         suture_display_adjust_optim.user_display_pnts()
 
-        json_equal = json.dumps(equally_spaced_losses)
-        json_post = json.dumps(post_algorithm_losses)
-
-        equal_losses_pth = baseline_pth + "losses.json"
-        opt_losses_pth = opt_pth + "losses.json"
-
-        f = open(equal_losses_pth,"w")
-        f.write(json_equal)
-        f.close()
-
-        f = open(opt_losses_pth,"w")
-        f.write(json_post)
-        f.close()
+        
 
         # dragging codeeee
         # print(“Overhead center points”, np.array(suturePlacement3d.center_pts.shape))
