@@ -86,11 +86,11 @@ if __name__ == "__main__":
     
     box_method = True
     save_figs = True
-    left_file = 'left_exp_009.png'
+    left_file = 'left_exp_007.png'
     left_img_path = 'chicken_images/' + left_file
     left_img_path_enhanced = 'chicken_images/enhanced/' + left_file
 
-    right_file = 'right_exp_009.png'
+    right_file = 'right_exp_007.png'
     right_img_path = 'chicken_images/' + right_file
     right_img_path_enhanced = 'chicken_images/enhanced/' + right_file
 
@@ -98,7 +98,7 @@ if __name__ == "__main__":
     # pick two random points to generate synthetic splines
     #num1, num2 = random.randrange(0, len(mesh.vertex_coordinates)), random.randrange(0, len(mesh.vertex_coordinates))
     num1, num2 = 21695, 8695
-    results_pth = "exp_009"
+    results_pth = "exp_007"
 
     baseline_pth = "results/" + results_pth + "/baseline/"
     opt_pth = "results/" + results_pth + "/opt/"
@@ -207,7 +207,7 @@ if __name__ == "__main__":
     if mode == '2d' and experiment_mode == "physical":
         adj_path = 'adjacency_matrix.txt'
         loc_path = 'vertex_lookup.txt'
-        disp_path = "RAFT/disparity_009.npy"
+        disp_path = "RAFT/disparity_007.npy"
 
         # get the largest and smallest value in the mesh
 
