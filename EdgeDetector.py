@@ -188,7 +188,7 @@ def line_to_spline(line, img_path, mm_per_pixel, viz=False):
 
     return sampled_spline_pts, sampled_tck
 
-def line_to_spline_3d(line, sample_ratio=30, viz=False):
+def line_to_spline_3d(line, sample_ratio=30, viz=False, s_factor=0):
 
 
     x = line[:, 0] # x-coordinates of the shortest path
@@ -207,9 +207,9 @@ def line_to_spline_3d(line, sample_ratio=30, viz=False):
     print(t)
 
     # get spline in each dimension
-    x_spline = inter.UnivariateSpline(t, x)
-    y_spline = inter.UnivariateSpline(t, y)
-    z_spline = inter.UnivariateSpline(t, z)
+    x_spline = inter.UnivariateSpline(t, x, s=s_factor)
+    y_spline = inter.UnivariateSpline(t, y, s=s_factor)
+    z_spline = inter.UnivariateSpline(t, z, s=s_factor)
 
     print("plotting x")
     print(x)

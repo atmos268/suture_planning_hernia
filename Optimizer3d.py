@@ -16,9 +16,10 @@ class Optimizer3d:
     suture_width: how far, in mm, the insertion and extraction points should be from the wound line
     hyperparameters: hyperparameters for our optimization
     """
-    def __init__(self, mesh: MeshIngestor, spline, suture_width, hyperparameters, force_model_parameters):
+    def __init__(self, mesh: MeshIngestor, spline, suture_width, hyperparameters, force_model_parameters, smoothed_spline):
         self.mesh = mesh
         self.spline = spline
+        self.smoothed_spline = smoothed_spline
         self.suture_width = suture_width 
         self.suture_placement = None
         self.c_ideal = hyperparameters[0]
@@ -101,12 +102,12 @@ class Optimizer3d:
         placement.t = points_t
 
         spline_x, spline_y, spline_z = spline[0], spline[1], spline[2]
-        derivative_x, derivative_y, derivative_z = spline_x.derivative(), spline_y.derivative(), spline_z.derivative()
+        spline_xs, spline_ys, spline_zs = self.smoothed_spline[0], self.smoothed_spline[1], self.smoothed_spline[2]
+        derivative_x, derivative_y, derivative_z = spline_xs.derivative(), spline_ys.derivative(), spline_zs.derivative()
 
         # get center points
         center_points = [[spline_x(t), spline_y(t), spline_z(t)] for t in points_t]
         # print("magnitude center points", [np.linalg.norm(center_points[i]) for i in range(num_points)])
-
 
         # get derivative points
         derivative_points = [[derivative_x(t), derivative_y(t), derivative_z(t)] for t in points_t]
@@ -151,7 +152,6 @@ class Optimizer3d:
         # get center points
         center_points = [[spline_x(t), spline_y(t), spline_z(t)] for t in points_t]
         # print("magnitude center points", [np.linalg.norm(center_points[i]) for i in range(num_points)])
-
 
         # get derivative points
         derivative_points = [[derivative_x(t), derivative_y(t), derivative_z(t)] for t in points_t]
@@ -753,11 +753,15 @@ class Optimizer3d:
             y_spline = wound_spline[1]
             z_spline = wound_spline[2]
 
+            xs_spline = self.smoothed_spline[0]
+            ys_spline = self.smoothed_spline[1]
+            zs_spline = self.smoothed_spline[2]
+
             t = np.linspace(0, 1, granularity)
 
-            dx_spline = x_spline.derivative()
-            dy_spline = y_spline.derivative()
-            dz_spline = z_spline.derivative()
+            dx_spline = xs_spline.derivative()
+            dy_spline = ys_spline.derivative()
+            dz_spline = zs_spline.derivative()
 
             closure_loss = 0
             shear_loss = 0

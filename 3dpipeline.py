@@ -86,11 +86,11 @@ if __name__ == "__main__":
     
     box_method = True
     save_figs = True
-    left_file = 'left_exp_007.png'
+    left_file = 'left_exp_009.png'
     left_img_path = 'chicken_images/' + left_file
     left_img_path_enhanced = 'chicken_images/enhanced/' + left_file
 
-    right_file = 'right_exp_007.png'
+    right_file = 'right_exp_009.png'
     right_img_path = 'chicken_images/' + right_file
     right_img_path_enhanced = 'chicken_images/enhanced/' + right_file
 
@@ -98,7 +98,7 @@ if __name__ == "__main__":
     # pick two random points to generate synthetic splines
     #num1, num2 = random.randrange(0, len(mesh.vertex_coordinates)), random.randrange(0, len(mesh.vertex_coordinates))
     num1, num2 = 21695, 8695
-    results_pth = "exp_007"
+    results_pth = "exp_009"
 
     baseline_pth = "results/" + results_pth + "/baseline/"
     opt_pth = "results/" + results_pth + "/opt/"
@@ -207,7 +207,7 @@ if __name__ == "__main__":
     if mode == '2d' and experiment_mode == "physical":
         adj_path = 'adjacency_matrix.txt'
         loc_path = 'vertex_lookup.txt'
-        disp_path = "RAFT/disparity_007.npy"
+        disp_path = "RAFT/disparity_009.npy"
 
         # get the largest and smallest value in the mesh
 
@@ -353,8 +353,8 @@ if __name__ == "__main__":
 
     elif mode == '3d' and experiment_mode == "physical":
         
-        viz = True
-        use_prev = False
+        viz = False
+        use_prev = True
         suture_width = 0.007
         
         # get the masks
@@ -383,7 +383,7 @@ if __name__ == "__main__":
             np.save(right_line_path, right_line)
         
         # do raft, no need to do rn, as we are using the existing RAFT output
-        disp_path = "RAFT/disparity_007.npy"
+        disp_path = "RAFT/disparity_009.npy"
 
         # dilate to get region
         dilation = 100
@@ -422,7 +422,8 @@ if __name__ == "__main__":
         # since we are not visualizing here, no need for scaling info
         # left_spline = line_to_spline(left_line, None, None, viz=False)
         # will actually need to use line_to_spline_3d (expect 3d points)
-        left_spline = line_to_spline_3d(line_pts_3d, sample_ratio=30, viz=False)
+        left_spline = line_to_spline_3d(line_pts_3d, sample_ratio=30, viz=False, s_factor=0)
+        left_spline_smoothed = line_to_spline_3d(line_pts_3d, sample_ratio=30, viz=False, s_factor=0.01)
 
         granularity = 100
 
@@ -461,7 +462,7 @@ if __name__ == "__main__":
 
         force_model_parameters = {'ellipse_ecc': 1.0, 'force_decay': 0.5/suture_width, 'verbose': 0, 'ideal_closure_force': None, 'imparted_force': None}
 
-        optim3d = Optimizer3d(mesh, left_spline, suture_width, hyperparams, force_model_parameters)
+        optim3d = Optimizer3d(mesh, left_spline, suture_width, hyperparams, force_model_parameters, left_spline_smoothed)
         
         spline_length = optim3d.calculate_spline_length(left_spline, mesh)
         num_sutures_initial = int(spline_length / (gamma)) #TODO: modify later 
@@ -487,7 +488,6 @@ if __name__ == "__main__":
 
             suturePlacement3d, normal_vectors, derivative_vectors = optim3d.generate_inital_placement(mesh, left_spline, num_sutures=num_sutures)
             #print("Normal vector", normal_vectors)
-
             optim3d.plot_mesh_path_and_spline(mesh, left_spline, suturePlacement3d, normal_vectors, derivative_vectors, viz=viz, results_pth=baseline_pth)
             equally_spaced_losses[num_sutures] = optim3d.optimize(suturePlacement3d, eval=True)
             if equally_spaced_losses[num_sutures]["curr_loss"] < best_baseline_loss:
