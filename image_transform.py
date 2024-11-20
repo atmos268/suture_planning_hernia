@@ -64,6 +64,8 @@ def get_dilated_mask(img_path, dilation):
 
 def get_transformed_points(image_path, disp_path, sam_mask, viz=False):
     # disparity_map from raft (for testing used google colab)
+    # if you have disparity, how to get depth 
+    # math that will tell us for any given point what is the 3D location
     disp = np.load(disp_path)
 
     #mask from SAM

@@ -83,14 +83,13 @@ def project3d_to_2d(left_image, points):
 
 
 if __name__ == "__main__":
-    
     box_method = True
     save_figs = True
-    left_file = 'left_exp_007.png'
+    left_file = 'left_exp_009.png'
     left_img_path = 'chicken_images/' + left_file
     left_img_path_enhanced = 'chicken_images/enhanced/' + left_file
 
-    right_file = 'right_exp_007.png'
+    right_file = 'right_exp_009.png'
     right_img_path = 'chicken_images/' + right_file
     right_img_path_enhanced = 'chicken_images/enhanced/' + right_file
 
@@ -98,7 +97,7 @@ if __name__ == "__main__":
     # pick two random points to generate synthetic splines
     #num1, num2 = random.randrange(0, len(mesh.vertex_coordinates)), random.randrange(0, len(mesh.vertex_coordinates))
     num1, num2 = 21695, 8695
-    results_pth = "exp_007"
+    results_pth = "exp_009"
 
     baseline_pth = "results/" + results_pth + "/baseline/"
     opt_pth = "results/" + results_pth + "/opt/"
@@ -207,7 +206,7 @@ if __name__ == "__main__":
     if mode == '2d' and experiment_mode == "physical":
         adj_path = 'adjacency_matrix.txt'
         loc_path = 'vertex_lookup.txt'
-        disp_path = "RAFT/disparity_007.npy"
+        disp_path = "RAFT/disparity_009.npy"
 
         # get the largest and smallest value in the mesh
 
@@ -406,6 +405,7 @@ if __name__ == "__main__":
             img_width, img_height = Image.open(left_img_path).size
             line_mask = np.zeros((img_height, img_width))
             line_mask[row, col] = 1
+            # redo get transformed points
             pt_3d = get_transformed_points(left_img_path, disp_path, line_mask, viz=False)
             line_pts_3d.append(pt_3d[0])
         line_pts_3d = np.array(line_pts_3d)
@@ -452,11 +452,12 @@ if __name__ == "__main__":
         # Create the graph
         mesh.generate_mesh()
 
-        gamma = suture_width * 1.5
-        c_ideal = 1000
-        c_var = 5000
-        c_shear = 1
-        c_closure = 0.5
+        #hyperparameters
+        gamma = suture_width * 1.5 # ideal distance between each suture
+        c_ideal = 1000 # variance from ideal
+        c_var = 5000 # variance between center points distances
+        c_shear = 1 # shear loss
+        c_closure = 0.5 # closure loss
 
         hyperparams = [c_ideal, gamma, c_var, c_shear, c_closure]
 
