@@ -69,7 +69,7 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
         plt.show()
 
         box = left_coords[0] + left_coords[1]
-        mask = create_mask(img_path, box, [], 'huge', box_method=True)
+        mask = create_mask(img_path, box, [], 'base', box_method=True)
 
         # make the mask into an image and save
         im = Image.fromarray(mask)
@@ -140,9 +140,9 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
     if viz:
         plt.show()
     
-    return ordered_points
+    return ordered_points, numpydata
 
-def line_to_spline(line, img_path, mm_per_pixel):
+def line_to_spline(line, img_path, mm_per_pixel, viz=False):
 
     # fit spline to points
     exact_tck, u = inter.splprep([[pt[0] for pt in line], [pt[1] for pt in line]], k=3, s=0)
@@ -169,33 +169,67 @@ def line_to_spline(line, img_path, mm_per_pixel):
         sampled_spline_pts.append(sampled_wound_parametric(t_step, 0))
         smoothed_spline_pts.append(smoothed_wound_parametric(t_step, 0))
     
+    if viz:
+        img = Image.open(img_path)
+        img_np = np.asarray(img)
+        plt.imshow(img_np)
 
-    img = Image.open(img_path)
-    img_np = np.asarray(img)
-    plt.imshow(img_np)
-
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
-    # plt.plot([pt[1] for pt in spline_pts], [pt[0] for pt in spline_pts], color='r')
-    ax1.imshow(img_np)
-    ax1.plot([pt[1]/mm_per_pixel for pt in exact_spline_pts], [pt[0]/mm_per_pixel for pt in exact_spline_pts])
-    ax2.imshow(img_np)
-    ax2.plot([pt[1]/mm_per_pixel for pt in sampled_spline_pts], [pt[0]/mm_per_pixel for pt in sampled_spline_pts])
-    ax3.imshow(img_np)
-    ax3.plot([pt[1]/mm_per_pixel for pt in smoothed_spline_pts], [pt[0]/mm_per_pixel for pt in smoothed_spline_pts])
-    
-    # plot side by side
-    # plt.savefig("spline.png")
+        fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
+        # plt.plot([pt[1] for pt in spline_pts], [pt[0] for pt in spline_pts], color='r')
+        ax1.imshow(img_np)
+        ax1.plot([pt[1]/mm_per_pixel for pt in exact_spline_pts], [pt[0]/mm_per_pixel for pt in exact_spline_pts])
+        ax2.imshow(img_np)
+        ax2.plot([pt[1]/mm_per_pixel for pt in sampled_spline_pts], [pt[0]/mm_per_pixel for pt in sampled_spline_pts])
+        ax3.imshow(img_np)
+        ax3.plot([pt[1]/mm_per_pixel for pt in smoothed_spline_pts], [pt[0]/mm_per_pixel for pt in smoothed_spline_pts])
+        
+        # plot side by side
+        plt.savefig("spline.png")
 
     return sampled_spline_pts, sampled_tck
+
+def line_to_spline_3d(line, sample_ratio=30, viz=False, s_factor=0):
+
+
+    x = line[:, 0] # x-coordinates of the shortest path
+    y = line[:, 1]
+    z = line[:, 2]
+
+    # define t based on cumulative dists
+    distances = np.sqrt(np.sum(np.diff(line, axis=0)**2, axis=1))
+
+    # Calculate cumulative distance
+    cumulative_distance = np.insert(np.cumsum(distances), 0, 0)
+
+    # Normalize t to range from 0 to 1
+    t = cumulative_distance / cumulative_distance[-1]
+
+    print(t)
+
+    # get spline in each dimension
+    x_spline = inter.UnivariateSpline(t, x, s=s_factor)
+    y_spline = inter.UnivariateSpline(t, y, s=s_factor)
+    z_spline = inter.UnivariateSpline(t, z, s=s_factor)
+
+    print("plotting x")
+    print(x)
+    print(x.shape)
+    # plt.close()
+    print([i / len(x) for i in range(len(x))])
+    plt.plot(np.array([i / len(x) for i in range(len(x))]), np.array(x))
+    plt.plot([i / 100 for i in range(100)], [x_spline(i/100) for i in range(100)])
+    plt.show()
+
+    return [x_spline, y_spline, z_spline]
 
 if __name__ == "__main__":
     
     box_method = True
     img_path = 'chicken_images/image_left_001.png'
 
-    line = img_to_line(img_path, box_method, viz=True)
+    line, mask = img_to_line(img_path, box_method, viz=True)
 
-    spline, tck = line_to_spline(line, img_path)
+    spline, tck = line_to_spline(line, img_path, viz=True)
 
     # now run original pipeline
 
