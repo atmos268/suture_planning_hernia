@@ -62,11 +62,8 @@ def get_dilated_mask(img_path, dilation):
     img_dilated = new_edge_detector.dilate_to_line(mask, dilation)
     cv2.imwrite("dilated_mask.jpg", img_dilated)
 
-def get_transformed_points(image_path, disp_path, sam_mask, viz=False):
+def get_transformed_points(image_path, disp, sam_mask, viz=False, maintain_order=False, order_matrix=None):
     # disparity_map from raft (for testing used google colab)
-    # if you have disparity, how to get depth 
-    # math that will tell us for any given point what is the 3D location
-    disp = np.load(disp_path)
 
     #mask from SAM
     sam_mask = sam_mask.astype('uint8')
@@ -96,16 +93,40 @@ def get_transformed_points(image_path, disp_path, sam_mask, viz=False):
     flat_Y = Y_wound.flatten()
     flat_Z = Z_wound.flatten()
 
-    include_indices = []
-    for i in range(len(flat_Z)):
-        if flat_Z[i] != 0:
-            include_indices.append(i)
-    
-    cleaned_X = [flat_X[include_idx] for include_idx in include_indices]
-    cleaned_Y = [flat_Y[include_idx] for include_idx in include_indices]
-    cleaned_Z = [flat_Z[include_idx] for include_idx in include_indices]
+    if not maintain_order:
 
-    wound_points = np.column_stack((cleaned_X, cleaned_Y, cleaned_Z))
+        include_indices = []
+        for i in range(len(flat_Z)):
+            if flat_Z[i] != 0:
+                include_indices.append(i)
+        
+        cleaned_X = [flat_X[include_idx] for include_idx in include_indices]
+        cleaned_Y = [flat_Y[include_idx] for include_idx in include_indices]
+        cleaned_Z = [flat_Z[include_idx] for include_idx in include_indices]
+
+        wound_points = np.column_stack((cleaned_X, cleaned_Y, cleaned_Z))
+
+    else:
+
+        flat_order = order_matrix.flatten()
+
+        len_line =int(np.max(flat_order)) + 1
+
+        cleaned_X = [0 for i in range(len_line)]
+        cleaned_Y = [0 for i in range(len_line)]
+        cleaned_Z = [0 for i in range(len_line)]
+
+        # add in order
+        for i in range(len(flat_order)):
+            if flat_order[i] != -1:
+                cleaned_X[flat_order[i]] = flat_X[i]
+                cleaned_Y[flat_order[i]] = flat_Y[i]
+                cleaned_Z[flat_order[i]] = flat_Z[i]
+
+        wound_points = np.column_stack((cleaned_X, cleaned_Y, cleaned_Z))
+        
+
+
     if viz:
         fig = plt.figure()
         ax = plt.axes(projection='3d')

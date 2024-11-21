@@ -262,9 +262,9 @@ def compute_felt_force(mesh, insertion_pt, wound_pt, insertion_force_vec, ellips
 
     s_factor = len(x)/5.0 # A starting point for the smoothing factor; adjust based on noise level
     #s_factor = 0.1
-    x_smooth = inter.UnivariateSpline(t, x, s=s_factor)
-    y_smooth = inter.UnivariateSpline(t, y, s=s_factor)
-    z_smooth = inter.UnivariateSpline(t, z, s=s_factor)
+    x_smooth = inter.UnivariateSpline(t, x, s=0.01)
+    y_smooth = inter.UnivariateSpline(t, y, s=0.01)
+    z_smooth = inter.UnivariateSpline(t, z, s=0.01)
     # GET DERIVATIVES OF SPLINE AT insertion_vertex AND wound_vertex
     x_smooth_deriv = x_smooth.derivative()
     y_smooth_deriv = y_smooth.derivative()
@@ -494,7 +494,7 @@ def test_real_mesh(vis = False):
     rand_wound_pt = mesh.get_point_location(random.randrange(0, len(mesh.vertex_coordinates)))
 
     force_vec = generate_random_force_vector()
-    print("force vector: ", force_vec)
+    # print("force vector: ", force_vec)
 
     # now, compute the felt force
     # compute_felt_force(mesh, shortest_path, insertion_pt, wound_pt, insertion_force_vec, ellipse_ecc, points_to_sample, ep, force_decay=1, verbose=1)

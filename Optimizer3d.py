@@ -653,6 +653,7 @@ class Optimizer3d:
 
             # forces are exerted by the suture from extraction to insertion points (and vice versa)
             force_vecs = extraction_pts - insertion_pts
+            # print("force vecs", force_vecs)
             for i in range(len(force_vecs)):
                 force_vecs[i] = force_vecs[i] / np.linalg.norm(force_vecs[i])
 

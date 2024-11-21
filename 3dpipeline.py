@@ -85,11 +85,13 @@ def project3d_to_2d(left_image, points):
 if __name__ == "__main__":
     box_method = True
     save_figs = True
-    left_file = 'left_exp_009.png'
+    chicken_number = 9
+
+    left_file = f'left_exp_00{chicken_number}.png'
     left_img_path = 'chicken_images/' + left_file
     left_img_path_enhanced = 'chicken_images/enhanced/' + left_file
 
-    right_file = 'right_exp_009.png'
+    right_file = f'right_exp_00{chicken_number}.png'
     right_img_path = 'chicken_images/' + right_file
     right_img_path_enhanced = 'chicken_images/enhanced/' + right_file
 
@@ -97,11 +99,15 @@ if __name__ == "__main__":
     # pick two random points to generate synthetic splines
     #num1, num2 = random.randrange(0, len(mesh.vertex_coordinates)), random.randrange(0, len(mesh.vertex_coordinates))
     num1, num2 = 21695, 8695
-    results_pth = "exp_009"
+    results_pth = "exp_temp"
 
     baseline_pth = "results/" + results_pth + "/baseline/"
     opt_pth = "results/" + results_pth + "/opt/"
     old_algo_pth = "results/" + results_pth + "/old_algo/"
+
+    image_pth = f"exp_00{chicken_number}"
+
+    final_plan_pth = "final_plans/" + image_pth
 
     if not os.path.isdir("results/"):
         os.mkdir("results/")
@@ -117,6 +123,15 @@ if __name__ == "__main__":
     
     if not os.path.isdir(old_algo_pth):
         os.mkdir(old_algo_pth)
+    
+    if not os.path.isdir("final_plans/"):
+        os.mkdir("final_plans/")
+    
+    if not os.path.isdir("final_plans/" + image_pth):
+        os.mkdir("final_plans/" + image_pth)
+    
+    if not os.path.isdir("masks/"):
+        os.mkdir("masks/")
 
     mode = '3d' # 3d
 
@@ -353,17 +368,17 @@ if __name__ == "__main__":
     elif mode == '3d' and experiment_mode == "physical":
         
         viz = False
-        use_prev = True
+        use_prev = False
         suture_width = 0.007
         
         # get the masks
         # save left and right masks
 
-        left_mask_path = 'temp_images/left_mask.npy'
-        right_mask_path = 'temp_images/right_mask.npy'
-        left_line_path = 'temp_images/left_line.npy'
-        right_line_path = 'temp_images/right_line.npy'
-        left_dilated_mask_path = 'temp_images/left_dilated_mask.jpg'
+        left_mask_path = f'masks/left_mask{chicken_number}.npy'
+        right_mask_path = f'masks/right_mask{chicken_number}.npy'
+        left_line_path = f'masks/left_line{chicken_number}.npy'
+        right_line_path = f'masks/right_line{chicken_number}.npy'
+        left_dilated_mask_path = f'masks/left_dilated_mask{chicken_number}.jpg'
 
         if use_prev:
             left_line = np.load(left_line_path)
@@ -373,7 +388,7 @@ if __name__ == "__main__":
             right_mask = np.load(right_mask_path)
 
         else:
-
+            # Right click is not on wound
             left_line, left_mask = img_to_line(left_img_path, box_method, viz=True, save_figs=save_figs)
             np.save(left_mask_path, left_mask)
             np.save(left_line_path, left_line)
@@ -382,7 +397,8 @@ if __name__ == "__main__":
             np.save(right_line_path, right_line)
         
         # do raft, no need to do rn, as we are using the existing RAFT output
-        disp_path = "RAFT/disparity_009.npy"
+        disp_path = f"RAFT/disparity_00{chicken_number}.npy"
+        disp = np.load(disp_path)
 
         # dilate to get region
         dilation = 100
@@ -392,24 +408,40 @@ if __name__ == "__main__":
         cv2.imwrite(left_dilated_mask_path, dilated_mask) 
 
         # write out points to a file
-        surrounding_pts = get_transformed_points(left_img_path, disp_path, dilated_mask)
+        surrounding_pts = get_transformed_points(left_img_path, disp, dilated_mask)
         np.save('surrounding_pts.npy', surrounding_pts)
         
         # convert the spline to 3d using raft
         # TODO: convert points to 3d one by one to preserve ordering
         
-        line_pts_3d = []
-        print("Left line shape", len(left_line))
-        for row, col in left_line[::10]:
-            # create mask with 1 point 
-            img_width, img_height = Image.open(left_img_path).size
-            line_mask = np.zeros((img_height, img_width))
-            line_mask[row, col] = 1
-            # redo get transformed points
-            pt_3d = get_transformed_points(left_img_path, disp_path, line_mask, viz=False)
-            line_pts_3d.append(pt_3d[0])
-        line_pts_3d = np.array(line_pts_3d)
-        print(line_pts_3d)
+        # line_pts_3d = []
+        # print("Left line shape", len(left_line))
+        # for row, col in left_line[::10]:
+        #     # create mask with 1 point 
+        #     img_width, img_height = Image.open(left_img_path).size
+        #     line_mask = np.zeros((img_height, img_width))
+        #     line_mask[row, col] = 1
+        #     # redo get transformed points
+        #     pt_3d = get_transformed_points(left_img_path, disp_path, line_mask, viz=False)
+        #     line_pts_3d.append(pt_3d[0])
+        # line_pts_3d = np.array(line_pts_3d)
+        # print(line_pts_3d)
+
+        img_width, img_height = Image.open(left_img_path).size
+
+        # make the order matrix and line mask
+
+        print("left line", left_line)
+
+        order_matrix = np.zeros((img_height, img_width), int) - 1
+        line_mask = np.zeros((img_height, img_width))
+
+        # assign index to location on image and add to 
+        for i, coord in enumerate(left_line):
+            line_mask[coord[0], coord[1]] = 1
+            order_matrix[coord[0], coord[1]] = i
+
+        line_pts_3d = get_transformed_points(left_img_path, disp, line_mask, viz=False, maintain_order=True, order_matrix=order_matrix)
 
         np.save('line_pts_3d.npy', line_pts_3d)
 
@@ -423,7 +455,7 @@ if __name__ == "__main__":
         # left_spline = line_to_spline(left_line, None, None, viz=False)
         # will actually need to use line_to_spline_3d (expect 3d points)
         left_spline = line_to_spline_3d(line_pts_3d, sample_ratio=30, viz=False, s_factor=0)
-        left_spline_smoothed = line_to_spline_3d(line_pts_3d, sample_ratio=30, viz=False, s_factor=0.01)
+        left_spline_smoothed = line_to_spline_3d(line_pts_3d, sample_ratio=30, viz=False, s_factor = 0.01)
 
         granularity = 100
 
@@ -431,10 +463,18 @@ if __name__ == "__main__":
         y_pts = [left_spline[1](t/granularity) for t in range(granularity)]
         z_pts = [left_spline[2](t/granularity) for t in range(granularity)]
 
-        ax.scatter3D(x_pts, y_pts, z_pts)
+        xs_pts = [left_spline_smoothed[0](t/granularity) for t in range(granularity)]
+        ys_pts = [left_spline_smoothed[1](t/granularity) for t in range(granularity)]
+        zs_pts = [left_spline_smoothed[2](t/granularity) for t in range(granularity)]
+
         plt.title("Spline points")
+        ax = plt.axes(projection='3d')
+        ax.scatter3D(x_pts, y_pts, z_pts)
+        ax.scatter3D(xs_pts, ys_pts, zs_pts)
         plt.show()
         # get mesh from the surrounding points
+
+        
                     
         with open("pipeline_xyz_pts.xyz", "w") as f:
             for point in surrounding_pts:
