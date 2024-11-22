@@ -368,7 +368,7 @@ if __name__ == "__main__":
     elif mode == '3d' and experiment_mode == "physical":
         
         viz = False
-        use_prev = False
+        use_prev = True
         suture_width = 0.007
         
         # get the masks
@@ -456,7 +456,6 @@ if __name__ == "__main__":
         # will actually need to use line_to_spline_3d (expect 3d points)
         left_spline = line_to_spline_3d(line_pts_3d, sample_ratio=30, viz=False, s_factor=0)
         left_spline_smoothed = line_to_spline_3d(line_pts_3d, sample_ratio=30, viz=False, s_factor = 0.01)
-
         granularity = 100
 
         x_pts = [left_spline[0](t/granularity) for t in range(granularity)]
@@ -493,11 +492,16 @@ if __name__ == "__main__":
         mesh.generate_mesh()
 
         #hyperparameters
-        gamma = suture_width * 1.5 # ideal distance between each suture
-        c_ideal = 1000 # variance from ideal
-        c_var = 5000 # variance between center points distances
-        c_shear = 1 # shear loss
-        c_closure = 0.5 # closure loss
+        # gamma = suture_width * 1.5 # ideal distance between each suture
+        # c_ideal = 1000 # variance from ideal
+        # c_var = 5000 # variance between center points distances
+        # c_shear = 1 # shear loss
+        # c_closure = 0.5 # closure loss
+        gamma = suture_width # ideal distance between each suture
+        c_ideal = 0 # variance from ideal
+        c_var = 0 # variance between center points distances
+        c_shear = 1000000 # shear loss
+        c_closure = 1000000 # closure loss
 
         hyperparams = [c_ideal, gamma, c_var, c_shear, c_closure]
 
@@ -510,6 +514,9 @@ if __name__ == "__main__":
         print("Num sutures initial", num_sutures_initial)
         start_range = max(int(num_sutures_initial * 0.5), 2)
         end_range = int(num_sutures_initial * 1.5)
+
+        # start_range = 5
+        # end_range = 12
 
         print("range:", start_range, end_range)
 
@@ -538,7 +545,7 @@ if __name__ == "__main__":
             optim3d.optimize(suturePlacement3d)
 
             optim3d.plot_mesh_path_and_spline(mesh, left_spline, suturePlacement3d, normal_vectors, derivative_vectors, viz=viz, results_pth=opt_pth)
-            post_algorithm_losses[num_sutures] = optim3d.optimize(suturePlacement3d, eval=True)
+            post_algorithm_losses[num_sutures] = optim3d.optimize(suturePlacement3d, eval=False)
 
             if post_algorithm_losses[num_sutures]["curr_loss"] < best_opt_loss:
                 best_opt_loss = post_algorithm_losses[num_sutures]["curr_loss"]

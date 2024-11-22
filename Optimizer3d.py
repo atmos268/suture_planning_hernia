@@ -369,7 +369,7 @@ class Optimizer3d:
             t values for each point. This is what we are optimizing over (we want to find the 
             best values of t).
             """
-
+            print("WOUND POINTS", wound_points)
             if not eval:
                 self.update_placement(placement, self.mesh, placement.spline, wound_points)
             
@@ -381,9 +381,12 @@ class Optimizer3d:
             
             closure_loss, shear_loss = compute_closure_shear_loss(granularity=20)
             # print("Closure loss", closure_loss)
-            # print("Shear loss", shear_loss * self.c_shear)
-            # print("var_loss", var_loss)
-            # print("closure_loss", closure_loss)
+            print("shear loss", shear_loss)
+            print("var_loss", var_loss)
+            print("closure_loss", closure_loss)
+
+            print("SHEAR COEF", self.c_shear)
+            print("CLOSURE COEF", self.c_closure)
 
             curr_loss = shear_loss * self.c_shear + closure_loss * self.c_closure + var_loss * self.c_var + ideal_loss * self.c_ideal
             # curr_loss = var_loss * self.c_var + ideal_loss * self.c_ideal
