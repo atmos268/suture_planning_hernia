@@ -500,8 +500,8 @@ if __name__ == "__main__":
         gamma = suture_width # ideal distance between each suture
         c_ideal = 0 # variance from ideal
         c_var = 0 # variance between center points distances
-        c_shear = 1000000 # shear loss
-        c_closure = 1000000 # closure loss
+        c_shear = 0.001 # shear loss
+        c_closure = 0.001 # closure loss
 
         hyperparams = [c_ideal, gamma, c_var, c_shear, c_closure]
 
@@ -545,7 +545,7 @@ if __name__ == "__main__":
             optim3d.optimize(suturePlacement3d)
 
             optim3d.plot_mesh_path_and_spline(mesh, left_spline, suturePlacement3d, normal_vectors, derivative_vectors, viz=viz, results_pth=opt_pth)
-            post_algorithm_losses[num_sutures] = optim3d.optimize(suturePlacement3d, eval=False)
+            post_algorithm_losses[num_sutures] = optim3d.optimize(suturePlacement3d, eval=True)
 
             if post_algorithm_losses[num_sutures]["curr_loss"] < best_opt_loss:
                 best_opt_loss = post_algorithm_losses[num_sutures]["curr_loss"]

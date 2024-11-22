@@ -379,7 +379,7 @@ class Optimizer3d:
             var_loss = self.get_point_dist_var_loss(placement)
             ideal_loss = self.get_ideal_loss(placement)
             
-            closure_loss, shear_loss = compute_closure_shear_loss(granularity=20)
+            closure_loss, shear_loss = compute_closure_shear_loss(wound_points, granularity=20)
             # print("Closure loss", closure_loss)
             print("shear loss", shear_loss)
             print("var_loss", var_loss)
@@ -653,6 +653,8 @@ class Optimizer3d:
 
             insertion_pts = np.array(placement.insertion_pts)
             extraction_pts = np.array(placement.extraction_pts)
+            print("INSERTION PTS", insertion_pts)
+            print("EXTRACTION PTS", extraction_pts)
 
             # forces are exerted by the suture from extraction to insertion points (and vice versa)
             force_vecs = extraction_pts - insertion_pts
@@ -748,7 +750,7 @@ class Optimizer3d:
 
             self.plot_mesh_path_spline_and_forces(mesh, spline, suturePlacement3d, point, tot_insertion_force, tot_extraction_force, spline_segments=100)
 
-        def compute_closure_shear_loss(granularity=5):
+        def compute_closure_shear_loss(wound_points, granularity=5):
             # granularity is the number of points to sample on the wound spline
 
             wound_spline = self.spline
@@ -779,15 +781,15 @@ class Optimizer3d:
                 dy = dy_spline(t[i])
                 dz = dz_spline(t[i])
 
-                wound_pt = np.array([x, y, z])
-                wound_derivative = np.array([dx, dy, dz])
+                sampled_pt = np.array([x, y, z])
+                sampled_derivative = np.array([dx, dy, dz])
 
-                wound_derivative = wound_derivative / np.linalg.norm(wound_derivative)
+                sampled_derivative = sampled_derivative / np.linalg.norm(sampled_derivative)
 
-                closure_force, shear_force = compute_closure_shear_force(wound_pt, wound_derivative)
+                closure_force, shear_force = compute_closure_shear_force(sampled_pt, sampled_derivative)
 
                 if self.force_model['verbose'] > 0:
-                    plot_insertion_extraction_force(t[i], wound_derivative)
+                    plot_insertion_extraction_force(t[i], sampled_derivative)
 
                 closure_loss += ((closure_force - self.force_model['ideal_closure_force'])**2)/granularity
                 shear_loss += (shear_force**2)/granularity
