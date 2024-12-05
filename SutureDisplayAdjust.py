@@ -14,16 +14,18 @@ cnt = 0
 
 
 class SutureDisplayAdjust:
-    def __init__(self, insert_pts, center_pts, extract_pts, left_image):
+    def __init__(self, insert_pts, center_pts, extract_pts, left_image, center_spline):
 
         self.x_sut = -1
         self.y_sut = -1
 
         self.left_image = left_image
 
-        self.center_pts_pxl = insert_pts
-        self.insertion_pts_pxl = center_pts
+        self.center_pts_pxl = center_pts
+        self.insertion_pts_pxl = insert_pts
         self.extraction_pts_pxl = extract_pts
+
+        self.center_spline = center_spline
 
         # convert back to pixel, and round
 
@@ -46,18 +48,25 @@ class SutureDisplayAdjust:
         self.use_multiprocessing = False  # super super buggy on dvrk, not sure why
 
     def draw_initial(self):
-        blue, red, green = (255, 0, 0), (0, 0, 255), (0, 255, 0)
+        blue, red, green, black = (255, 0, 0), (0, 0, 255), (0, 255, 0), (0, 0, 0)
+        wound = (139, 135, 255)
         img_draw = self.left_image.copy()
+        for i in range(len(self.center_spline)-1):
+            cv2.line(img_draw, self.center_spline[i], self.center_spline[i+1], wound, 5)
+        for data in zip(self.insertion_pts_pxl[::-1], self.extraction_pts_pxl[::-1]):
+            cv2.line(img_draw, data[0], data[1], black, 2)
         for i, txt in enumerate(self.insertion_pts_pxl[::-1]):
-            cv2.circle(img_draw, (self.insertion_pts_pxl[i][0], self.insertion_pts_pxl[i][1]), 5, red, -1)
-        for i, txt in enumerate(self.center_pts_pxl[::-1]):
-            cv2.circle(img_draw, (self.center_pts_pxl[i][0], self.center_pts_pxl[i][1]), 5, green, -1)
+            cv2.circle(img_draw, (self.insertion_pts_pxl[i][0], self.insertion_pts_pxl[i][1]), 5, green, -1)
+        # for i, txt in enumerate(self.center_pts_pxl[::-1]):
+        #     cv2.circle(img_draw, (self.center_pts_pxl[i][0], self.center_pts_pxl[i][1]), 5, green, -1)
         for i, txt in enumerate(self.extraction_pts_pxl[::-1]):
             cv2.circle(img_draw, (self.extraction_pts_pxl[i][0], self.extraction_pts_pxl[i][1]), 5, blue, -1)
+        
         cv2.imshow("Adjustment Visualizer", img_draw)
 
     def __on_mouse_event(self, event, x, y, flags, param):
-        blue, red, green = (255, 0, 0), (0, 0, 255), (0, 255, 0)
+        blue, red, green, black = (255, 0, 0), (0, 0, 255), (0, 255, 0), (0, 0, 0)
+        wound = (139, 135, 255)
         img_draw = self.left_image.copy()
 
         def find_closest_suture(x, y):
@@ -92,9 +101,9 @@ class SutureDisplayAdjust:
                 self.x_sut, self.y_sut = x, y
                 color = None
                 if self.suture_type == 'insert':
-                    color = red
-                elif self.suture_type == 'center':
                     color = green
+                elif self.suture_type == 'center':
+                    color = red
                 elif self.suture_type == 'extract':
                     color = blue
                 cv2.circle(img_draw, (self.x_sut, self.y_sut), 5, color, -1)
@@ -111,10 +120,14 @@ class SutureDisplayAdjust:
                 self.is_dragging = False
         else:
             return
+        for i in range(len(self.center_spline)-1):
+            cv2.line(img_draw, self.center_spline[i], self.center_spline[i+1], wound, 5)
+        for data in zip(self.insertion_pts_pxl[::-1], self.extraction_pts_pxl[::-1]):
+            cv2.line(img_draw, data[0], data[1], black, 2)
         for i, txt in enumerate(self.insertion_pts_pxl[::-1]):
-            cv2.circle(img_draw, (self.insertion_pts_pxl[i][0], self.insertion_pts_pxl[i][1]), 5, red, -1)
-        for i, txt in enumerate(self.center_pts_pxl[::-1]):
-            cv2.circle(img_draw, (self.center_pts_pxl[i][0], self.center_pts_pxl[i][1]), 5, green, -1)
+            cv2.circle(img_draw, (self.insertion_pts_pxl[i][0], self.insertion_pts_pxl[i][1]), 5, green, -1)
+        # for i, txt in enumerate(self.center_pts_pxl[::-1]):
+        #     cv2.circle(img_draw, (self.center_pts_pxl[i][0], self.center_pts_pxl[i][1]), 5, red, -1)
         for i, txt in enumerate(self.extraction_pts_pxl[::-1]):
             cv2.circle(img_draw, (self.extraction_pts_pxl[i][0], self.extraction_pts_pxl[i][1]), 5, blue, -1)
         cv2.imshow("Adjustment Visualizer", img_draw)
@@ -137,7 +150,7 @@ class SutureDisplayAdjust:
         self.is_dragging = False
         self.px, self.py = -1, -1
         cv2.imshow("Adjustment Visualizer", self.left_image)
-        self.draw_initial()
+        # self.draw_initial()
         cv2.setMouseCallback('Adjustment Visualizer', self.__on_mouse_event)  # fills pnts array
         cv2.waitKey(0)
         self.scale_found = True

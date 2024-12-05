@@ -14,8 +14,10 @@ def click_points_simple(img):
         nonlocal left_coords,right_coords
         if(event.button==1):
             left_coords.append(coords)
+            print("Left button", coords)
         elif(event.button==3):
             right_coords.append(coords)
+            print("Right button", coords)
     cid = fig.canvas.mpl_connect('button_press_event', onclick)
     plt.show()
     return left_coords,right_coords

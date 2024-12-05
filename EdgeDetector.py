@@ -105,8 +105,7 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
     np.save('temp_images/binary_skeleton.npy', skeleton)
 
     plt.imshow(skeleton)
-    if viz:
-        plt.show()
+    plt.show()
 
     plt.imsave('temp_images/skeleton_sam.jpg', skeleton)
 
@@ -136,9 +135,7 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
     img_np = np.asarray(img)
     plt.imshow(img_np)
     plt.plot([pt[1] for pt in ordered_points], [pt[0] for pt in ordered_points])
-
-    if viz:
-        plt.show()
+    plt.show()
     
     return ordered_points, numpydata
 
