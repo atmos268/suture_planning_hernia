@@ -150,7 +150,7 @@ class SutureDisplayAdjust:
         self.is_dragging = False
         self.px, self.py = -1, -1
         cv2.imshow("Adjustment Visualizer", self.left_image)
-        # self.draw_initial()
+        self.draw_initial()
         cv2.setMouseCallback('Adjustment Visualizer', self.__on_mouse_event)  # fills pnts array
         cv2.waitKey(0)
         self.scale_found = True

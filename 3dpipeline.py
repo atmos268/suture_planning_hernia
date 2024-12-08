@@ -19,6 +19,7 @@ import random
 from SuturePlacement3d import SuturePlacement3d
 import json
 import os
+import matplotlib.colors as mcolors
 import copy
 
 def calculate_z(mesh, point, smallest_z, largest_z):
@@ -85,7 +86,7 @@ def project3d_to_2d(left_image, points):
 if __name__ == "__main__":
     box_method = True
     save_figs = True
-    chicken_number = 7
+    chicken_number = 0
 
     left_file = f'left_exp_00{chicken_number}.png'
     left_img_path = 'chicken_images/' + left_file
@@ -369,7 +370,7 @@ if __name__ == "__main__":
         
         viz = False
         use_prev = True
-        suture_width = 0.007
+        suture_width = 0.005
         
         # get the masks
         # save left and right masks
@@ -447,17 +448,17 @@ if __name__ == "__main__":
 
         np.save('line_pts_3d.npy', line_pts_3d)
 
-        fig = plt.figure()
-        ax = plt.axes(projection='3d')
+        # fig = plt.figure()
+        # ax = plt.axes(projection='3d')
 
-        ax.scatter3D([point[0] for point in line_pts_3d], [point[1] for point in line_pts_3d], [point[2] for point in line_pts_3d])
+        # ax.scatter3D([point[0] for point in line_pts_3d], [point[1] for point in line_pts_3d], [point[2] for point in line_pts_3d])
 
         # get the spline from the left image
         # since we are not visualizing here, no need for scaling info
         # left_spline = line_to_spline(left_line, None, None, viz=False)
         # will actually need to use line_to_spline_3d (expect 3d points)
         left_spline = line_to_spline_3d(line_pts_3d, sample_ratio=30, viz=False, s_factor=0)
-        left_spline_smoothed = line_to_spline_3d(line_pts_3d, sample_ratio=30, viz=False, s_factor = 0.01)
+        left_spline_smoothed = line_to_spline_3d(line_pts_3d, sample_ratio=30, viz=False, s_factor=0.0001)
         granularity = 100
 
         x_pts = [left_spline[0](t/granularity) for t in range(granularity)]
@@ -468,15 +469,56 @@ if __name__ == "__main__":
         ys_pts = [left_spline_smoothed[1](t/granularity) for t in range(granularity)]
         zs_pts = [left_spline_smoothed[2](t/granularity) for t in range(granularity)]
 
-        plt.title("Spline points")
+        derivative_x, derivative_y, derivative_z = left_spline_smoothed[0].derivative(), left_spline_smoothed[1].derivative(), left_spline_smoothed[2].derivative()
+        derivative_x2, derivative_y2, derivative_z2 = left_spline_smoothed[0].derivative(2), left_spline_smoothed[1].derivative(2), left_spline_smoothed[2].derivative(2)
+
+        curvature_arr = []
+        for i in range(granularity):
+            t = i / granularity
+            r_prime = np.array([derivative_x(t), derivative_y(t), derivative_z(t)])
+            r_double_prime = np.array([derivative_x2(t), derivative_y2(t), derivative_z2(t)])
+            curvature = np.linalg.norm(np.cross(r_prime, r_double_prime)) / np.linalg.norm(r_prime)**3
+            # print(f"AT MIDPOINT T {midpt_t} the CURVATURE IS", curvature)
+            curvature_arr.append(curvature)
+
+        bounds = [0, 50, 100, 150, 200]
+        norm = mcolors.BoundaryNorm(bounds, ncolors=256)
+        fig = plt.figure()
         ax = plt.axes(projection='3d')
-        ax.scatter3D(x_pts, y_pts, z_pts)
-        ax.scatter3D(xs_pts, ys_pts, zs_pts)
-        # plt.show()
+        plt.title("Spline curvature")
+        print("max curve", max(curvature_arr))
+        p = ax.scatter3D(x_pts, y_pts, z_pts, c=curvature_arr, norm=norm)
+        fig.colorbar(p)
+        plt.show()
+
+        def sigmoid(x, L, k, x0):
+            """
+            Sigmoid function with parameters to control its shape.
+            L: the curve's maximum value
+            k: the logistic growth rate or steepness of the curve
+            x0: the x-value of the sigmoid's midpoint
+            """
+            return L / (1 + np.exp(-k * (x - x0)))
+
+        curvature_arr = np.array(curvature_arr)
+        scaled_curvature = curvature_arr / 100
+        L = 0.007 - 0.003  # The range of the spacing values
+        k = 10  # The steepness of the curve
+        x0 = 0.5  # The midpoint of the sigmoid
+
+        # Calculate the spacing using the sigmoid function
+        spacing = 0.007 - sigmoid(scaled_curvature, L, k, x0)
+        print('SPACING', spacing)
         # get mesh from the surrounding points
 
-        
-                    
+        bounds = [0, 50, 100, 150, 200]
+        fig = plt.figure()
+        ax = plt.axes(projection='3d')
+        plt.title("Sigmoid spacing")
+        p = ax.scatter3D(x_pts, y_pts, z_pts, c=spacing)
+        fig.colorbar(p)
+        plt.show()
+
         with open("pipeline_xyz_pts.xyz", "w") as f:
             for point in surrounding_pts:
                 f.write(f"{point[0]} {point[1]} {point[2]}\n")
@@ -507,19 +549,69 @@ if __name__ == "__main__":
 
         hyperparams = [c_ideal, gamma, c_var, c_shear, c_closure]
 
-        force_model_parameters = {'ellipse_ecc': 1.0, 'force_decay': 0.5/suture_width, 'verbose': 0, 'ideal_closure_force': None, 'imparted_force': None}
+        force_model_parameters = {'ellipse_ecc': 1, 'force_decay': 0.5/0.005, 'verbose': 0, 'ideal_closure_force': None, 'imparted_force': None}
 
-        optim3d = Optimizer3d(mesh, left_spline, suture_width, hyperparams, force_model_parameters, left_spline_smoothed)
-        
+        optim3d = Optimizer3d(mesh, left_spline, suture_width, hyperparams, force_model_parameters, left_spline_smoothed, spacing)
+    
         spline_length = optim3d.calculate_spline_length(left_spline, mesh)
         print("Spline length", spline_length)
         num_sutures_initial = int(spline_length / (gamma)) #TODO: modify later 
         print("Num sutures initial", num_sutures_initial)
-        # start_range = int(spline_length / 0.008)
-        # end_range = int(spline_length / 0.004)
+        # start_range = int(spline_length / 0.006)
+        # end_range = int(spline_length / 0.0045)
 
-        start_range = 10
-        end_range = 15
+        # TEST CLOSURE FORCE
+
+        center_pts, insertion_pts, extraction_pts = optim3d.generate_inital_placement(mesh, left_spline, num_sutures=6)
+        closure_loss, shear_loss, all_closure, per_insertion, per_extraction = optim3d.compute_closure_shear_loss(granularity=100)
+        optim3d.plot_mesh_path_and_spline()
+
+
+        fig = plt.figure()
+        ax = plt.axes(projection='3d')
+        plt.title("CLOSURE FORCES")
+        p = ax.scatter3D(x_pts, y_pts, z_pts, c=all_closure)
+        fig.colorbar(p)
+        plt.show()
+
+        # for i in range(6):
+        #     fig = plt.figure()
+        #     ax = plt.axes(projection='3d')
+        #     print('per insertion', per_insertion[i])
+        #     plt.title(f"CLOSURE FORCES FOR INSERTION {i}")
+        #     p = ax.scatter3D(x_pts, y_pts, z_pts, c=per_insertion[i])
+        #     ax.scatter3D(optim3d.insertion_pts[i][0], optim3d.insertion_pts[i][1], optim3d.insertion_pts[i][2], c='red')
+        #     ax.scatter3D(optim3d.center_pts[i][0], optim3d.center_pts[i][1], optim3d.center_pts[i][2], c='green')
+        #     ax.scatter3D(optim3d.extraction_pts[i][0], optim3d.extraction_pts[i][1], optim3d.extraction_pts[i][2], c='blue')
+        #     fig.colorbar(p)
+        #     plt.show()
+
+        # for i in range(6):
+        #     fig = plt.figure()
+        #     ax = plt.axes(projection='3d')
+        #     print('per extraction', per_extraction[i])
+        #     plt.title(f"CLOSURE FORCES FOR EXTRACTION {i}")
+        #     p = ax.scatter3D(x_pts, y_pts, z_pts, c=per_extraction[i])
+        #     ax.scatter3D(optim3d.insertion_pts[i][0], optim3d.insertion_pts[i][1], optim3d.insertion_pts[i][2], c='red')
+        #     ax.scatter3D(optim3d.center_pts[i][0], optim3d.center_pts[i][1], optim3d.center_pts[i][2], c='green')
+        #     ax.scatter3D(optim3d.extraction_pts[i][0], optim3d.extraction_pts[i][1], optim3d.extraction_pts[i][2], c='blue')
+        #     fig.colorbar(p)
+        #     plt.show()
+        
+        optim3d.optimize(eval=False)
+
+        closure_loss, shear_loss, all_closure, per_insertion, per_extraction = optim3d.compute_closure_shear_loss(granularity=100)
+        optim3d.plot_mesh_path_and_spline()
+
+        fig = plt.figure()
+        ax = plt.axes(projection='3d')
+        plt.title("CLOSURE FORCES AFTER")
+        p = ax.scatter3D(x_pts, y_pts, z_pts, c=all_closure)
+        fig.colorbar(p)
+        plt.show()
+
+        start_range = 3
+        end_range = 12
 
         print("range:", start_range, end_range)
 
@@ -535,35 +627,41 @@ if __name__ == "__main__":
         best_opt_extraction = None
         best_opt_center = None
 
-        for num_sutures in range(start_range, end_range + 1):
-            print("num sutures:", num_sutures)
 
-            center_pts, insertion_pts, extraction_pts = optim3d.generate_inital_placement(mesh, left_spline, num_sutures=num_sutures)
-            #print("Normal vector", normal_vectors)
-            # optim3d.plot_mesh_path_and_spline(mesh, left_spline, viz=True, results_pth=baseline_pth)
-            # equally_spaced_losses[num_sutures] = optim3d.optimize( eval=True)
-            # if equally_spaced_losses[num_sutures]["curr_loss"] < best_baseline_loss:
-            #     best_baseline_loss = equally_spaced_losses[num_sutures]["curr_loss"]
-            #     best_baseline_placement = copy.deepcopy(optim3d.suture_placement)
 
-            optim3d.optimize(eval=False)
-            # optim3d.plot_mesh_path_and_spline(mesh, left_spline, viz=True, results_pth=baseline_pth)
 
-            # optim3d.plot_mesh_path_and_spline(mesh, left_spline, viz=viz, results_pth=opt_pth)
 
-            post_algorithm_losses[num_sutures] = optim3d.optimize(eval=True)
+        # for num_sutures in range(start_range, end_range + 1):
+        #     print("num sutures:", num_sutures)
+
+        #     center_pts, insertion_pts, extraction_pts = optim3d.generate_inital_placement(mesh, left_spline, num_sutures=num_sutures)
+        #     #print("Normal vector", normal_vectors)
+        #     # optim3d.plot_mesh_path_and_spline(mesh, left_spline, viz=True, results_pth=baseline_pth)
+        #     equally_spaced_losses[num_sutures] = optim3d.optimize(eval=True)
+        #     print('Initial loss', equally_spaced_losses[num_sutures]["curr_loss"])
+        #     # if equally_spaced_losses[num_sutures]["curr_loss"] < best_baseline_loss:
+        #     #     best_baseline_loss = equally_spaced_losses[num_sutures]["curr_loss"]
+        #     #     best_baseline_placement = copy.deepcopy(optim3d.suture_placement)
+
+        #     optim3d.optimize(eval=False)
+        #     # optim3d.plot_mesh_path_and_spline(mesh, left_spline, viz=True, results_pth=baseline_pth)
+
+        #     # optim3d.plot_mesh_path_and_spline(mesh, left_spline, viz=viz, results_pth=opt_pth)
+
+        #     post_algorithm_losses[num_sutures] = optim3d.optimize(eval=True)
+        #     print('After loss', post_algorithm_losses[num_sutures]["curr_loss"])
 
             
-            if post_algorithm_losses[num_sutures]["curr_loss"] < best_opt_loss:
-                print("num sututes", num_sutures, "best loss so far")
-                best_opt_loss = post_algorithm_losses[num_sutures]["curr_loss"]
-                print("BEST LOSS", best_opt_loss)
-                best_opt_insertion = optim3d.insertion_pts
-                best_opt_extraction = optim3d.extraction_pts
-                best_opt_center = optim3d.center_pts
-                baseline_insertion = insertion_pts
-                baseline_extraction = extraction_pts
-                baseline_center = center_pts
+        #     if post_algorithm_losses[num_sutures]["curr_loss"] < best_opt_loss:
+        #         print("num sututes", num_sutures, "best loss so far")
+        #         best_opt_loss = post_algorithm_losses[num_sutures]["curr_loss"]
+        #         print("BEST LOSS", best_opt_loss)
+        #         best_opt_insertion = optim3d.insertion_pts
+        #         best_opt_extraction = optim3d.extraction_pts
+        #         best_opt_center = optim3d.center_pts
+        #         baseline_insertion = insertion_pts
+        #         baseline_extraction = extraction_pts
+        #         baseline_center = center_pts
 
 
                 # best_opt_placement = copy.deepcopy(optim3d.suture_placement)
@@ -590,25 +688,25 @@ if __name__ == "__main__":
 
 
         
-        left_image = cv2.imread(left_img_path, cv2.IMREAD_COLOR)
-        center_spline = project3d_to_2d(left_image, line_pts_3d)
+        # left_image = cv2.imread(left_img_path, cv2.IMREAD_COLOR)
+        # center_spline = project3d_to_2d(left_image, line_pts_3d)
 
-        print("baseline")
-        insertion_pts_base = project3d_to_2d(left_image, baseline_insertion)
-        center_pts_base = project3d_to_2d(left_image, baseline_center)
-        extraction_base = project3d_to_2d(left_image, baseline_extraction)
-        suture_display_adjust = SutureDisplayAdjust(insertion_pts_base, center_pts_base, extraction_base, left_image, center_spline)
-        suture_display_adjust.user_display_pnts()
+        # print("baseline")
+        # insertion_pts_base = project3d_to_2d(left_image, baseline_insertion)
+        # center_pts_base = project3d_to_2d(left_image, baseline_center)
+        # extraction_base = project3d_to_2d(left_image, baseline_extraction)
+        # suture_display_adjust = SutureDisplayAdjust(insertion_pts_base, center_pts_base, extraction_base, left_image, center_spline)
+        # suture_display_adjust.user_display_pnts()
 
-        print("optimized")
-        left_image = cv2.imread(left_img_path, cv2.IMREAD_COLOR)
+        # print("optimized")
+        # left_image = cv2.imread(left_img_path, cv2.IMREAD_COLOR)
 
-        insertion_pts = project3d_to_2d(left_image, best_opt_insertion)
-        center_pts = project3d_to_2d(left_image, best_opt_center)
-        extraction_pts = project3d_to_2d(left_image, best_opt_extraction)
+        # insertion_pts = project3d_to_2d(left_image, best_opt_insertion)
+        # center_pts = project3d_to_2d(left_image, best_opt_center)
+        # extraction_pts = project3d_to_2d(left_image, best_opt_extraction)
 
-        suture_display_adjust_optim = SutureDisplayAdjust(insertion_pts, center_pts, extraction_pts, left_image, center_spline)
-        suture_display_adjust_optim.user_display_pnts()
+        # suture_display_adjust_optim = SutureDisplayAdjust(insertion_pts, center_pts, extraction_pts, left_image, center_spline)
+        # suture_display_adjust_optim.user_display_pnts()
 
         # dragging codeeee
         # print(“Overhead center points”, np.array(suturePlacement3d.center_pts.shape))

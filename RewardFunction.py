@@ -142,6 +142,8 @@ class RewardFunction():
 
         def single_wound_closure_and_shear_force(ice, w, t):
             # ice is the insertion, center, and extraction points
+            # t is any point on wound
+            # w is actual suture
             i, c, e = ice
             if abs(w - t) > 4 * self.influence_region:
                 return 0, 0
