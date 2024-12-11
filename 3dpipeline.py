@@ -86,7 +86,7 @@ def project3d_to_2d(left_image, points):
 if __name__ == "__main__":
     box_method = True
     save_figs = True
-    chicken_number = 0
+    chicken_number = 7
 
     left_file = f'left_exp_00{chicken_number}.png'
     left_img_path = 'chicken_images/' + left_file
@@ -370,7 +370,7 @@ if __name__ == "__main__":
         
         viz = False
         use_prev = True
-        suture_width = 0.005
+        suture_width = 0.007
         
         # get the masks
         # save left and right masks
@@ -549,7 +549,7 @@ if __name__ == "__main__":
 
         hyperparams = [c_ideal, gamma, c_var, c_shear, c_closure]
 
-        force_model_parameters = {'ellipse_ecc': 1, 'force_decay': 0.5/0.005, 'verbose': 0, 'ideal_closure_force': None, 'imparted_force': None}
+        force_model_parameters = {'ellipse_ecc': 1/0.77, 'force_decay': 0.5/0.007, 'verbose': 0, 'ideal_closure_force': None, 'imparted_force': None}
 
         optim3d = Optimizer3d(mesh, left_spline, suture_width, hyperparams, force_model_parameters, left_spline_smoothed, spacing)
     
@@ -563,16 +563,53 @@ if __name__ == "__main__":
         # TEST CLOSURE FORCE
 
         center_pts, insertion_pts, extraction_pts = optim3d.generate_inital_placement(mesh, left_spline, num_sutures=6)
-        closure_loss, shear_loss, all_closure, per_insertion, per_extraction = optim3d.compute_closure_shear_loss(granularity=100)
+        closure_loss, shear_loss, all_closure, per_insertion, per_extraction, insertion_forces, extraction_forces = optim3d.compute_closure_shear_loss(granularity=100)
         optim3d.plot_mesh_path_and_spline()
 
 
-        fig = plt.figure()
-        ax = plt.axes(projection='3d')
-        plt.title("CLOSURE FORCES")
-        p = ax.scatter3D(x_pts, y_pts, z_pts, c=all_closure)
-        fig.colorbar(p)
-        plt.show()
+        # fig = plt.figure()
+        # ax = plt.axes(projection='3d')
+        # plt.title("CLOSURE FORCES")
+        # p = ax.scatter3D(x_pts, y_pts, z_pts, c=all_closure)
+        # fig.colorbar(p)
+        # plt.show()
+
+        # for i in range(6):
+        #     fig = plt.figure()
+        #     ax = plt.axes(projection='3d')
+        #     # print('per extraction', per_insertion[i] + per_extraction[i])
+        #     plt.title(f"CLOSURE FORCES MAGNITUDE AT PT {i}")
+        #     p = ax.scatter3D(x_pts, y_pts, z_pts, c=np.array(per_insertion[i]) + np.array(per_extraction[i]))
+        #     ax.scatter3D(optim3d.insertion_pts[i][0], optim3d.insertion_pts[i][1], optim3d.insertion_pts[i][2], c='red')
+        #     ax.scatter3D(optim3d.center_pts[i][0], optim3d.center_pts[i][1], optim3d.center_pts[i][2], c='green')
+        #     ax.scatter3D(optim3d.extraction_pts[i][0], optim3d.extraction_pts[i][1], optim3d.extraction_pts[i][2], c='blue')
+        #     fig.colorbar(p)
+        #     plt.show()
+        
+
+        # for i in range(6):
+        #     fig = plt.figure()
+        #     ax = plt.axes(projection='3d')
+        #     # print('per extraction', per_insertion[i] + per_extraction[i])
+        #     plt.title(f"INSERTION FORCE MAGNITUDE AT {i}")
+        #     p = ax.scatter3D(x_pts, y_pts, z_pts, c=[np.linalg.norm(force) for force in insertion_forces[i]])
+        #     ax.scatter3D(optim3d.insertion_pts[i][0], optim3d.insertion_pts[i][1], optim3d.insertion_pts[i][2], c='red')
+        #     ax.scatter3D(optim3d.center_pts[i][0], optim3d.center_pts[i][1], optim3d.center_pts[i][2], c='green')
+        #     ax.scatter3D(optim3d.extraction_pts[i][0], optim3d.extraction_pts[i][1], optim3d.extraction_pts[i][2], c='blue')
+        #     fig.colorbar(p)
+        #     plt.show()
+        
+        # for i in range(6):
+        #     fig = plt.figure()
+        #     ax = plt.axes(projection='3d')
+        #     # print('per extraction', per_insertion[i] + per_extraction[i])
+        #     plt.title(f"CLOSURE MAGNITUDE AT {i}")
+        #     p = ax.scatter3D(x_pts, y_pts, z_pts, c=[np.linalg.norm(iforce - eforce) for iforce, eforce in zip(insertion_forces[i], extraction_forces[i])])
+        #     ax.scatter3D(optim3d.insertion_pts[i][0], optim3d.insertion_pts[i][1], optim3d.insertion_pts[i][2], c='red')
+        #     ax.scatter3D(optim3d.center_pts[i][0], optim3d.center_pts[i][1], optim3d.center_pts[i][2], c='green')
+        #     ax.scatter3D(optim3d.extraction_pts[i][0], optim3d.extraction_pts[i][1], optim3d.extraction_pts[i][2], c='blue')
+        #     fig.colorbar(p)
+        #     plt.show()
 
         # for i in range(6):
         #     fig = plt.figure()
@@ -598,20 +635,32 @@ if __name__ == "__main__":
         #     fig.colorbar(p)
         #     plt.show()
         
-        optim3d.optimize(eval=False)
+        # optim3d.optimize(eval=False)
 
-        closure_loss, shear_loss, all_closure, per_insertion, per_extraction = optim3d.compute_closure_shear_loss(granularity=100)
-        optim3d.plot_mesh_path_and_spline()
+        # closure_loss, shear_loss, all_closure, per_insertion, per_extraction, insertion_forces, extraction_forces = optim3d.compute_closure_shear_loss(granularity=100)
+        # optim3d.plot_mesh_path_and_spline()
 
-        fig = plt.figure()
-        ax = plt.axes(projection='3d')
-        plt.title("CLOSURE FORCES AFTER")
-        p = ax.scatter3D(x_pts, y_pts, z_pts, c=all_closure)
-        fig.colorbar(p)
-        plt.show()
+        # fig = plt.figure()
+        # ax = plt.axes(projection='3d')
+        # plt.title("CLOSURE FORCES AFTER")
+        # p = ax.scatter3D(x_pts, y_pts, z_pts, c=all_closure)
+        # fig.colorbar(p)
+        # plt.show()
 
-        start_range = 3
-        end_range = 12
+        # for i in range(6):
+        #     fig = plt.figure()
+        #     ax = plt.axes(projection='3d')
+        #     # print('per extraction', per_insertion[i] + per_extraction[i])
+        #     plt.title(f"CLOSURE MAGNITUDE AT {i}")
+        #     p = ax.scatter3D(x_pts, y_pts, z_pts, c=[np.linalg.norm(iforce - eforce) for iforce, eforce in zip(insertion_forces[i], extraction_forces[i])])
+        #     ax.scatter3D(optim3d.insertion_pts[i][0], optim3d.insertion_pts[i][1], optim3d.insertion_pts[i][2], c='red')
+        #     ax.scatter3D(optim3d.center_pts[i][0], optim3d.center_pts[i][1], optim3d.center_pts[i][2], c='green')
+        #     ax.scatter3D(optim3d.extraction_pts[i][0], optim3d.extraction_pts[i][1], optim3d.extraction_pts[i][2], c='blue')
+        #     fig.colorbar(p)
+        #     plt.show()
+
+        start_range = 5
+        end_range = 15
 
         print("range:", start_range, end_range)
 
@@ -628,85 +677,82 @@ if __name__ == "__main__":
         best_opt_center = None
 
 
+        for num_sutures in range(start_range, end_range + 1):
+            print("num sutures:", num_sutures)
 
+            center_pts, insertion_pts, extraction_pts = optim3d.generate_inital_placement(mesh, left_spline, num_sutures=num_sutures)
+            #print("Normal vector", normal_vectors)
+            # optim3d.plot_mesh_path_and_spline(mesh, left_spline, viz=True, results_pth=baseline_pth)
+            equally_spaced_losses[num_sutures] = optim3d.optimize(eval=True)
+            print('Initial loss', equally_spaced_losses[num_sutures]["curr_loss"])
+            # if equally_spaced_losses[num_sutures]["curr_loss"] < best_baseline_loss:
+            #     best_baseline_loss = equally_spaced_losses[num_sutures]["curr_loss"]
+            #     best_baseline_placement = copy.deepcopy(optim3d.suture_placement)
 
+            optim3d.optimize(eval=False)
+            # optim3d.plot_mesh_path_and_spline(mesh, left_spline, viz=True, results_pth=baseline_pth)
 
-        # for num_sutures in range(start_range, end_range + 1):
-        #     print("num sutures:", num_sutures)
+            # optim3d.plot_mesh_path_and_spline(mesh, left_spline, viz=viz, results_pth=opt_pth)
 
-        #     center_pts, insertion_pts, extraction_pts = optim3d.generate_inital_placement(mesh, left_spline, num_sutures=num_sutures)
-        #     #print("Normal vector", normal_vectors)
-        #     # optim3d.plot_mesh_path_and_spline(mesh, left_spline, viz=True, results_pth=baseline_pth)
-        #     equally_spaced_losses[num_sutures] = optim3d.optimize(eval=True)
-        #     print('Initial loss', equally_spaced_losses[num_sutures]["curr_loss"])
-        #     # if equally_spaced_losses[num_sutures]["curr_loss"] < best_baseline_loss:
-        #     #     best_baseline_loss = equally_spaced_losses[num_sutures]["curr_loss"]
-        #     #     best_baseline_placement = copy.deepcopy(optim3d.suture_placement)
-
-        #     optim3d.optimize(eval=False)
-        #     # optim3d.plot_mesh_path_and_spline(mesh, left_spline, viz=True, results_pth=baseline_pth)
-
-        #     # optim3d.plot_mesh_path_and_spline(mesh, left_spline, viz=viz, results_pth=opt_pth)
-
-        #     post_algorithm_losses[num_sutures] = optim3d.optimize(eval=True)
-        #     print('After loss', post_algorithm_losses[num_sutures]["curr_loss"])
+            post_algorithm_losses[num_sutures] = optim3d.optimize(eval=True)
+            print('After loss', post_algorithm_losses[num_sutures]["curr_loss"])
 
             
-        #     if post_algorithm_losses[num_sutures]["curr_loss"] < best_opt_loss:
-        #         print("num sututes", num_sutures, "best loss so far")
-        #         best_opt_loss = post_algorithm_losses[num_sutures]["curr_loss"]
-        #         print("BEST LOSS", best_opt_loss)
-        #         best_opt_insertion = optim3d.insertion_pts
-        #         best_opt_extraction = optim3d.extraction_pts
-        #         best_opt_center = optim3d.center_pts
-        #         baseline_insertion = insertion_pts
-        #         baseline_extraction = extraction_pts
-        #         baseline_center = center_pts
+            if post_algorithm_losses[num_sutures]["curr_loss"] < best_opt_loss:
+                print("num sutures", num_sutures, "best loss so far")
+                best_opt_loss = post_algorithm_losses[num_sutures]["curr_loss"]
+                print("BEST LOSS", best_opt_loss)
+                best_opt_insertion = optim3d.insertion_pts
+                best_opt_extraction = optim3d.extraction_pts
+                best_opt_center = optim3d.center_pts
+                baseline_insertion = insertion_pts
+                baseline_extraction = extraction_pts
+                baseline_center = center_pts
 
 
                 # best_opt_placement = copy.deepcopy(optim3d.suture_placement)
 
-        # print("equally_spaced_losses", equally_spaced_losses)
-        # print("post_algorithm_losses", post_algorithm_losses)
+        print("equally_spaced_losses", equally_spaced_losses)
+        print("post_algorithm_losses", post_algorithm_losses)
                 
         # save data
                 
-        # json_equal = json.dumps(equally_spaced_losses)
-        # json_post = json.dumps(post_algorithm_losses)
+        json_equal = json.dumps(equally_spaced_losses)
+        json_post = json.dumps(post_algorithm_losses)
 
-        # equal_losses_pth = baseline_pth + "losses.json"
-        # opt_losses_pth = opt_pth + "losses.json"
+        equal_losses_pth = baseline_pth + "losses.json"
+        opt_losses_pth = opt_pth + "losses.json"
 
-        # f = open(equal_losses_pth,"w")
-        # f.write(json_equal)
-        # f.close()
+        f = open(equal_losses_pth,"w")
+        f.write(json_equal)
+        f.close()
 
-        # f = open(opt_losses_pth,"w")
-        # f.write(json_post)
-        # f.close()
+        f = open(opt_losses_pth,"w")
+        f.write(json_post)
+        f.close()
                 
 
 
         
-        # left_image = cv2.imread(left_img_path, cv2.IMREAD_COLOR)
-        # center_spline = project3d_to_2d(left_image, line_pts_3d)
+        left_image = cv2.imread(left_img_path, cv2.IMREAD_COLOR)
+        center_spline = project3d_to_2d(left_image, line_pts_3d)
 
-        # print("baseline")
-        # insertion_pts_base = project3d_to_2d(left_image, baseline_insertion)
-        # center_pts_base = project3d_to_2d(left_image, baseline_center)
-        # extraction_base = project3d_to_2d(left_image, baseline_extraction)
-        # suture_display_adjust = SutureDisplayAdjust(insertion_pts_base, center_pts_base, extraction_base, left_image, center_spline)
-        # suture_display_adjust.user_display_pnts()
+        print("baseline")
+        insertion_pts_base = project3d_to_2d(left_image, baseline_insertion)
+        center_pts_base = project3d_to_2d(left_image, baseline_center)
+        extraction_base = project3d_to_2d(left_image, baseline_extraction)
+        suture_display_adjust = SutureDisplayAdjust(insertion_pts_base, center_pts_base, extraction_base, left_image, center_spline)
+        suture_display_adjust.user_display_pnts()
 
-        # print("optimized")
-        # left_image = cv2.imread(left_img_path, cv2.IMREAD_COLOR)
+        print("optimized")
+        left_image = cv2.imread(left_img_path, cv2.IMREAD_COLOR)
 
-        # insertion_pts = project3d_to_2d(left_image, best_opt_insertion)
-        # center_pts = project3d_to_2d(left_image, best_opt_center)
-        # extraction_pts = project3d_to_2d(left_image, best_opt_extraction)
+        insertion_pts = project3d_to_2d(left_image, best_opt_insertion)
+        center_pts = project3d_to_2d(left_image, best_opt_center)
+        extraction_pts = project3d_to_2d(left_image, best_opt_extraction)
 
-        # suture_display_adjust_optim = SutureDisplayAdjust(insertion_pts, center_pts, extraction_pts, left_image, center_spline)
-        # suture_display_adjust_optim.user_display_pnts()
+        suture_display_adjust_optim = SutureDisplayAdjust(insertion_pts, center_pts, extraction_pts, left_image, center_spline)
+        suture_display_adjust_optim.user_display_pnts()
 
         # dragging codeeee
         # print(“Overhead center points”, np.array(suturePlacement3d.center_pts.shape))

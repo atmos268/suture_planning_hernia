@@ -73,6 +73,9 @@ class Optimizer3d:
             per_insertion = [[] for _ in range(len(self.insertion_pts))]
             per_extraction = [[] for _ in range(len(self.extraction_pts))]
 
+            per_insertion_force = [[] for _ in range(len(self.insertion_pts))]
+            per_extraction_force = [[] for _ in range(len(self.extraction_pts))]
+
             for i in range(granularity):
                 x = x_spline(t[i])
                 y = y_spline(t[i])
@@ -92,12 +95,16 @@ class Optimizer3d:
                 else:
                     sampled_derivative = sampled_derivative / np.linalg.norm(sampled_derivative)
 
-                closure_force, shear_force, peri, pere = self.compute_closure_shear_force(sampled_pt, sampled_derivative)
+                closure_force, shear_force, peri, pere, insertion, extraction = self.compute_closure_shear_force(sampled_pt, sampled_derivative)
                 # [1, 2, 3, ... 6]
 
                 for i in range(len(self.insertion_pts)):
                     per_insertion[i].append(peri[i])
                     per_extraction[i].append(pere[i])
+
+                for i in range(len(self.insertion_pts)):
+                    per_insertion_force[i].append(insertion[i])
+                    per_extraction_force[i].append(extraction[i])
 
                 # if self.force_model['verbose'] > 0:
                 # self.plot_insertion_extraction_force(t[i], sampled_derivative)
@@ -114,7 +121,7 @@ class Optimizer3d:
             # print("Closure loss", closure_loss)
             # print("Shear loss", shear_loss)
 
-            return closure_loss, shear_loss, all_closure, per_insertion, per_extraction
+            return closure_loss, shear_loss, all_closure, per_insertion, per_extraction, per_insertion_force, per_extraction_force
 
             # return closure_loss, shear_loss
     
@@ -145,19 +152,31 @@ class Optimizer3d:
                 print("sanity check: magnitude of wound line normal (should be equal to 1): ", np.linalg.norm(wound_line_normal))
             wound_line_normal = wound_line_normal / np.linalg.norm(wound_line_normal)
 
-            total_insertion_force, per_insertion = self.compute_total_force(insertion_pts, force_vecs, point)
-            total_extraction_force, per_extraction = self.compute_total_force(extraction_pts, -force_vecs, point)
+            # per insertion is for that point, index i is the force at insertion point i
+            total_insertion_force, per_insertion, force_per_insertion = self.compute_total_force(insertion_pts, force_vecs, point)
+            total_extraction_force, per_extraction, force_per_extraction = self.compute_total_force(extraction_pts, -force_vecs, point)
 
             insertion_closure_force = np.dot(total_insertion_force, wound_line_normal)
             extraction_closure_force = np.dot(total_extraction_force, wound_line_normal)
 
-            print('POINT', point)
-            print('insertion', insertion_closure_force)
-            print('extraction', extraction_closure_force)
+            insertion_force = []
+            for force in force_per_insertion:
+                insertion_force.append(np.dot(force, wound_line_normal))
+            
+            extraction_force = []
+            for force in force_per_extraction:
+                extraction_force.append(np.dot(force, wound_line_normal))
+
+            insertion_closure_force = np.dot(total_insertion_force, wound_line_normal)
+            extraction_closure_force = np.dot(total_extraction_force, wound_line_normal)
+
+            # print('POINT', point)
+            # print('insertion', insertion_closure_force)
+            # print('extraction', extraction_closure_force)
 
             closure_force = np.abs(insertion_closure_force - extraction_closure_force)
 
-            print('closure', closure_force)
+            # print('closure', closure_force)
 
             insertion_shear_force = np.dot(total_insertion_force, wound_derivative_proj)
             extraction_shear_force = np.dot(total_extraction_force, wound_derivative_proj)
@@ -174,7 +193,7 @@ class Optimizer3d:
             # print("Closure force: ", closure_force)
             # print("Shear force: ", shear_force)
 
-            return closure_force, shear_force, per_insertion, per_extraction
+            return closure_force, shear_force, per_insertion, per_extraction, insertion_force, extraction_force
 
     def compute_felt_force(self, in_ex_pt, in_ex_force_vec, point, num_nearest = 20):
     
@@ -230,7 +249,7 @@ class Optimizer3d:
             force_angle = get_force_angle(in_ex_plane_normal, in_ex_force_vec, point - in_ex_pt)
 
             ellipse_dist_factor = np.sqrt((np.sin(force_angle) * ellipse_ecc) ** 2 + (np.cos(force_angle)) ** 2)
-
+            # 1/2 / width
             wound_force = self.force_model['imparted_force'] - force_decay * np.linalg.norm(point - in_ex_pt) * ellipse_dist_factor
 
             # if verbose > 10:
@@ -291,23 +310,27 @@ class Optimizer3d:
 
             total_force = np.array([0.0, 0.0, 0.0])
             per_insertion_pt = []
+            force_per_insertion_pt = []
             for i in range(len(in_ex_pts)):
                 in_ex_pt = in_ex_pts[i]
                 in_ex_force_vec = in_ex_force_vecs[i]
                 mag = 0
+                force = np.array([0, 0, 0])
                 if np.linalg.norm(in_ex_pt - point) <= 1/self.force_model['force_decay']:   #TODO: double check the distance
                     felt_force = self.compute_felt_force(in_ex_pt, in_ex_force_vec, point)
                     # self.plot_mesh_path_spline_and_forces(point, in_ex_pt, in_ex_force_vec)
                     if self.force_model['verbose'] > 10:
                         print('felt force: ', felt_force)
+                    force = felt_force
                     total_force = felt_force + total_force
                     mag = np.linalg.norm(felt_force)
+                force_per_insertion_pt.append(force)
                 per_insertion_pt.append(mag)
 
             if self.force_model['verbose'] > 10:
                 print('total force: ', total_force)
 
-            return total_force, per_insertion_pt
+            return total_force, per_insertion_pt, force_per_insertion_pt
         
 
     def plot_insertion_extraction_force(self, t, wound_derivative):
@@ -557,7 +580,7 @@ class Optimizer3d:
             # h = self.gamma * (1 / 2)
             h = 0.0025
             return min([i - h for i in insert_dists] + 
-                    [i - h for i in center_dists] + 
+                    # [i - h for i in center_dists] + 
                     [i - h for i in extract_dists])
 
         def max_suture_dist(t):
@@ -612,7 +635,7 @@ class Optimizer3d:
             # ideal_loss = self.get_ideal_loss()
 
             # curvature_loss = self.get_curvature_loss()
-            closure_loss, shear_loss, all_closure, per_insertion, per_extraction = self.compute_closure_shear_loss(granularity=100)
+            closure_loss, shear_loss, all_closure, per_insertion, per_extraction, _, _ = self.compute_closure_shear_loss(granularity=100)
             # print("closure loss", closure_loss)
             # print("shear loss", shear_loss)
             # print("var_loss", var_loss)
@@ -622,8 +645,7 @@ class Optimizer3d:
             # print("SHEAR COEF", self.c_shear)
             # print("CLOSURE COEF", self.c_closure)
 
-            curr_loss = closure_loss
-            # + closure_loss + shear_loss
+            curr_loss = closure_loss + shear_loss
             # curr_loss = var_loss * self.c_var + ideal_loss * self.c_ideal
             # print("current_loss:" + str(curr_loss))
 
@@ -660,53 +682,26 @@ class Optimizer3d:
         # print("RESULT")
         # print(result)
         cons = []
-        for i in range(len(initial_guess)):
-            l = {'type': 'ineq',
-                'fun': lambda t, i=i: t[i] - 0}
-            u = {'type': 'ineq',
-                'fun': lambda t, i=i: 1 - t[i]}
-            cons.append(l)
-            cons.append(u)
-        
-        # for i in range(1, len(initial_guess)-1):
+        # for i in range(len(initial_guess)):
         #     l = {'type': 'ineq',
-        #         'fun': lambda t, i=i: euclidean_dist(self.insertion_pts[i], self.insertion_pts[i+1]) - 0.0025}
+        #         'fun': lambda t, i=i: t[i] - 0}
         #     u = {'type': 'ineq',
-        #         'fun': lambda t, i=i: euclidean_dist(self.insertion_pts[i], self.insertion_pts[i-1]) - 0.0025}
-        #     l2 = {'type': 'ineq',
-        #         'fun': lambda t, i=i: euclidean_dist(self.extraction_pts[i], self.extraction_pts[i+1]) - 0.0025}
-        #     u2 = {'type': 'ineq',
-        #         'fun': lambda t, i=i: euclidean_dist(self.extraction_pts[i], self.extraction_pts[i-1]) - 0.0025}
-        #     c3 = {'type': 'ineq',
-        #         'fun': lambda t, i=i: euclidean_dist(0.008 - self.insertion_pts[i], self.insertion_pts[i+1])}
-        #     c4 = {'type': 'ineq',
-        #         'fun': lambda t, i=i: euclidean_dist(0.008 - self.insertion_pts[i], self.insertion_pts[i-1])}
-        #     c5 = {'type': 'ineq',
-        #         'fun': lambda t, i=i: euclidean_dist(0.008 - self.extraction_pts[i], self.extraction_pts[i+1])}
-        #     c6 = {'type': 'ineq',
-        #         'fun': lambda t, i=i: euclidean_dist(0.008 - self.extraction_pts[i], self.extraction_pts[i-1])}
-        #     # u = {'type': 'ineq',
-        #     #     'fun': lambda t, i=i: 1 - t[i]}
+        #         'fun': lambda t, i=i: 1 - t[i]}
         #     cons.append(l)
         #     cons.append(u)
-        #     cons.append(l2)
-        #     cons.append(u2)
-        #     cons.append(c3)
-        #     cons.append(c4)
-        #     cons.append(c5)
-        #     cons.append(c6)
         
-        # cons.append({'type': 'ineq', 'fun': lambda t: min_all_suture_dist(t)}
-        #                {'type': 'ineq', 'fun': lambda t: max_suture_dist(t)})
-
+        cons.append({'type': 'ineq', 'fun': lambda t: min_all_suture_dist(t)})
+        cons.append({'type': 'ineq', 'fun': lambda t: max_suture_dist(t)})
+                    
         result = optim.minimize(
             fun=loss,
             x0=initial_guess,
-            method='SLSQP',
-            # bounds=bounds,
-            constraints = cons,
-            options={'disp':True, 'eps':1e-3, 'ftol': 1e-10},
+            method='Nelder-Mead',
+            bounds=bounds,
+            # constraints = cons,
+            options={'disp':True}
         )
+
         return result
 
     
@@ -835,65 +830,3 @@ class Optimizer3d:
         # print("current_loss:" + str(curr_loss))
 
         return curr_loss
-
-if __name__ == '__main__':
-
-    # Specify the path to your text file
-    adj_path = 'adjacency_matrix.txt'
-    loc_path = 'vertex_lookup.txt'
-
-
-    mesh = MeshIngestor(adj_path, loc_path)
-
-    # Create the graph
-    mesh.generate_mesh()
-
-    # pick two random points for testing purposes
-    num1, num2 = random.randrange(0, len(mesh.vertex_coordinates)), random.randrange(0, len(mesh.vertex_coordinates))
-    #num1, num2 = 21695, 8695
-    #num1, num2 = 20000, 18000
-    rand_start_pt = mesh.get_point_location(num1)
-    rand_wound_pt = mesh.get_point_location(num2)
-    shortest_path = mesh.get_a_star_path(rand_start_pt, rand_wound_pt)
-    shortest_path_xyz = np.array([mesh.get_point_location(pt_idx) for pt_idx in shortest_path])
-    
-    # Calculate distances between consecutive points
-    distances = np.sqrt(np.sum(np.diff(shortest_path_xyz, axis=0)**2, axis=1))
-
-    # Calculate cumulative distance
-    cumulative_distance = np.insert(np.cumsum(distances), 0, 0)
-
-    # Normalize t to range from 0 to 1
-    t = cumulative_distance / cumulative_distance[-1]
-
-    # FIT SPLINE TO SHORTEST PATH
-    x = shortest_path_xyz[:, 0] # x-coordinates of the shortest path
-    y = shortest_path_xyz[:, 1]
-    z = shortest_path_xyz[:, 2]
-
-    s_factor = len(x)/5.0 # A starting point for the smoothing factor; adjust based on noise level
-    #s_factor = 0.1
-    x_smooth = inter.UnivariateSpline(t, x, s=s_factor)
-    y_smooth = inter.UnivariateSpline(t, y, s=s_factor)
-    z_smooth = inter.UnivariateSpline(t, z, s=s_factor)
-    spline = [x_smooth, y_smooth, z_smooth]
-    suture_width = 0.005
-
-    c_ideal = 10000
-    gamma = suture_width 
-    c_var = 1000
-    c_shear = 10
-    c_closure = 0.1
-
-    hyperparams = [c_ideal, gamma, c_var, c_shear, c_closure]
-
-    force_model_parameters = {'ellipse_ecc': 0.77, 'force_decay': 0.5/suture_width, 'verbose': 0, 'ideal_closure_force': None, 'imparted_force': None}
-
-    optim3d = Optimizer3d(mesh, spline, suture_width, hyperparams, force_model_parameters)
-    normal_vectors, derivative_vectors = optim3d.generate_inital_placement(mesh, spline)
-    #print("Normal vector", normal_vectors)
-    optim3d.plot_mesh_path_and_spline(mesh, spline, normal_vectors, derivative_vectors)
-    optim3d.optimize()
-
-    optim3d.plot_mesh_path_and_spline(mesh, spline, normal_vectors, derivative_vectors)
-
