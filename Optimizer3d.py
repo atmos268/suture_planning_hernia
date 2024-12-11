@@ -195,7 +195,7 @@ class Optimizer3d:
 
             return closure_force, shear_force, per_insertion, per_extraction, insertion_force, extraction_force
 
-    def compute_felt_force(self, in_ex_pt, in_ex_force_vec, point, num_nearest = 20):
+    def compute_felt_force(self, in_ex_pt, in_ex_force_vec, point, i, num_nearest = 20):
     
             # Original function had points_to_sample, ep as parameters
 
@@ -205,7 +205,8 @@ class Optimizer3d:
 
             mesh = self.mesh
 
-            ellipse_ecc = self.force_model['ellipse_ecc']
+            # ellipse_ecc = self.force_model['ellipse_ecc']
+            ellipse_ecc =self.spacing[int(self.points_t[i] * 99)]
             force_decay = self.force_model['force_decay']
             verbose = self.force_model['verbose']
 
@@ -317,7 +318,7 @@ class Optimizer3d:
                 mag = 0
                 force = np.array([0, 0, 0])
                 if np.linalg.norm(in_ex_pt - point) <= 1/self.force_model['force_decay']:   #TODO: double check the distance
-                    felt_force = self.compute_felt_force(in_ex_pt, in_ex_force_vec, point)
+                    felt_force = self.compute_felt_force(in_ex_pt, in_ex_force_vec, point, i)
                     # self.plot_mesh_path_spline_and_forces(point, in_ex_pt, in_ex_force_vec)
                     if self.force_model['verbose'] > 10:
                         print('felt force: ', felt_force)
@@ -779,7 +780,7 @@ class Optimizer3d:
 
         # USE EXPONENTIAL / SIGMOID
         
-        return error
+        return np.sqrt(error)
 
     def get_diff_var(self, points): 
         

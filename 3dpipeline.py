@@ -502,19 +502,19 @@ if __name__ == "__main__":
 
         curvature_arr = np.array(curvature_arr)
         scaled_curvature = curvature_arr / 100
-        L = 0.007 - 0.003  # The range of the spacing values
+        L = 1/0.5 - 1/0.9  # The range of the spacing values
+        # more curve means 1/0.5 ellipse whereas less curve means greater
         k = 10  # The steepness of the curve
         x0 = 0.5  # The midpoint of the sigmoid
 
         # Calculate the spacing using the sigmoid function
-        spacing = 0.007 - sigmoid(scaled_curvature, L, k, x0)
+        spacing = (1/0.9) + sigmoid(scaled_curvature, L, k, x0)
         print('SPACING', spacing)
         # get mesh from the surrounding points
 
-        bounds = [0, 50, 100, 150, 200]
         fig = plt.figure()
         ax = plt.axes(projection='3d')
-        plt.title("Sigmoid spacing")
+        plt.title("Sigmoid eccentricity")
         p = ax.scatter3D(x_pts, y_pts, z_pts, c=spacing)
         fig.colorbar(p)
         plt.show()
@@ -549,7 +549,7 @@ if __name__ == "__main__":
 
         hyperparams = [c_ideal, gamma, c_var, c_shear, c_closure]
 
-        force_model_parameters = {'ellipse_ecc': 1/0.77, 'force_decay': 0.5/0.007, 'verbose': 0, 'ideal_closure_force': None, 'imparted_force': None}
+        force_model_parameters = {'ellipse_ecc': 1/0.5, 'force_decay': 0.5/0.007, 'verbose': 0, 'ideal_closure_force': None, 'imparted_force': None}
 
         optim3d = Optimizer3d(mesh, left_spline, suture_width, hyperparams, force_model_parameters, left_spline_smoothed, spacing)
     
@@ -562,17 +562,17 @@ if __name__ == "__main__":
 
         # TEST CLOSURE FORCE
 
-        center_pts, insertion_pts, extraction_pts = optim3d.generate_inital_placement(mesh, left_spline, num_sutures=6)
+        center_pts, insertion_pts, extraction_pts = optim3d.generate_inital_placement(mesh, left_spline, num_sutures=10)
         closure_loss, shear_loss, all_closure, per_insertion, per_extraction, insertion_forces, extraction_forces = optim3d.compute_closure_shear_loss(granularity=100)
         optim3d.plot_mesh_path_and_spline()
 
 
-        # fig = plt.figure()
-        # ax = plt.axes(projection='3d')
-        # plt.title("CLOSURE FORCES")
-        # p = ax.scatter3D(x_pts, y_pts, z_pts, c=all_closure)
-        # fig.colorbar(p)
-        # plt.show()
+        fig = plt.figure()
+        ax = plt.axes(projection='3d')
+        plt.title("CLOSURE FORCES BEFORE")
+        p = ax.scatter3D(x_pts, y_pts, z_pts, c=all_closure)
+        fig.colorbar(p)
+        plt.show()
 
         # for i in range(6):
         #     fig = plt.figure()
@@ -635,17 +635,17 @@ if __name__ == "__main__":
         #     fig.colorbar(p)
         #     plt.show()
         
-        # optim3d.optimize(eval=False)
+        optim3d.optimize(eval=False)
 
-        # closure_loss, shear_loss, all_closure, per_insertion, per_extraction, insertion_forces, extraction_forces = optim3d.compute_closure_shear_loss(granularity=100)
-        # optim3d.plot_mesh_path_and_spline()
+        closure_loss, shear_loss, all_closure, per_insertion, per_extraction, insertion_forces, extraction_forces = optim3d.compute_closure_shear_loss(granularity=100)
+        optim3d.plot_mesh_path_and_spline()
 
-        # fig = plt.figure()
-        # ax = plt.axes(projection='3d')
-        # plt.title("CLOSURE FORCES AFTER")
-        # p = ax.scatter3D(x_pts, y_pts, z_pts, c=all_closure)
-        # fig.colorbar(p)
-        # plt.show()
+        fig = plt.figure()
+        ax = plt.axes(projection='3d')
+        plt.title("CLOSURE FORCES AFTER")
+        p = ax.scatter3D(x_pts, y_pts, z_pts, c=all_closure)
+        fig.colorbar(p)
+        plt.show()
 
         # for i in range(6):
         #     fig = plt.figure()
@@ -659,8 +659,8 @@ if __name__ == "__main__":
         #     fig.colorbar(p)
         #     plt.show()
 
-        start_range = 5
-        end_range = 15
+        start_range = 6
+        end_range = 13
 
         print("range:", start_range, end_range)
 
@@ -730,9 +730,16 @@ if __name__ == "__main__":
         f = open(opt_losses_pth,"w")
         f.write(json_post)
         f.close()
-                
 
+        closure_loss, shear_loss, all_closure, per_insertion, per_extraction, insertion_forces, extraction_forces = optim3d.compute_closure_shear_loss(granularity=100)
+        optim3d.plot_mesh_path_and_spline()
 
+        fig = plt.figure()
+        ax = plt.axes(projection='3d')
+        plt.title("CLOSURE FORCES FINAL")
+        p = ax.scatter3D(x_pts, y_pts, z_pts, c=all_closure)
+        fig.colorbar(p)
+        plt.show()
         
         left_image = cv2.imread(left_img_path, cv2.IMREAD_COLOR)
         center_spline = project3d_to_2d(left_image, line_pts_3d)
