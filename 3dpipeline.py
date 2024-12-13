@@ -676,6 +676,8 @@ if __name__ == "__main__":
         best_opt_extraction = None
         best_opt_center = None
 
+        final_closure = None
+        final_shear = None
 
         for num_sutures in range(start_range, end_range + 1):
             print("num sutures:", num_sutures)
@@ -708,7 +710,7 @@ if __name__ == "__main__":
                 baseline_insertion = insertion_pts
                 baseline_extraction = extraction_pts
                 baseline_center = center_pts
-
+                _, _, final_closure, _, _, _, _ = optim3d.compute_closure_shear_loss(granularity=100)
 
                 # best_opt_placement = copy.deepcopy(optim3d.suture_placement)
 
@@ -731,15 +733,19 @@ if __name__ == "__main__":
         f.write(json_post)
         f.close()
 
-        closure_loss, shear_loss, all_closure, per_insertion, per_extraction, insertion_forces, extraction_forces = optim3d.compute_closure_shear_loss(granularity=100)
-        optim3d.plot_mesh_path_and_spline()
-
         fig = plt.figure()
         ax = plt.axes(projection='3d')
         plt.title("CLOSURE FORCES FINAL")
-        p = ax.scatter3D(x_pts, y_pts, z_pts, c=all_closure)
+        p = ax.scatter3D(x_pts, y_pts, z_pts, c=final_closure)
         fig.colorbar(p)
         plt.show()
+
+        # fig = plt.figure()
+        # ax = plt.axes(projection='3d')
+        # plt.title("SHEAR FORCES FINAL")
+        # p = ax.scatter3D(x_pts, y_pts, z_pts, c=final_shear)
+        # fig.colorbar(p)
+        # plt.show()
         
         left_image = cv2.imread(left_img_path, cv2.IMREAD_COLOR)
         center_spline = project3d_to_2d(left_image, line_pts_3d)

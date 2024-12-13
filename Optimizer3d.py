@@ -653,7 +653,7 @@ class Optimizer3d:
             if not eval:
                 return curr_loss
             else:
-                return {"var_loss": 0, "ideal_loss": 0, "closure_loss": 0, "shear_loss": 0, "curr_loss": curr_loss}
+                return {"closure_loss": closure_loss, "shear_loss": shear_loss, "curr_loss": curr_loss}
         
         def jac(t):
             return optim.approx_fprime(t, loss)
@@ -699,7 +699,6 @@ class Optimizer3d:
             x0=initial_guess,
             method='Nelder-Mead',
             bounds=bounds,
-            # constraints = cons,
             options={'disp':True}
         )
 
