@@ -40,7 +40,7 @@ class Optimizer3d:
         # Ideal closure force calculated according to properties of the original diamond force model
         # If you want, can specify ideal_closure_force yourself, otherwise set to None and this calculation will be done
         if force_model_parameters['ideal_closure_force'] is None:
-            self.force_model['ideal_closure_force'] = np.max(2.0 - self.force_model['force_decay'] * self.suture_width, 0)
+            self.force_model['ideal_closure_force'] = np.max(1, 0)
         
         if self.force_model['verbose'] > 0:
             print("Ideal closure force: ", self.force_model['ideal_closure_force'])
@@ -251,7 +251,7 @@ class Optimizer3d:
 
             ellipse_dist_factor = np.sqrt((np.sin(force_angle) * ellipse_ecc) ** 2 + (np.cos(force_angle)) ** 2)
             # 1/2 / width
-            wound_force = self.force_model['imparted_force'] - force_decay * np.linalg.norm(point - in_ex_pt) * ellipse_dist_factor
+            wound_force = self.force_model['imparted_force'] - force_decay * (np.linalg.norm(point - in_ex_pt) - 0.002) * ellipse_dist_factor
 
             # if verbose > 10:
             #     print('in_ex force: ', self.force_model['imparted_force'])

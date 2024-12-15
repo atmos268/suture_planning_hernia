@@ -86,7 +86,7 @@ def project3d_to_2d(left_image, points):
 if __name__ == "__main__":
     box_method = True
     save_figs = True
-    chicken_number = 7
+    chicken_number = 2
 
     left_file = f'left_exp_00{chicken_number}.png'
     left_img_path = 'chicken_images/' + left_file
@@ -502,13 +502,13 @@ if __name__ == "__main__":
 
         curvature_arr = np.array(curvature_arr)
         scaled_curvature = curvature_arr / 100
-        L = 1/0.5 - 1/0.9  # The range of the spacing values
+        L = 1/0.5 - 1  # The range of the spacing values
         # more curve means 1/0.5 ellipse whereas less curve means greater
         k = 10  # The steepness of the curve
         x0 = 0.5  # The midpoint of the sigmoid
 
         # Calculate the spacing using the sigmoid function
-        spacing = (1/0.9) + sigmoid(scaled_curvature, L, k, x0)
+        spacing = 1 + sigmoid(scaled_curvature, L, k, x0)
         print('SPACING', spacing)
         # get mesh from the surrounding points
 
@@ -549,7 +549,7 @@ if __name__ == "__main__":
 
         hyperparams = [c_ideal, gamma, c_var, c_shear, c_closure]
 
-        force_model_parameters = {'ellipse_ecc': 1/0.5, 'force_decay': 0.5/0.007, 'verbose': 0, 'ideal_closure_force': None, 'imparted_force': None}
+        force_model_parameters = {'ellipse_ecc': 1/0.5, 'force_decay': 0.5/0.005, 'verbose': 0, 'ideal_closure_force': None, 'imparted_force': None}
 
         optim3d = Optimizer3d(mesh, left_spline, suture_width, hyperparams, force_model_parameters, left_spline_smoothed, spacing)
     
@@ -562,7 +562,7 @@ if __name__ == "__main__":
 
         # TEST CLOSURE FORCE
 
-        center_pts, insertion_pts, extraction_pts = optim3d.generate_inital_placement(mesh, left_spline, num_sutures=10)
+        center_pts, insertion_pts, extraction_pts = optim3d.generate_inital_placement(mesh, left_spline, num_sutures=8)
         closure_loss, shear_loss, all_closure, per_insertion, per_extraction, insertion_forces, extraction_forces = optim3d.compute_closure_shear_loss(granularity=100)
         optim3d.plot_mesh_path_and_spline()
 
@@ -659,8 +659,8 @@ if __name__ == "__main__":
         #     fig.colorbar(p)
         #     plt.show()
 
-        start_range = 6
-        end_range = 13
+        start_range = 4
+        end_range = 12
 
         print("range:", start_range, end_range)
 
