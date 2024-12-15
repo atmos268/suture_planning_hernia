@@ -45,7 +45,14 @@ def get_plane_estimation_chatgpt(indices, points, ep=20, verbose=1):
 
     return normal
 
-def get_plane_estimation(mesh, pt, num_nearest=20):
+def is_inside(point, mesh, direction=np.array([1.0, 0.0, 0.0]), tol=1e-1):
+        intersections, _, _ = mesh.ray.intersects_location(
+            ray_origins=[point - direction * tol], #  - direction * tol
+            ray_directions=[direction],
+        )
+        return (len(intersections) % 2) == 1
+
+def get_plane_estimation(mesh, pt, num_nearest=20, trimesh=None):
     _, local_area = mesh.get_nearest_k_points(pt, num_nearest)
 
     #convert to xyz
@@ -58,7 +65,14 @@ def get_plane_estimation(mesh, pt, num_nearest=20):
     b = sep_xyz[2]
 
     coeffs, residuals, rank, s = np.linalg.lstsq(A, b, rcond=None)
-    
+    # if trimesh is not None:
+    #     one_normal = [coeffs[0], coeffs[1], -1]
+    #     other_normal = [-coeffs[0], -coeffs[1], 1]
+    #     if is_inside(pt, trimesh, np.array(one_normal)):
+    #         normal = one_normal
+    #     else:
+    #         normal = other_normal
+    # else:
     normal = [coeffs[0], coeffs[1], -1]
     d = coeffs[2]  # Distance from origin
 

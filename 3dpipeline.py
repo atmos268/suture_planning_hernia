@@ -96,7 +96,7 @@ if __name__ == "__main__":
     right_img_path = 'chicken_images/' + right_file
     right_img_path_enhanced = 'chicken_images/enhanced/' + right_file
 
-    experiment_mode = "physical" # Run synthetic vs physical experiments pipeline
+    experiment_mode = "synthetic" # Run synthetic vs physical experiments pipeline
     # pick two random points to generate synthetic splines
     #num1, num2 = random.randrange(0, len(mesh.vertex_coordinates)), random.randrange(0, len(mesh.vertex_coordinates))
     num1, num2 = 21695, 8695
@@ -137,21 +137,113 @@ if __name__ == "__main__":
     mode = '3d' # 3d
 
     if experiment_mode == "synthetic":
-        adj_path = 'adjacency_matrix.txt'
-        loc_path = 'vertex_lookup.txt'
+        adj_path = 'synth_adjacency.txt'
+        loc_path = 'synth_coordinates.txt'
+
+        print("Initializing mesh")
 
         mesh = MeshIngestor(adj_path, loc_path)
 
+        print("using data to make mesh")
         # Create the graph
         mesh.generate_mesh()
-        start_pt = mesh.get_point_location(num1)
-        wound_pt = mesh.get_point_location(num2)
-        shortest_path = mesh.get_a_star_path(start_pt, wound_pt)
+
+        print("calculating shortest path")
+        # Previous example
+        # start = mesh.get_nearest_point([0, -0.9, 0.8])[1]
+        # end = mesh.get_nearest_point([0, -0.77, -1])[1]
+        # Ken's example
+        # end = mesh.get_nearest_point([1, -0.3, -1])[1]
+        # start = mesh.get_nearest_point([0.6, -0.15, -2])[1]
+        # middle = mesh.get_nearest_point([0.6, -0.15, -2])[1]
+        # end = mesh.get_nearest_point([0.6, -0.15, -2])[1]
+        # pt1 =  mesh.get_point_location(mesh.get_nearest_point([0.6, 0.2, -2])[1])
+        # EXAMPLE 1
+        # pt0 = mesh.get_point_location(mesh.get_nearest_point([0, -0.9, 1.5])[1])
+        # pt2 = mesh.get_point_location(mesh.get_nearest_point([1.4, -1, 1.3])[1])
+        # END EXAMPLE
+        # pt1 = mesh.get_point_location(mesh.get_nearest_point([0.5, -0.8, 1.5])[1])
+        # pt3 = mesh.get_point_location(mesh.get_nearest_point([-1, -0.4, -1])[1])
+        # # pt3 = mesh.get_point_location(mesh.get_nearest_point([1, 0.1, -1])[1])
+        # (0.6, -0.2, -2)
+        # (0.6, -0.5, -1.9)
+        # (0.75, -0.5, -1.7)
+        # (0.8, -0.5, -1.5)
+        leg1 = mesh.get_point_location(mesh.get_nearest_point([1, -0.5, -0.25])[1])
+        leg2 = mesh.get_point_location(mesh.get_nearest_point([0.5, -1.5, -0.25])[1])
+        
+        # print("start and end indices", start, end)
+        # start_pt = mesh.get_point_location(start)
+        # wound_pt = mesh.get_point_location(end)
+        # print("start and end locations", start_pt, wound_pt)
+        # + mesh.get_a_star_path(pt2, pt3) + mesh.get_a_star_path(pt3, pt4)
+        shortest_path = mesh.get_a_star_path(leg1, leg2)
+ 
         shortest_path_xyz = np.array([mesh.get_point_location(pt_idx) for pt_idx in shortest_path])
+        print('shortest path', shortest_path_xyz)
         smallest_z, largest_z = min(shortest_path_xyz[:, 2]), max(shortest_path_xyz[:, 2])
 
         spline3d = line_to_spline_3d(shortest_path_xyz, sample_ratio=30, viz=False)
-        suture_width = 0.005 
+        spline3d_smoothed = line_to_spline_3d(shortest_path_xyz, sample_ratio=30, viz=False, s_factor=0.0001)
+        granularity = 100
+
+        x_pts = [spline3d[0](t/granularity) for t in range(granularity)]
+        y_pts = [spline3d[1](t/granularity) for t in range(granularity)]
+        z_pts = [spline3d[2](t/granularity) for t in range(granularity)]
+
+        derivative_x, derivative_y, derivative_z = spline3d[0].derivative(), spline3d[1].derivative(), spline3d[2].derivative()
+        derivative_x2, derivative_y2, derivative_z2 = spline3d[0].derivative(2), spline3d[1].derivative(2), spline3d[2].derivative(2)
+        
+
+        curvature_arr = []
+        for i in range(granularity):
+            t = i / granularity
+            r_prime = np.array([derivative_x(t), derivative_y(t), derivative_z(t)])
+            r_double_prime = np.array([derivative_x2(t), derivative_y2(t), derivative_z2(t)])
+            curvature = np.linalg.norm(np.cross(r_prime, r_double_prime)) / np.linalg.norm(r_prime)**3
+            # print(f"AT MIDPOINT T {midpt_t} the CURVATURE IS", curvature)
+            curvature_arr.append(curvature)
+        
+        print('CURVATURE', curvature_arr)
+        print("MIN", np.min(curvature_arr))
+        print("MAX", np.max(curvature_arr))
+
+        fig = plt.figure()
+        ax = plt.axes(projection='3d')
+        plt.title("Spline curvature")
+        print("max curve", max(curvature_arr))
+        p = ax.scatter3D(x_pts, y_pts, z_pts, c=curvature_arr)
+        fig.colorbar(p)
+        plt.show()
+
+        def sigmoid(x, L, k, x0):
+            """
+            Sigmoid function with parameters to control its shape.
+            L: the curve's maximum value
+            k: the logistic growth rate or steepness of the curve
+            x0: the x-value of the sigmoid's midpoint
+            """
+            return L / (1 + np.exp(-k * (x - x0)))
+
+        curvature_arr = np.array(curvature_arr)
+        scaled_curvature = curvature_arr / max(curvature_arr)
+        L = 1/0.5 - 1  # The range of the spacing values
+        # more curve means 1/0.5 ellipse whereas less curve means greater
+        k = 10  # The steepness of the curve
+        x0 = 0.5  # The midpoint of the sigmoid
+
+        # Calculate the spacing using the sigmoid function
+        spacing = 1 + sigmoid(scaled_curvature, L, k, x0)
+        print('SPACING', spacing)
+        # get mesh from the surrounding points
+
+        fig = plt.figure()
+        ax = plt.axes(projection='3d')
+        plt.title("Sigmoid eccentricity")
+        p = ax.scatter3D(x_pts, y_pts, z_pts, c=spacing)
+        fig.colorbar(p)
+        plt.show()
+        suture_width = 0.15
         mm_per_pixel = 10
         c_ideal = 1000
         gamma = suture_width 
@@ -159,23 +251,94 @@ if __name__ == "__main__":
         c_shear = 1
         c_closure = 1
 
+
         hyperparams = [c_ideal, gamma, c_var, c_shear, c_closure]
 
-        force_model_parameters = {'ellipse_ecc': 1.0, 'force_decay': 0.5/suture_width, 'verbose': 0, 'ideal_closure_force': None, 'imparted_force': None}
+        force_model_parameters = {'ellipse_ecc': 1.0, 'force_decay': 0.5/0.15, 'verbose': 0, 'ideal_closure_force': None, 'imparted_force': None}
 
-        optim3d = Optimizer3d(mesh, spline3d, suture_width, hyperparams, force_model_parameters)
+        optim3d = Optimizer3d(mesh, spline3d, suture_width, hyperparams, force_model_parameters, spline3d_smoothed, spacing, synthetic=True)
 
         if mode == "3d":
-            suturePlacement3d, normal_vectors, derivative_vectors = optim3d.generate_inital_placement(mesh, spline3d)
 
-            optim3d.plot_mesh_path_and_spline(mesh, spline3d)
+            # display mesh as with spline
+            mesh.plot_mesh(shortest_path_xyz)
 
-            optim3d.optimize(suturePlacement3d)
+            center_pts, insertion_pts, extraction_pts = optim3d.generate_inital_placement(mesh, spline3d, num_sutures=8)
+            closure_loss, shear_loss, all_closure, per_insertion, per_extraction, insertion_forces, extraction_forces = optim3d.compute_closure_shear_loss(granularity=100)
+            optim3d.plot_mesh_path_and_spline()
 
-            optim3d.plot_mesh_path_and_spline(mesh, spline3d)
 
-            loss3d = optim3d.loss_placement(suturePlacement3d)
-            print("loss of 3d placement", str(loss3d))
+            fig = plt.figure()
+            ax = plt.axes(projection='3d')
+            plt.title("CLOSURE FORCES BEFORE")
+            p = ax.scatter3D(x_pts, y_pts, z_pts, c=all_closure)
+            fig.colorbar(p)
+            plt.show()
+            
+            optim3d.optimize(eval=False)
+
+            closure_loss, shear_loss, all_closure, per_insertion, per_extraction, insertion_forces, extraction_forces = optim3d.compute_closure_shear_loss(granularity=100)
+            optim3d.plot_mesh_path_and_spline()
+
+            fig = plt.figure()
+            ax = plt.axes(projection='3d')
+            plt.title("CLOSURE FORCES AFTER")
+            p = ax.scatter3D(x_pts, y_pts, z_pts, c=all_closure)
+            fig.colorbar(p)
+            plt.show()
+
+            start_range = 4
+            end_range = 12
+
+            print("range:", start_range, end_range)
+
+            equally_spaced_losses = {}
+            post_algorithm_losses = {}
+
+            best_baseline_loss = 1e8
+            best_baseline_placement = None
+
+            best_opt_loss = 1e8
+            best_opt_insertion = None
+            best_opt_extraction = None
+            best_opt_center = None
+
+            final_closure = None
+            final_shear = None
+
+            best_optim = None
+
+            for num_sutures in range(start_range, end_range + 1):
+                print("num sutures:", num_sutures)
+                center_pts, insertion_pts, extraction_pts = optim3d.generate_inital_placement(mesh, spline3d, num_sutures=num_sutures)
+                equally_spaced_losses[num_sutures] = optim3d.optimize(eval=True)
+                print('Initial loss', equally_spaced_losses[num_sutures]["curr_loss"])
+                optim3d.optimize(eval=False)
+                
+                post_algorithm_losses[num_sutures] = optim3d.optimize(eval=True)
+                print('After loss', post_algorithm_losses[num_sutures]["curr_loss"])
+
+                
+                if post_algorithm_losses[num_sutures]["curr_loss"] < best_opt_loss:
+                    print("num sutures", num_sutures, "best loss so far")
+                    best_opt_loss = post_algorithm_losses[num_sutures]["curr_loss"]
+                    print("BEST LOSS", best_opt_loss)
+                    best_opt_insertion = optim3d.insertion_pts
+                    best_opt_extraction = optim3d.extraction_pts
+                    best_opt_center = optim3d.center_pts
+                    baseline_insertion = insertion_pts
+                    baseline_extraction = extraction_pts
+                    baseline_center = center_pts
+                    _, _, final_closure, _, _, _, _ = optim3d.compute_closure_shear_loss(granularity=100)
+                    best_optim = copy.deepcopy(optim3d)
+
+            best_optim.plot_mesh_path_and_spline()
+            fig = plt.figure()
+            ax = plt.axes(projection='3d')
+            plt.title("CLOSURE FORCES FINAL")
+            p = ax.scatter3D(x_pts, y_pts, z_pts, c=final_closure)
+            fig.colorbar(p)
+            plt.show()
 
         elif mode == "2d":
             suture_width = 0.005

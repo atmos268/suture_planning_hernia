@@ -5,6 +5,7 @@ from test_force_model import get_plane_estimation, project_vector_onto_plane
 import scipy.interpolate as inter
 import random
 import copy
+import trimesh
 
 import scipy.optimize as optim
 import matplotlib.pyplot as plt
@@ -18,7 +19,7 @@ class Optimizer3d:
     suture_width: how far, in mm, the insertion and extraction points should be from the wound line
     hyperparameters: hyperparameters for our optimization
     """
-    def __init__(self, mesh: MeshIngestor, spline, suture_width, hyperparameters, force_model_parameters, smoothed_spline, spacing):
+    def __init__(self, mesh: MeshIngestor, spline, suture_width, hyperparameters, force_model_parameters, smoothed_spline, spacing, synthetic=False):
         self.mesh = mesh
         self.spline = spline
         self.smoothed_spline = smoothed_spline
@@ -36,6 +37,13 @@ class Optimizer3d:
         self.force_model = force_model_parameters #Force model parameters are a dictionary 
         self.num_points_for_plane = 1000
         self.spacing = spacing
+
+        self.synthetic = synthetic
+        if self.synthetic:
+            scene = trimesh.load('roast_chicken.glb')
+            self.trimesh = scene.geometry['defaultMaterial']
+        else:
+            self.trimesh = None
 
         # Ideal closure force calculated according to properties of the original diamond force model
         # If you want, can specify ideal_closure_force yourself, otherwise set to None and this calculation will be done
@@ -142,7 +150,7 @@ class Optimizer3d:
             for i in range(len(force_vecs)):
                 force_vecs[i] = force_vecs[i] / np.linalg.norm(force_vecs[i])
 
-            wound_plane = get_plane_estimation(self.mesh, point)
+            wound_plane = get_plane_estimation(mesh, point, trimesh=self.trimesh)
             wound_plane = wound_plane / np.linalg.norm(wound_plane)
             wound_derivative_proj = project_vector_onto_plane(wound_derivative, wound_plane)
             wound_derivative_proj = wound_derivative_proj / np.linalg.norm(wound_derivative_proj)
@@ -210,8 +218,8 @@ class Optimizer3d:
             force_decay = self.force_model['force_decay']
             verbose = self.force_model['verbose']
 
-            in_ex_plane = get_plane_estimation(mesh, in_ex_pt, num_nearest)
-            wound_plane = get_plane_estimation(mesh, point, num_nearest)
+            in_ex_plane = get_plane_estimation(mesh, in_ex_pt, num_nearest, trimesh=self.trimesh)
+            wound_plane = get_plane_estimation(mesh, point, num_nearest, trimesh=self.trimesh)
 
             if verbose > 10:
                 print("in_ex plane: ", in_ex_plane)
@@ -429,7 +437,7 @@ class Optimizer3d:
         derivative_points = [[derivative_x(t), derivative_y(t), derivative_z(t)] for t in points_t]
 
         #get tangent plane normal vectors
-        normal_vectors = [get_plane_estimation(mesh, center_points[i], self.num_points_for_plane) for i in range(num_points)]
+        normal_vectors = [get_plane_estimation(mesh, center_points[i], self.num_points_for_plane, trimesh=self.trimesh) for i in range(num_points)]
 
         # project derivatives onto the tangent plane
         derivative_vectors = [project_vector_onto_plane(derivative_points[i], normal_vectors[i]) for i in range(num_points)]
@@ -447,6 +455,7 @@ class Optimizer3d:
         # Extraction points = - cross product
         extraction_points = [mesh.get_point_location(mesh.get_nearest_point(center_points[i] + self.suture_width * (-np.cross(normal_vectors[i], derivative_vectors[i])))[1]) for i in range(num_points)]
 
+        
         # update suture placement 3d object
         self.center_pts = center_points
         self.insertion_pts = insertion_points
