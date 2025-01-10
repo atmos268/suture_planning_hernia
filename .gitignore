@@ -1,5 +1,5 @@
 __pycache__/
-sam2/checkpoints/sam2.1_hiera_tiny.pt
+sam2/checkpoints/
 clicking/
 CMakeCache.txt
 CMakeFiles/
