@@ -4,9 +4,7 @@ import math
 import matplotlib.pyplot as plt
 import math
 
-def click_points_simple(img):
-    fig = plt.figure()
-    plt.imshow(img)
+def click_points_simple(fig):
     left_coords,right_coords = [], []
     def onclick(event):
         xind,yind = int(event.xdata),int(event.ydata)

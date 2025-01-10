@@ -8,7 +8,6 @@ import scipy.interpolate as inter
 from point_ordering import get_pt_ordering
 # import plantcv
 from SAM import create_mask
-from segment_anything import SamPredictor
 from largestCC import keep_largest_connected_component
 from fillHoles import fillHoles
 from matplotlib import colormaps
@@ -48,47 +47,35 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
     # PIL images into NumPy arrays
     numpydata = np.asarray(img)
 
-    if box_method:
-        left_coords, right_coords = click_points_simple(numpydata)
-        if len(left_coords) != 2:
-            raise ValueError("Please select 2 points (top left, bottom right)")
-        
-        # display box and image
-        fig, ax = plt.subplots()
+    fig = plt.figure()
+    plt.imshow(numpydata)
 
-        # Display the image
-        ax.imshow(numpydata)
+    left_coords, right_coords = click_points_simple(fig)
 
-        # Create a Rectangle patch
-        w = left_coords[1][0] - left_coords[0][0]
-        h = left_coords[1][1] - left_coords[0][1]
-        rect = patches.Rectangle(tuple(left_coords[0]), w, h, linewidth=1, edgecolor='r', facecolor='none')
+    num_left = len(left_coords)
+    num_right = len(right_coords)
 
-        # Add the patch to the Axes
-        ax.add_patch(rect)
-        plt.show()
+    fore_back = [1 for _ in range(num_left)] + [0 for _ in range(num_right)]
 
-        box = left_coords[0] + left_coords[1]
-        mask = create_mask(img_path, box, [], 'base', box_method=True)
+    def show_mask(mask, random_color=False):
+        if random_color:
+            color = np.concatenate([np.random.random(3), np.array([0.6])], axis=0)
+        else:
+            color = np.array([30/255, 144/255, 255/255, 0.6])
+        h, w = mask.shape[-2:]
+        mask_image = mask.reshape(h, w, 1) * color.reshape(1, 1, -1)
+        plt.imshow(mask_image)
 
-        # make the mask into an image and save
-        im = Image.fromarray(mask)
-        im.save('temp_images/sam_mask.jpg')
-
-    else:
-
-        left_coords, right_coords = click_points_simple(numpydata)
-
-        num_left = len(left_coords)
-        num_right = len(right_coords)
-
-        fore_back = [1 for _ in range(num_left)] + [0 for _ in range(num_right)]
-
-        mask, img = create_mask(img_path, np.array(left_coords + right_coords), np.array(fore_back), 'base')
-    
-        cv2.imwrite('temp_images/sam_mask.jpg', mask)
+    mask, img, display_mask = create_mask(img_path, np.array(left_coords + right_coords), np.array(fore_back), fig)
+    cv2.imwrite('temp_images/sam_mask.jpg', mask)
     mask = keep_largest_connected_component('temp_images/sam_mask.jpg')
     cv2.imwrite('temp_images/sam_mask.jpg', mask)
+
+    # TRY GETTING BORDER OF MASK
+    contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Choose the largest contour if there are multiple
+    border_pts = max(contours, key=cv2.contourArea).squeeze()
 
     # mask post-processing    
     new_edge_detector = EdgeDetector()
@@ -104,24 +91,20 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
 
     np.save('temp_images/binary_skeleton.npy', skeleton)
 
-    plt.imshow(skeleton)
-    plt.show()
+    # plt.imshow(img)
+    # plt.imshow(skeleton)
+    # plt.show()
 
     plt.imsave('temp_images/skeleton_sam.jpg', skeleton)
 
     # order points 
     ordered_points = get_pt_ordering(skeleton)
 
-    # display results
-    fig, (ax1,ax2) = plt.subplots(1,2)
-    ax1.imshow(numpydata)
-    ax1.title.set_text("Original")
-
     filled_holes = Image.open("temp_images/sam_mask.jpg")
     numpydata = np.asarray(filled_holes)
-    ax2.imshow(numpydata)
-    ax2.title.set_text("SAM Mask")
-    fig.tight_layout()
+    # ax2.imshow(numpydata)
+    # ax2.title.set_text("SAM Mask")
+    # fig.tight_layout()
 
     # plot the image, dilation, skeleton
     if save_figs:
@@ -129,15 +112,73 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
 
     # now, order the points
 
-    # overlay ordered points over the original image
-    fig_overlay =  plt.figure()
+    img = Image.open(img_path)
+    left_img = np.asarray(img)
+    plt.imshow(left_img)
+    show_mask(display_mask)
+    # print(len(contours))
 
-    img_np = np.asarray(img)
-    plt.imshow(img_np)
-    plt.plot([pt[1] for pt in ordered_points], [pt[0] for pt in ordered_points])
+    # fill gaps function? 
+    def fill_gaps(contour_matrix, eps_threshold=2):
+        x_pts = [pt[0] for pt in contour_matrix]
+        y_pts = [pt[1] for pt in contour_matrix]
+
+        result_x_pts = [x_pts[0]]
+        result_y_pts = [y_pts[0]]
+
+        distance_array = []
+
+        # iterate through all points from start to end to check for gap
+        for i in range(1, len(x_pts)):
+            
+            # L2/euclidean distance in 2D
+            distance = np.sqrt((x_pts[i] - x_pts[i-1])**2 + (y_pts[i] - y_pts[i-1])**2)
+            distance_array.append(distance)
+            
+            # gap detected
+            if distance > eps_threshold: 
+                # we want to fit a polynomial of degree 5 to ensure decent smoothness so get up to 2 points before gap and 3 points after gap
+                prior_gap_indices = max(0, i-5)
+                post_gap_indices = min(len(x_pts), i+5)
+
+                localize_x_pts = x_pts[prior_gap_indices:post_gap_indices]
+                localize_y_pts = y_pts[prior_gap_indices:post_gap_indices]
+
+                # at most degree 5 imposed 
+                degree = min(len(localize_x_pts) - 1, 3)
+                coefficients = np.polyfit(localize_x_pts, localize_y_pts, degree)
+                polynomial = np.poly1d(coefficients)
+
+                num_points = max(int(np.ceil(distance / eps_threshold)), 3)
+                interp_x = np.linspace(x_pts[i-1], x_pts[i], num_points + 1)[1:]
+                interp_y = polynomial(interp_x)
+
+                result_x_pts.extend(interp_x)
+                result_y_pts.extend(interp_y)
+
+            # no fitting its fine (no gap detected)
+            else: 
+                result_x_pts.append(x_pts[i])
+                result_y_pts.append(y_pts[i])
+                
+        # # get largest distance test 
+        # print("get largest distance test")
+        # print(f"largest distance: {max(distance_array)}")
+        return np.column_stack((result_x_pts, result_y_pts))
+
+        
+        
+    border_pts_gaps_filled = fill_gaps(border_pts)
+
+    
+    # plt.plot([pt[0] for pt in border_pts], [pt[1] for pt in border_pts], 'b')
+    plt.plot([pt[0] for pt in border_pts_gaps_filled], [pt[1] for pt in border_pts_gaps_filled], 'b')
+
+    plt.plot([pt[1] for pt in ordered_points], [pt[0] for pt in ordered_points], 'w')
+    # plt.plot([border_pts[0,0], border_pts[-1,0]], [border_pts[0,1], border_pts[-1,1]], 'r')
     plt.show()
     
-    return ordered_points, numpydata
+    return ordered_points, numpydata, border_pts
 
 def line_to_spline(line, img_path, mm_per_pixel, viz=False):
 

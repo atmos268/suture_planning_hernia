@@ -39,4 +39,3 @@ plt.imshow(m, cmap='viridis', aspect=2)
 plt.yticks(np.arange(0))
 plt.xticks(np.arange(0,25,5), [0,25,50,75,100])
 plt.show()
->>>>>>> origin/closure-force

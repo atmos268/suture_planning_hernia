@@ -86,7 +86,7 @@ def project3d_to_2d(left_image, points):
 if __name__ == "__main__":
     box_method = True
     save_figs = True
-    chicken_number = 2
+    chicken_number = 7
 
     left_file = f'left_exp_00{chicken_number}.png'
     left_img_path = 'chicken_images/' + left_file
@@ -96,7 +96,7 @@ if __name__ == "__main__":
     right_img_path = 'chicken_images/' + right_file
     right_img_path_enhanced = 'chicken_images/enhanced/' + right_file
 
-    experiment_mode = "synthetic" # Run synthetic vs physical experiments pipeline
+    experiment_mode = "physical" # Run synthetic vs physical experiments pipeline
     # pick two random points to generate synthetic splines
     #num1, num2 = random.randrange(0, len(mesh.vertex_coordinates)), random.randrange(0, len(mesh.vertex_coordinates))
     num1, num2 = 21695, 8695
@@ -159,8 +159,8 @@ if __name__ == "__main__":
         # end = mesh.get_nearest_point([0.6, -0.15, -2])[1]
         # pt1 =  mesh.get_point_location(mesh.get_nearest_point([0.6, 0.2, -2])[1])
         # EXAMPLE 1
-        # pt0 = mesh.get_point_location(mesh.get_nearest_point([0, -0.9, 1.5])[1])
-        # pt2 = mesh.get_point_location(mesh.get_nearest_point([1.4, -1, 1.3])[1])
+        pt0 = mesh.get_point_location(mesh.get_nearest_point([0, -0.9, 1.5])[1])
+        pt2 = mesh.get_point_location(mesh.get_nearest_point([1.4, -1, 1.3])[1])
         # END EXAMPLE
         # pt1 = mesh.get_point_location(mesh.get_nearest_point([0.5, -0.8, 1.5])[1])
         # pt3 = mesh.get_point_location(mesh.get_nearest_point([-1, -0.4, -1])[1])
@@ -169,15 +169,15 @@ if __name__ == "__main__":
         # (0.6, -0.5, -1.9)
         # (0.75, -0.5, -1.7)
         # (0.8, -0.5, -1.5)
-        leg1 = mesh.get_point_location(mesh.get_nearest_point([1, -0.5, -0.25])[1])
-        leg2 = mesh.get_point_location(mesh.get_nearest_point([0.5, -1.5, -0.25])[1])
+        # leg1 = mesh.get_point_location(mesh.get_nearest_point([1, -0.5, -0.25])[1])
+        # leg2 = mesh.get_point_location(mesh.get_nearest_point([0.5, -1.5, -0.25])[1])
         
         # print("start and end indices", start, end)
         # start_pt = mesh.get_point_location(start)
         # wound_pt = mesh.get_point_location(end)
         # print("start and end locations", start_pt, wound_pt)
         # + mesh.get_a_star_path(pt2, pt3) + mesh.get_a_star_path(pt3, pt4)
-        shortest_path = mesh.get_a_star_path(leg1, leg2)
+        shortest_path = mesh.get_a_star_path(pt0, pt2)
  
         shortest_path_xyz = np.array([mesh.get_point_location(pt_idx) for pt_idx in shortest_path])
         print('shortest path', shortest_path_xyz)
@@ -256,7 +256,9 @@ if __name__ == "__main__":
 
         force_model_parameters = {'ellipse_ecc': 1.0, 'force_decay': 0.5/0.15, 'verbose': 0, 'ideal_closure_force': None, 'imparted_force': None}
 
-        optim3d = Optimizer3d(mesh, spline3d, suture_width, hyperparams, force_model_parameters, spline3d_smoothed, spacing, synthetic=True)
+        
+        left_image = cv2.imread(left_img_path, cv2.IMREAD_COLOR)
+        optim3d = Optimizer3d(mesh, spline3d, suture_width, hyperparams, force_model_parameters, spline3d_smoothed, spacing, left_image, synthetic=True)
 
         if mode == "3d":
 
@@ -532,35 +534,37 @@ if __name__ == "__main__":
     elif mode == '3d' and experiment_mode == "physical":
         
         viz = False
-        use_prev = True
-        suture_width = 0.007
+        use_prev = False
+        suture_width = 0.006
         
         # get the masks
         # save left and right masks
 
         left_mask_path = f'masks/left_mask{chicken_number}.npy'
-        right_mask_path = f'masks/right_mask{chicken_number}.npy'
+        # right_mask_path = f'masks/right_mask{chicken_number}.npy'
         left_line_path = f'masks/left_line{chicken_number}.npy'
-        right_line_path = f'masks/right_line{chicken_number}.npy'
+        border_pts_path = f'masks/border_pts{chicken_number}.npy'
+        # right_line_path = f'masks/right_line{chicken_number}.npy'
         left_dilated_mask_path = f'masks/left_dilated_mask{chicken_number}.jpg'
 
         if use_prev:
             left_line = np.load(left_line_path)
             left_mask = np.load(left_mask_path)
 
-            right_line = np.load(right_line_path)
-            right_mask = np.load(right_mask_path)
+            # right_line = np.load(right_line_path)
+            # right_mask = np.load(right_mask_path)
 
         else:
             # Right click is not on wound
             # img = Image.open(left_img_path)
             # enhanced = adjust_contrast_saturation(img, 3, 1)
-            left_line, left_mask = img_to_line(left_img_path, box_method=False, viz=True, save_figs=save_figs)
+            left_line, left_mask, border_pts = img_to_line(left_img_path, box_method=False, viz=True, save_figs=save_figs)
             np.save(left_mask_path, left_mask)
             np.save(left_line_path, left_line)
-            right_line, right_mask = img_to_line(right_img_path, box_method=False, viz=True, save_figs=save_figs)
-            np.save(right_mask_path, right_mask)
-            np.save(right_line_path, right_line)
+            np.save(border_pts_path, border_pts)
+            # right_line, right_mask = img_to_line(right_img_path, box_method=False, viz=True, save_figs=save_figs)
+            # np.save(right_mask_path, right_mask)
+            # np.save(right_line_path, right_line)
         
         # do raft, no need to do rn, as we are using the existing RAFT output
         disp_path = f"RAFT/disparity_00{chicken_number}.npy"
@@ -576,6 +580,24 @@ if __name__ == "__main__":
         # write out points to a file
         surrounding_pts = get_transformed_points(left_img_path, disp, dilated_mask)
         np.save('surrounding_pts.npy', surrounding_pts)
+
+        img_width, img_height = Image.open(left_img_path).size
+
+
+        border_mask = np.zeros((img_height, img_width))
+
+        # assign index to location on image and add to 
+        for i, coord in enumerate(border_pts):
+            border_mask[coord[1], coord[0]] = 1
+
+        border_pts_3d = get_transformed_points(border_pts_path, disp, border_mask)
+        # np.save('surrounding_pts.npy', border_pts_3d)
+
+        fig = plt.figure()
+        ax = plt.axes(projection='3d')
+
+        ax.scatter3D([point[0] for point in border_pts_3d], [point[1] for point in border_pts_3d], [point[2] for point in border_pts_3d])
+
         
         # convert the spline to 3d using raft
         # TODO: convert points to 3d one by one to preserve ordering
@@ -593,7 +615,6 @@ if __name__ == "__main__":
         # line_pts_3d = np.array(line_pts_3d)
         # print(line_pts_3d)
 
-        img_width, img_height = Image.open(left_img_path).size
 
         # make the order matrix and line mask
 
@@ -714,28 +735,27 @@ if __name__ == "__main__":
 
         force_model_parameters = {'ellipse_ecc': 1/0.5, 'force_decay': 0.5/0.005, 'verbose': 0, 'ideal_closure_force': None, 'imparted_force': None}
 
-        optim3d = Optimizer3d(mesh, left_spline, suture_width, hyperparams, force_model_parameters, left_spline_smoothed, spacing)
+        left_image = cv2.imread(left_img_path, cv2.IMREAD_COLOR)
+        optim3d = Optimizer3d(mesh, left_spline, suture_width, hyperparams, force_model_parameters, left_spline_smoothed, spacing, left_image, border_pts_3d)
     
         spline_length = optim3d.calculate_spline_length(left_spline, mesh)
         print("Spline length", spline_length)
         num_sutures_initial = int(spline_length / (gamma)) #TODO: modify later 
         print("Num sutures initial", num_sutures_initial)
-        # start_range = int(spline_length / 0.006)
-        # end_range = int(spline_length / 0.0045)
 
         # TEST CLOSURE FORCE
 
-        center_pts, insertion_pts, extraction_pts = optim3d.generate_inital_placement(mesh, left_spline, num_sutures=8)
-        closure_loss, shear_loss, all_closure, per_insertion, per_extraction, insertion_forces, extraction_forces = optim3d.compute_closure_shear_loss(granularity=100)
-        optim3d.plot_mesh_path_and_spline()
+        # center_pts, insertion_pts, extraction_pts = optim3d.generate_inital_placement(mesh, left_spline, num_sutures=8)
+        # closure_loss, shear_loss, all_closure, per_insertion, per_extraction, insertion_forces, extraction_forces = optim3d.compute_closure_shear_loss(granularity=100)
+        # optim3d.plot_mesh_path_and_spline()
 
 
-        fig = plt.figure()
-        ax = plt.axes(projection='3d')
-        plt.title("CLOSURE FORCES BEFORE")
-        p = ax.scatter3D(x_pts, y_pts, z_pts, c=all_closure)
-        fig.colorbar(p)
-        plt.show()
+        # fig = plt.figure()
+        # ax = plt.axes(projection='3d')
+        # plt.title("CLOSURE FORCES BEFORE")
+        # p = ax.scatter3D(x_pts, y_pts, z_pts, c=all_closure)
+        # fig.colorbar(p)
+        # plt.show()
 
         # for i in range(6):
         #     fig = plt.figure()
@@ -798,17 +818,17 @@ if __name__ == "__main__":
         #     fig.colorbar(p)
         #     plt.show()
         
-        optim3d.optimize(eval=False)
+        # optim3d.optimize(eval=False)
 
-        closure_loss, shear_loss, all_closure, per_insertion, per_extraction, insertion_forces, extraction_forces = optim3d.compute_closure_shear_loss(granularity=100)
-        optim3d.plot_mesh_path_and_spline()
+        # closure_loss, shear_loss, all_closure, per_insertion, per_extraction, insertion_forces, extraction_forces = optim3d.compute_closure_shear_loss(granularity=100)
+        # optim3d.plot_mesh_path_and_spline()
 
-        fig = plt.figure()
-        ax = plt.axes(projection='3d')
-        plt.title("CLOSURE FORCES AFTER")
-        p = ax.scatter3D(x_pts, y_pts, z_pts, c=all_closure)
-        fig.colorbar(p)
-        plt.show()
+        # fig = plt.figure()
+        # ax = plt.axes(projection='3d')
+        # plt.title("CLOSURE FORCES AFTER")
+        # p = ax.scatter3D(x_pts, y_pts, z_pts, c=all_closure)
+        # fig.colorbar(p)
+        # plt.show()
 
         # for i in range(6):
         #     fig = plt.figure()
@@ -823,7 +843,10 @@ if __name__ == "__main__":
         #     plt.show()
 
         start_range = 4
-        end_range = 12
+        end_range = 7
+
+        # start_range = int(spline_length / 0.0075)
+        # end_range = int(spline_length / 0.004)
 
         print("range:", start_range, end_range)
 

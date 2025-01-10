@@ -6,6 +6,8 @@ import scipy.interpolate as inter
 import random
 import copy
 import trimesh
+import tensorflow as tf
+import cv2
 
 import scipy.optimize as optim
 import matplotlib.pyplot as plt
@@ -19,7 +21,7 @@ class Optimizer3d:
     suture_width: how far, in mm, the insertion and extraction points should be from the wound line
     hyperparameters: hyperparameters for our optimization
     """
-    def __init__(self, mesh: MeshIngestor, spline, suture_width, hyperparameters, force_model_parameters, smoothed_spline, spacing, synthetic=False):
+    def __init__(self, mesh: MeshIngestor, spline, suture_width, hyperparameters, force_model_parameters, smoothed_spline, spacing, left_image, border_pts_3d, synthetic=False):
         self.mesh = mesh
         self.spline = spline
         self.smoothed_spline = smoothed_spline
@@ -37,6 +39,16 @@ class Optimizer3d:
         self.force_model = force_model_parameters #Force model parameters are a dictionary 
         self.num_points_for_plane = 1000
         self.spacing = spacing
+        self.left_image = left_image
+        self.border_pts_3d = border_pts_3d
+
+        transformation_tensor = tf.io.read_file('transforms/tf_av_left_zivid.tf')
+        transformation_string = transformation_tensor.numpy().decode('utf-8') # Convert to a Python string
+        # Split the string into individual lines and elements
+        lines = transformation_string.strip().split('\n')[2:]
+        matrix_elements = [list(map(float, line.split())) for line in lines]
+        # Convert the matrix elements to a NumPy array
+        self.transformation_matrix = np.array(matrix_elements)
 
         self.synthetic = synthetic
         if self.synthetic:
@@ -446,6 +458,10 @@ class Optimizer3d:
         normal_vectors = [self.normalize_vector(normal_vectors[i]) for i in range(num_points)]
         derivative_vectors = [self.normalize_vector(derivative_vectors[i]) for i in range(num_points)]
 
+        # find out correct width on both sides
+        # choose the closest points
+        # insertion_width = 
+    
         # Insertion points = cross product 
         insertion_points = [mesh.get_point_location(mesh.get_nearest_point(center_points[i] + self.suture_width * np.cross(normal_vectors[i], derivative_vectors[i]))[1]) for i in range(num_points)]
 
@@ -577,55 +593,6 @@ class Optimizer3d:
 
         wound_points = self.points_t
 
-        def min_all_suture_dist(t):
-            self.update_placement(self.mesh, t)  # Dynamically update placement
-            insert_pts = self.insertion_pts
-            # center_pts = self.center_pts
-            extract_pts = self.extraction_pts
-
-            insert_dists = self.get_all_dists(insert_pts)
-            # center_dists = self.get_all_dists(center_pts)
-            extract_dists = self.get_all_dists(extract_pts)
-
-            # h = self.gamma * (1 / 2)
-            h = 0.0025
-            return min([i - h for i in insert_dists] + 
-                    # [i - h for i in center_dists] + 
-                    [i - h for i in extract_dists])
-
-        def max_suture_dist(t):
-            self.update_placement(self.mesh, t)  # Dynamically update placement
-            insert_pts = self.insertion_pts
-            center_pts = self.center_pts
-            extract_pts = self.extraction_pts
-
-            insert_dists = self.get_dists(insert_pts)
-            center_dists = self.get_dists(center_pts)
-            extract_dists = self.get_dists(extract_pts)
-
-            # h = self.gamma * 4
-            h = 0.008
-            return min([h - i for i in insert_dists] + 
-                    [h - i for i in center_dists] + 
-                    [h - i for i in extract_dists])
-
-
-        constraints = [
-                        {'type': 'ineq', 'fun': lambda t: min(t)},
-                        {'type': 'ineq', 'fun': lambda t: 1 - max(t)},
-                    #    {'type': 'ineq', 'fun': lambda t: min_all_suture_dist(t)},
-                    #    {'type': 'ineq', 'fun': lambda t: max_suture_dist(t)},
-                       ]
-        
-        # for i in range(len(t) - 1):
-        #     constraints.append({'type': 'ineq', 'fun': lambda t: get_ith_max_constraint(insert_dists, i)})
-        #     constraints.append({'type': 'ineq', 'fun': lambda t: get_ith_max_constraint(center_dists, i)})
-        #     constraints.append({'type': 'ineq', 'fun': lambda t: get_ith_max_constraint(extract_dists, i)})
-        #     constraints.append({'type': 'ineq', 'fun': lambda t: get_ith_min_constraint(insert_dists, i)})
-        #     constraints.append({'type': 'ineq', 'fun': lambda t: get_ith_min_constraint(center_dists, i)})
-        #     constraints.append({'type': 'ineq', 'fun': lambda t: get_ith_min_constraint(extract_dists, i)})
-
-
         def loss(wound_points, eval=False):
             """
             This function should calculate the loss of a particular placement. As before, the 
@@ -655,15 +622,18 @@ class Optimizer3d:
             # print("SHEAR COEF", self.c_shear)
             # print("CLOSURE COEF", self.c_closure)
 
-            curr_loss = closure_loss + shear_loss
+            if min(self.get_all_dists(self.insertion_pts) + self.get_all_dists(self.extraction_pts)) < 0.0025:
+                curr_loss = 1
+            else:
+                curr_loss = closure_loss + shear_loss
             # curr_loss = var_loss * self.c_var + ideal_loss * self.c_ideal
             # print("current_loss:" + str(curr_loss))
-
+            
             if not eval:
                 return curr_loss
             else:
                 return {"closure_loss": closure_loss, "shear_loss": shear_loss, "curr_loss": curr_loss}
-        
+
         def jac(t):
             return optim.approx_fprime(t, loss)
 
@@ -691,18 +661,7 @@ class Optimizer3d:
         # result = optim.minimize(loss, initial_guess, bounds=bounds, options={"maxiter":50, "disp":True}, method = 'SLSQP', jac = jac)
         # print("RESULT")
         # print(result)
-        cons = []
-        # for i in range(len(initial_guess)):
-        #     l = {'type': 'ineq',
-        #         'fun': lambda t, i=i: t[i] - 0}
-        #     u = {'type': 'ineq',
-        #         'fun': lambda t, i=i: 1 - t[i]}
-        #     cons.append(l)
-        #     cons.append(u)
-        
-        cons.append({'type': 'ineq', 'fun': lambda t: min_all_suture_dist(t)})
-        cons.append({'type': 'ineq', 'fun': lambda t: max_suture_dist(t)})
-                    
+                
         result = optim.minimize(
             fun=loss,
             x0=initial_guess,
