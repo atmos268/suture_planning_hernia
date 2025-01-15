@@ -66,8 +66,8 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
         mask_image = mask.reshape(h, w, 1) * color.reshape(1, 1, -1)
         plt.imshow(mask_image)
 
-    mask, img, display_mask = create_mask(img_path, np.array(left_coords + right_coords), np.array(fore_back), fig)
-    cv2.imwrite('temp_images/sam_mask.jpg', mask)
+    original_mask, img, display_mask = create_mask(img_path, np.array(left_coords + right_coords), np.array(fore_back), fig)
+    cv2.imwrite('temp_images/sam_mask.jpg', original_mask)
     mask = keep_largest_connected_component('temp_images/sam_mask.jpg')
     cv2.imwrite('temp_images/sam_mask.jpg', mask)
 
@@ -102,6 +102,7 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
 
     filled_holes = Image.open("temp_images/sam_mask.jpg")
     numpydata = np.asarray(filled_holes)
+
     # ax2.imshow(numpydata)
     # ax2.title.set_text("SAM Mask")
     # fig.tight_layout()
@@ -168,17 +169,17 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
 
         
         
-    border_pts_gaps_filled = fill_gaps(border_pts)
+    # border_pts_gaps_filled = fill_gaps(border_pts)
 
     
     # plt.plot([pt[0] for pt in border_pts], [pt[1] for pt in border_pts], 'b')
-    plt.plot([pt[0] for pt in border_pts_gaps_filled], [pt[1] for pt in border_pts_gaps_filled], 'b')
+    # plt.plot([pt[0] for pt in border_pts_gaps_filled], [pt[1] for pt in border_pts_gaps_filled], 'b')
 
     plt.plot([pt[1] for pt in ordered_points], [pt[0] for pt in ordered_points], 'w')
     # plt.plot([border_pts[0,0], border_pts[-1,0]], [border_pts[0,1], border_pts[-1,1]], 'r')
     plt.show()
     
-    return ordered_points, numpydata, border_pts
+    return ordered_points, numpydata, np.asarray(mask)
 
 def line_to_spline(line, img_path, mm_per_pixel, viz=False):
 

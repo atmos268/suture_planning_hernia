@@ -21,7 +21,7 @@ class Optimizer3d:
     suture_width: how far, in mm, the insertion and extraction points should be from the wound line
     hyperparameters: hyperparameters for our optimization
     """
-    def __init__(self, mesh: MeshIngestor, spline, suture_width, hyperparameters, force_model_parameters, smoothed_spline, spacing, left_image, border_pts_3d, synthetic=False):
+    def __init__(self, mesh: MeshIngestor, spline, suture_width, hyperparameters, force_model_parameters, smoothed_spline, spacing, left_image, wound_point_cloud, synthetic=False):
         self.mesh = mesh
         self.spline = spline
         self.smoothed_spline = smoothed_spline
@@ -40,7 +40,7 @@ class Optimizer3d:
         self.num_points_for_plane = 1000
         self.spacing = spacing
         self.left_image = left_image
-        self.border_pts_3d = border_pts_3d
+        self.wound_point_cloud = wound_point_cloud
 
         transformation_tensor = tf.io.read_file('transforms/tf_av_left_zivid.tf')
         transformation_string = transformation_tensor.numpy().decode('utf-8') # Convert to a Python string
@@ -460,18 +460,22 @@ class Optimizer3d:
 
         # find out correct width on both sides
         # choose the closest points
-        # insertion_width = 
-    
+        wound_width_vectors = [np.cross(normal_vectors[i], derivative_vectors[i]) for i in range(num_points)]
+        # print("WOUND WIDTH VECTORS", wound_width_vectors)
+        wound_width_projections = [self.normalize_vector(np.dot(self.wound_point_cloud, wound_width_vectors[i])) for i in range(num_points)]
+        wound_widths = [0.5 * (np.max(wound_width_projections[i]) - np.min(wound_width_projections[i])) for i in range(num_points)]
+        # print(points_t)
+        # print("WOUND WIDTHS", wound_widths)
         # Insertion points = cross product 
-        insertion_points = [mesh.get_point_location(mesh.get_nearest_point(center_points[i] + self.suture_width * np.cross(normal_vectors[i], derivative_vectors[i]))[1]) for i in range(num_points)]
+        # 0.005 + wound_widths[i]
+        insertion_points = [mesh.get_point_location(mesh.get_nearest_point(center_points[i] + (self.suture_width) * (np.cross(normal_vectors[i], derivative_vectors[i])))[1]) for i in range(num_points)]
 
         # get the closest point on the mesh to that point
         # print("magnitude insertion points", [np.linalg.norm(insertion_points[i]) for i in range(num_points)])
 
         # Extraction points = - cross product
-        extraction_points = [mesh.get_point_location(mesh.get_nearest_point(center_points[i] + self.suture_width * (-np.cross(normal_vectors[i], derivative_vectors[i])))[1]) for i in range(num_points)]
+        extraction_points = [mesh.get_point_location(mesh.get_nearest_point(center_points[i] + (self.suture_width) * (-np.cross(normal_vectors[i], derivative_vectors[i])))[1]) for i in range(num_points)]
 
-        
         # update suture placement 3d object
         self.center_pts = center_points
         self.insertion_pts = insertion_points
@@ -496,7 +500,7 @@ class Optimizer3d:
         """
         magnitude = np.sqrt(sum(component**2 for component in vector))
         normalized_vector = [component / magnitude for component in vector]
-        return normalized_vector
+        return np.array(normalized_vector)
     
     def plot_mesh_path_and_spline(self, spline_segments=100, viz=True, results_pth=None):
         
