@@ -86,7 +86,7 @@ def project3d_to_2d(left_image, points):
 if __name__ == "__main__":
     box_method = True
     save_figs = True
-    chicken_number = 0
+    chicken_number = 4
 
     left_file = f'left_exp_00{chicken_number}.png'
     left_img_path = 'chicken_images/' + left_file
@@ -535,7 +535,7 @@ if __name__ == "__main__":
         
         viz = False
         use_prev = False
-        suture_width = 0.006
+        suture_width = 0.005
         
         # get the masks
         # save left and right masks
@@ -550,6 +550,7 @@ if __name__ == "__main__":
         if use_prev:
             left_line = np.load(left_line_path)
             left_mask = np.load(left_mask_path)
+            border_pts = np.load(border_pts_path)
 
             # right_line = np.load(right_line_path)
             # right_mask = np.load(right_mask_path)
@@ -558,10 +559,10 @@ if __name__ == "__main__":
             # Right click is not on wound
             # img = Image.open(left_img_path)
             # enhanced = adjust_contrast_saturation(img, 3, 1)
-            left_line, left_mask, sam_mask = img_to_line(left_img_path, box_method=False, viz=True, save_figs=save_figs)
+            left_line, left_mask, border_pts = img_to_line(left_img_path, box_method=False, viz=True, save_figs=save_figs)
             np.save(left_mask_path, left_mask)
             np.save(left_line_path, left_line)
-            # np.save(border_pts_path, sam_mask)
+            np.save(border_pts_path, border_pts)
             # right_line, right_mask = img_to_line(right_img_path, box_method=False, viz=True, save_figs=save_figs)
             # np.save(right_mask_path, right_mask)
             # np.save(right_line_path, right_line)
@@ -583,20 +584,31 @@ if __name__ == "__main__":
 
         img_width, img_height = Image.open(left_img_path).size
 
-        wound_point_cloud = get_transformed_points(left_img_path, disp, left_mask)
+        order_matrix = np.zeros((img_height, img_width), int) - 1
+        line_mask = np.zeros((img_height, img_width))
+
+        # assign index to location on image and add to 
+        for i, coord in enumerate(left_line):
+            line_mask[coord[0], coord[1]] = 1
+            order_matrix[coord[0], coord[1]] = i
+
+        line_pts_3d = get_transformed_points(left_img_path, disp, line_mask, viz=False, maintain_order=True, order_matrix=order_matrix)
+
+        border_mask = np.zeros((img_height, img_width))
+
+        # assign index to location on image and add to 
+        for i, coord in enumerate(border_pts):
+            border_mask[coord[1], coord[0]] = 1
+        
+        border_pts_3d = get_transformed_points(border_pts_path, disp, border_mask)
+        # np.save('surrounding_pts.npy', border_pts_3d)
+
+        print("border pts", border_pts_3d)
 
         fig = plt.figure()
         ax = plt.axes(projection='3d')
 
-        ax.scatter3D([point[0] for point in wound_point_cloud], [point[1] for point in wound_point_cloud], [point[2] for point in wound_point_cloud])
-        
-        # border_pts_3d = get_transformed_points(border_pts_path, disp, border_mask)
-        # np.save('surrounding_pts.npy', border_pts_3d)
-
-        # fig = plt.figure()
-        # ax = plt.axes(projection='3d')
-
-        # ax.scatter3D([point[0] for point in border_pts_3d], [point[1] for point in border_pts_3d], [point[2] for point in border_pts_3d])
+        ax.scatter3D([point[0] for point in border_pts_3d], [point[1] for point in border_pts_3d], [point[2] for point in border_pts_3d])
 
         
         # convert the spline to 3d using raft
@@ -736,7 +748,7 @@ if __name__ == "__main__":
         force_model_parameters = {'ellipse_ecc': 1/0.5, 'force_decay': 0.5/0.005, 'verbose': 0, 'ideal_closure_force': None, 'imparted_force': None}
 
         left_image = cv2.imread(left_img_path, cv2.IMREAD_COLOR)
-        optim3d = Optimizer3d(mesh, left_spline, suture_width, hyperparams, force_model_parameters, left_spline_smoothed, spacing, left_image, wound_point_cloud)
+        optim3d = Optimizer3d(mesh, left_spline, suture_width, hyperparams, force_model_parameters, left_spline_smoothed, spacing, left_image, border_pts_3d)
     
         spline_length = optim3d.calculate_spline_length(left_spline, mesh)
         print("Spline length", spline_length)
@@ -843,7 +855,7 @@ if __name__ == "__main__":
         #     plt.show()
 
         start_range = 3
-        end_range = 5
+        end_range = 8
 
         # start_range = int(spline_length / 0.0075)
         # end_range = int(spline_length / 0.004)

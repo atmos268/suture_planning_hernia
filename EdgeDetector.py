@@ -179,7 +179,7 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
     # plt.plot([border_pts[0,0], border_pts[-1,0]], [border_pts[0,1], border_pts[-1,1]], 'r')
     plt.show()
     
-    return ordered_points, numpydata, np.asarray(mask)
+    return ordered_points, numpydata, border_pts
 
 def line_to_spline(line, img_path, mm_per_pixel, viz=False):
 

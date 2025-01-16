@@ -6,6 +6,7 @@ import scipy.interpolate as inter
 import random
 import copy
 import trimesh
+from scipy.spatial import cKDTree
 import tensorflow as tf
 import cv2
 
@@ -21,7 +22,7 @@ class Optimizer3d:
     suture_width: how far, in mm, the insertion and extraction points should be from the wound line
     hyperparameters: hyperparameters for our optimization
     """
-    def __init__(self, mesh: MeshIngestor, spline, suture_width, hyperparameters, force_model_parameters, smoothed_spline, spacing, left_image, wound_point_cloud, synthetic=False):
+    def __init__(self, mesh: MeshIngestor, spline, suture_width, hyperparameters, force_model_parameters, smoothed_spline, spacing, left_image, border_pts_3d, synthetic=False):
         self.mesh = mesh
         self.spline = spline
         self.smoothed_spline = smoothed_spline
@@ -40,15 +41,49 @@ class Optimizer3d:
         self.num_points_for_plane = 1000
         self.spacing = spacing
         self.left_image = left_image
-        self.wound_point_cloud = wound_point_cloud
+        self.border_pts_3d = border_pts_3d
+        self.border_kdtree = cKDTree(self.border_pts_3d)
 
-        transformation_tensor = tf.io.read_file('transforms/tf_av_left_zivid.tf')
-        transformation_string = transformation_tensor.numpy().decode('utf-8') # Convert to a Python string
-        # Split the string into individual lines and elements
-        lines = transformation_string.strip().split('\n')[2:]
-        matrix_elements = [list(map(float, line.split())) for line in lines]
-        # Convert the matrix elements to a NumPy array
-        self.transformation_matrix = np.array(matrix_elements)
+        granularity = 100
+
+        spline_x, spline_y, spline_z = self.spline[0], self.spline[1], self.spline[2]
+        spline_xs, spline_ys, spline_zs = self.smoothed_spline[0], self.smoothed_spline[1], self.smoothed_spline[2]
+        derivative_x, derivative_y, derivative_z = spline_xs.derivative(), spline_ys.derivative(), spline_zs.derivative()
+
+        # get center points
+        
+        center_points = [[spline_x(t/granularity), spline_y(t/granularity), spline_z(t/granularity)] for t in range(granularity)]
+        # print("magnitude center points", [np.linalg.norm(center_points[i]) for i in range(num_points)])
+
+        # get derivative points
+        derivative_points = [[derivative_x(t/granularity), derivative_y(t/granularity), derivative_z(t/granularity)] for t in range(granularity)]
+
+        #get tangent plane normal vectors
+        normal_vectors = [get_plane_estimation(mesh, center_points[i], self.num_points_for_plane) for i in range(granularity)]
+
+        # project derivatives onto the tangent plane
+        derivative_vectors = [project_vector_onto_plane(derivative_points[i], normal_vectors[i]) for i in range(granularity)]
+
+        # normalize normal vectors and derivative vectors
+        normal_vectors = [self.normalize_vector(normal_vectors[i]) for i in range(granularity)]
+        derivative_vectors = [self.normalize_vector(derivative_vectors[i]) for i in range(granularity)]
+
+        # find out correct width on both sides
+        # choose the closest points
+        wound_width_vectors = [self.normalize_vector(np.cross(normal_vectors[i], derivative_vectors[i])) for i in range(granularity)]
+        # print("WOUND WIDTH VECTORS", wound_width_vectors)
+        self.wound_widths = []
+        for i in range(granularity):
+            min_dist = 99999999
+            min_border_pt_idx = -1
+            for ray_length in np.arange(0, 0.02, 0.001):
+                end_ray_pt = center_points[i] + (ray_length) * wound_width_vectors[i]
+                dist, nearest_border_pt_idx = self.border_kdtree.query(end_ray_pt, 1)
+                if dist < min_dist:
+                    min_dist = dist
+                    min_border_pt_idx = nearest_border_pt_idx
+            self.wound_widths.append(np.linalg.norm(self.border_pts_3d[min_border_pt_idx] - center_points[i]))
+
 
         self.synthetic = synthetic
         if self.synthetic:
@@ -226,8 +261,9 @@ class Optimizer3d:
             mesh = self.mesh
 
             # ellipse_ecc = self.force_model['ellipse_ecc']
-            ellipse_ecc =self.spacing[int(self.points_t[i] * 99)]
-            force_decay = self.force_model['force_decay']
+            ellipse_ecc = self.spacing[int(self.points_t[i] * 99)]
+            # force_decay = self.force_model['force_decay']
+            force_decay = 0.5 / (0.005 + self.wound_widths[int(self.points_t[i] * 99)])
             verbose = self.force_model['verbose']
 
             in_ex_plane = get_plane_estimation(mesh, in_ex_pt, num_nearest, trimesh=self.trimesh)
@@ -271,7 +307,7 @@ class Optimizer3d:
 
             ellipse_dist_factor = np.sqrt((np.sin(force_angle) * ellipse_ecc) ** 2 + (np.cos(force_angle)) ** 2)
             # 1/2 / width
-            wound_force = self.force_model['imparted_force'] - force_decay * (np.linalg.norm(point - in_ex_pt) - 0.002) * ellipse_dist_factor
+            wound_force = self.force_model['imparted_force'] - force_decay * (np.linalg.norm(point - in_ex_pt)) * ellipse_dist_factor
 
             # if verbose > 10:
             #     print('in_ex force: ', self.force_model['imparted_force'])
@@ -460,21 +496,19 @@ class Optimizer3d:
 
         # find out correct width on both sides
         # choose the closest points
-        wound_width_vectors = [np.cross(normal_vectors[i], derivative_vectors[i]) for i in range(num_points)]
-        # print("WOUND WIDTH VECTORS", wound_width_vectors)
-        wound_width_projections = [self.normalize_vector(np.dot(self.wound_point_cloud, wound_width_vectors[i])) for i in range(num_points)]
-        wound_widths = [0.5 * (np.max(wound_width_projections[i]) - np.min(wound_width_projections[i])) for i in range(num_points)]
         # print(points_t)
+        wound_widths = [self.wound_widths[int(pt * 99)] for pt in points_t]
+        # print(self.wound_widths)
         # print("WOUND WIDTHS", wound_widths)
         # Insertion points = cross product 
         # 0.005 + wound_widths[i]
-        insertion_points = [mesh.get_point_location(mesh.get_nearest_point(center_points[i] + (self.suture_width) * (np.cross(normal_vectors[i], derivative_vectors[i])))[1]) for i in range(num_points)]
+        insertion_points = [mesh.get_point_location(mesh.get_nearest_point(center_points[i] + (0.005 + wound_widths[i]) * (np.cross(normal_vectors[i], derivative_vectors[i])))[1]) for i in range(num_points)]
 
         # get the closest point on the mesh to that point
         # print("magnitude insertion points", [np.linalg.norm(insertion_points[i]) for i in range(num_points)])
 
         # Extraction points = - cross product
-        extraction_points = [mesh.get_point_location(mesh.get_nearest_point(center_points[i] + (self.suture_width) * (-np.cross(normal_vectors[i], derivative_vectors[i])))[1]) for i in range(num_points)]
+        extraction_points = [mesh.get_point_location(mesh.get_nearest_point(center_points[i] + (0.005 + wound_widths[i]) * (-np.cross(normal_vectors[i], derivative_vectors[i])))[1]) for i in range(num_points)]
 
         # update suture placement 3d object
         self.center_pts = center_points
