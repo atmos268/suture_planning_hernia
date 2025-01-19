@@ -261,6 +261,7 @@ if __name__ == "__main__":
         optim3d = Optimizer3d(mesh, spline3d, suture_width, hyperparams, force_model_parameters, spline3d_smoothed, spacing, left_image, synthetic=True)
 
         if mode == "3d":
+            print("hello here")
 
             # display mesh as with spline
             mesh.plot_mesh(shortest_path_xyz)
@@ -430,7 +431,8 @@ if __name__ == "__main__":
             print("not enough points clicked")
         
         mm_per_pixel = get_mm_per_pixel(left_pts[-2], left_pts[-1], mm_indicated)
-
+        
+        print("REACHED HERE")
         line, mask = img_to_line(left_img_path, box_method, viz=True, save_figs=save_figs)
         
         # build a line that is scaled to mm size
@@ -532,7 +534,7 @@ if __name__ == "__main__":
         # suture_display_adj_pipeline(newSuturePlacer)
 
     elif mode == '3d' and experiment_mode == "physical":
-        
+                
         viz = False
         use_prev = False
         suture_width = 0.005

@@ -34,7 +34,7 @@ class EdgeDetector:
         pass
 
 
-def img_to_line(img_path, box_method, viz=False, save_figs=False):
+def img_to_line(img_path, box_method, chicken_number, viz=False, save_figs=False):
 
     if not os.path.isdir("temp_images"):
         os.mkdir('temp_images')
@@ -46,11 +46,15 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
     # asarray() class is used to convert
     # PIL images into NumPy arrays
     numpydata = np.asarray(img)
-
+    
     fig = plt.figure()
     plt.imshow(numpydata)
-
+    #plt.show()
+    
     left_coords, right_coords = click_points_simple(fig)
+    
+    print(left_coords)
+    print(right_coords)
 
     num_left = len(left_coords)
     num_right = len(right_coords)
@@ -65,17 +69,20 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
         h, w = mask.shape[-2:]
         mask_image = mask.reshape(h, w, 1) * color.reshape(1, 1, -1)
         plt.imshow(mask_image)
-
+    
     original_mask, img, display_mask = create_mask(img_path, np.array(left_coords + right_coords), np.array(fore_back), fig)
     cv2.imwrite('temp_images/sam_mask.jpg', original_mask)
     mask = keep_largest_connected_component('temp_images/sam_mask.jpg')
     cv2.imwrite('temp_images/sam_mask.jpg', mask)
-
+    
+    ## VARIABLE WOUND WIDTH STUFF
     # TRY GETTING BORDER OF MASK
     contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     # Choose the largest contour if there are multiple
     border_pts = max(contours, key=cv2.contourArea).squeeze()
+    print(border_pts)
+    print(type(border_pts))
 
     # mask post-processing    
     new_edge_detector = EdgeDetector()
@@ -118,9 +125,47 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
     plt.imshow(left_img)
     show_mask(display_mask)
     # print(len(contours))
+    
+    def euc_dist(x, y):
+        return abs(x[0]-y[0])**2 + abs(x[1]-y[1])**2
+    
+    # RIA'S FUNCTION:
+    def fill_gaps(contour):
+        def linear_int_x(x1, y1, x2, y2, y):
+            return x1 + (y - y1) *  (x2 - x1) / (y2 - y1)
 
+        def linear_int_y(x1, y1, x2, y2, x):
+            return y1 + (x - x1) * (y2 - y1) / (x2 - x1)
+
+        def euc_dist(x, y):
+            return np.sqrt(abs(x[0]-y[0])**2 + abs(x[1]-y[1])**2)
+
+        contour = np.append(contour, [contour[0]], axis=0)
+        new_contour = np.copy(contour)
+        for i in range(len(contour)-1):
+            if euc_dist(contour[i], contour[i+1]) > 2:
+                x1, x2, y1, y2 = contour[i][0], contour[i+1][0], contour[i][1], contour[i+1][1]
+                # linearly interpolate along the direction with more sparsity
+                if abs(x1-x2) > abs(y1-y2):
+                    for new_x in range(min(x1, x2)+1, max(x1, x2)):
+                        new_contour = np.append(new_contour, [[new_x, int(linear_int_y(x1, y1, x2, y2, new_x))]], axis=0)
+                else:
+                    for new_y in range(min(y1, y2)+1, max(y1, y2)):
+                        new_contour = np.append(new_contour, [[int(linear_int_x(x1, y1, x2, y2, new_y)), new_y]], axis=0)
+
+        plt.imshow(img)
+        plt.scatter(contour[:, 0], contour[:, 1], s=1, color='red')
+        plt.show()
+        #plt.savefig(f"./ria_fill_gaps_results/unfilled_{chicken_number}.png")
+
+        plt.imshow(img)
+        plt.scatter(new_contour[:, 0], new_contour[:, 1], s=1, color='red')
+        plt.show()
+        #plt.savefig(f"./ria_fill_gaps_results/filled_{chicken_number}.png")
+        
+    # DAVID'S FUNCTION:
     # fill gaps function? 
-    def fill_gaps(contour_matrix, eps_threshold=2):
+    def fill_gaps_old(contour_matrix, eps_threshold=2):
         x_pts = [pt[0] for pt in contour_matrix]
         y_pts = [pt[1] for pt in contour_matrix]
 
@@ -172,12 +217,14 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
     # border_pts_gaps_filled = fill_gaps(border_pts)
 
     
-    # plt.plot([pt[0] for pt in border_pts], [pt[1] for pt in border_pts], 'b')
-    # plt.plot([pt[0] for pt in border_pts_gaps_filled], [pt[1] for pt in border_pts_gaps_filled], 'b')
+    plt.scatter([pt[0] for pt in border_pts], [pt[1] for pt in border_pts], color='blue', s=1)
+    #plt.plot([pt[0] for pt in border_pts_gaps_filled], [pt[1] for pt in border_pts_gaps_filled], 'b')
 
     plt.plot([pt[1] for pt in ordered_points], [pt[0] for pt in ordered_points], 'w')
-    # plt.plot([border_pts[0,0], border_pts[-1,0]], [border_pts[0,1], border_pts[-1,1]], 'r')
+    plt.plot([border_pts[0,0], border_pts[-1,0]], [border_pts[0,1], border_pts[-1,1]], 'r')
     plt.show()
+    
+    print(fill_gaps(border_pts))
     
     return ordered_points, numpydata, border_pts
 
@@ -264,11 +311,13 @@ def line_to_spline_3d(line, sample_ratio=30, viz=False, s_factor=None):
 if __name__ == "__main__":
     
     box_method = True
-    img_path = 'chicken_images/image_left_001.png'
+    
+    for i in [7]:
+        img_path = f'chicken_images/image_left_00{i}.png'
 
-    line, mask = img_to_line(img_path, box_method, viz=True)
+        line, mask, _ = img_to_line(img_path, box_method, i, viz=True)
 
-    spline, tck = line_to_spline(line, img_path, viz=True)
+    #spline, tck = line_to_spline(line, img_path, viz=True)
 
     # now run original pipeline
 
