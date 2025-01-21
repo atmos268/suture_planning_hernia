@@ -47,7 +47,7 @@ class SutureDisplayAdjust:
 
         self.use_multiprocessing = False  # super super buggy on dvrk, not sure why
 
-    def draw_initial(self):
+    def draw_initial(self, filename):
         blue, red, green, black = (255, 0, 0), (0, 0, 255), (0, 255, 0), (0, 0, 0)
         wound = (139, 135, 255)
         img_draw = self.left_image.copy()
@@ -61,8 +61,9 @@ class SutureDisplayAdjust:
         #     cv2.circle(img_draw, (self.center_pts_pxl[i][0], self.center_pts_pxl[i][1]), 5, green, -1)
         for i, txt in enumerate(self.extraction_pts_pxl[::-1]):
             cv2.circle(img_draw, (self.extraction_pts_pxl[i][0], self.extraction_pts_pxl[i][1]), 5, blue, -1)
-        
+
         cv2.imshow("Adjustment Visualizer", img_draw)
+        cv2.imwrite(f"results/{filename}.png", img_draw)
 
     def __on_mouse_event(self, event, x, y, flags, param):
         blue, red, green, black = (255, 0, 0), (0, 0, 255), (0, 255, 0), (0, 0, 0)
@@ -132,6 +133,7 @@ class SutureDisplayAdjust:
             cv2.circle(img_draw, (self.extraction_pts_pxl[i][0], self.extraction_pts_pxl[i][1]), 5, blue, -1)
         cv2.imshow("Adjustment Visualizer", img_draw)
 
+
     def adjust_points(self, img_color, img_point):
 
         self.img_color = img_color
@@ -144,14 +146,14 @@ class SutureDisplayAdjust:
 
         return self.pnts
 
-    def user_display_pnts(self):
+    def user_display_pnts(self, filename):
         # user specify points on the image
         self.pnts = []
         self.is_dragging = False
         self.px, self.py = -1, -1
         cv2.imshow("Adjustment Visualizer", self.left_image)
-        self.draw_initial()
-        cv2.setMouseCallback('Adjustment Visualizer', self.__on_mouse_event)  # fills pnts array
+        self.draw_initial(filename)
+        # cv2.setMouseCallback('Adjustment Visualizer', self.__on_mouse_event)  # fills pnts array
         cv2.waitKey(0)
         self.scale_found = True
         cv2.destroyAllWindows()

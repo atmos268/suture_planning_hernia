@@ -84,7 +84,6 @@ class Optimizer3d:
                     min_border_pt_idx = nearest_border_pt_idx
             self.wound_widths.append(np.linalg.norm(self.border_pts_3d[min_border_pt_idx] - center_points[i]))
 
-
         self.synthetic = synthetic
         if self.synthetic:
             scene = trimesh.load('roast_chicken.glb')

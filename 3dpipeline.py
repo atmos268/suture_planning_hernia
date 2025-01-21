@@ -86,7 +86,7 @@ def project3d_to_2d(left_image, points):
 if __name__ == "__main__":
     box_method = True
     save_figs = True
-    chicken_number = 4
+    chicken_number = 2
 
     left_file = f'left_exp_00{chicken_number}.png'
     left_img_path = 'chicken_images/' + left_file
@@ -955,7 +955,7 @@ if __name__ == "__main__":
         center_pts_base = project3d_to_2d(left_image, baseline_center)
         extraction_base = project3d_to_2d(left_image, baseline_extraction)
         suture_display_adjust = SutureDisplayAdjust(insertion_pts_base, center_pts_base, extraction_base, left_image, center_spline)
-        suture_display_adjust.user_display_pnts()
+        suture_display_adjust.user_display_pnts(f"base{chicken_number}")
 
         print("optimized")
         left_image = cv2.imread(left_img_path, cv2.IMREAD_COLOR)
@@ -965,7 +965,7 @@ if __name__ == "__main__":
         extraction_pts = project3d_to_2d(left_image, best_opt_extraction)
 
         suture_display_adjust_optim = SutureDisplayAdjust(insertion_pts, center_pts, extraction_pts, left_image, center_spline)
-        suture_display_adjust_optim.user_display_pnts()
+        suture_display_adjust_optim.user_display_pnts(f"opt{chicken_number}")
 
         # dragging codeeee
         # print(“Overhead center points”, np.array(suturePlacement3d.center_pts.shape))

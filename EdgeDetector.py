@@ -34,7 +34,7 @@ class EdgeDetector:
         pass
 
 
-def img_to_line(img_path, box_method, chicken_number, viz=False, save_figs=False):
+def img_to_line(img_path, box_method, viz=False, save_figs=False):
 
     if not os.path.isdir("temp_images"):
         os.mkdir('temp_images')
@@ -126,9 +126,6 @@ def img_to_line(img_path, box_method, chicken_number, viz=False, save_figs=False
     show_mask(display_mask)
     # print(len(contours))
     
-    def euc_dist(x, y):
-        return abs(x[0]-y[0])**2 + abs(x[1]-y[1])**2
-    
     # RIA'S FUNCTION:
     def fill_gaps(contour):
         def linear_int_x(x1, y1, x2, y2, y):
@@ -152,81 +149,31 @@ def img_to_line(img_path, box_method, chicken_number, viz=False, save_figs=False
                 else:
                     for new_y in range(min(y1, y2)+1, max(y1, y2)):
                         new_contour = np.append(new_contour, [[int(linear_int_x(x1, y1, x2, y2, new_y)), new_y]], axis=0)
-
-        plt.imshow(img)
-        plt.scatter(contour[:, 0], contour[:, 1], s=1, color='red')
-        plt.show()
+        return new_contour
+        # plt.imshow(img)
+        # plt.scatter(contour[:, 0], contour[:, 1], s=1, color='red')
+        # plt.show()
         #plt.savefig(f"./ria_fill_gaps_results/unfilled_{chicken_number}.png")
 
-        plt.imshow(img)
-        plt.scatter(new_contour[:, 0], new_contour[:, 1], s=1, color='red')
-        plt.show()
+        # plt.imshow(img)
+        # plt.scatter(new_contour[:, 0], new_contour[:, 1], s=1, color='red')
+        # plt.show()
         #plt.savefig(f"./ria_fill_gaps_results/filled_{chicken_number}.png")
         
-    # DAVID'S FUNCTION:
-    # fill gaps function? 
-    def fill_gaps_old(contour_matrix, eps_threshold=2):
-        x_pts = [pt[0] for pt in contour_matrix]
-        y_pts = [pt[1] for pt in contour_matrix]
-
-        result_x_pts = [x_pts[0]]
-        result_y_pts = [y_pts[0]]
-
-        distance_array = []
-
-        # iterate through all points from start to end to check for gap
-        for i in range(1, len(x_pts)):
-            
-            # L2/euclidean distance in 2D
-            distance = np.sqrt((x_pts[i] - x_pts[i-1])**2 + (y_pts[i] - y_pts[i-1])**2)
-            distance_array.append(distance)
-            
-            # gap detected
-            if distance > eps_threshold: 
-                # we want to fit a polynomial of degree 5 to ensure decent smoothness so get up to 2 points before gap and 3 points after gap
-                prior_gap_indices = max(0, i-5)
-                post_gap_indices = min(len(x_pts), i+5)
-
-                localize_x_pts = x_pts[prior_gap_indices:post_gap_indices]
-                localize_y_pts = y_pts[prior_gap_indices:post_gap_indices]
-
-                # at most degree 5 imposed 
-                degree = min(len(localize_x_pts) - 1, 3)
-                coefficients = np.polyfit(localize_x_pts, localize_y_pts, degree)
-                polynomial = np.poly1d(coefficients)
-
-                num_points = max(int(np.ceil(distance / eps_threshold)), 3)
-                interp_x = np.linspace(x_pts[i-1], x_pts[i], num_points + 1)[1:]
-                interp_y = polynomial(interp_x)
-
-                result_x_pts.extend(interp_x)
-                result_y_pts.extend(interp_y)
-
-            # no fitting its fine (no gap detected)
-            else: 
-                result_x_pts.append(x_pts[i])
-                result_y_pts.append(y_pts[i])
-                
-        # # get largest distance test 
-        # print("get largest distance test")
-        # print(f"largest distance: {max(distance_array)}")
-        return np.column_stack((result_x_pts, result_y_pts))
-
         
-        
-    # border_pts_gaps_filled = fill_gaps(border_pts)
+    border_pts_gaps_filled = fill_gaps(border_pts)
 
     
-    plt.scatter([pt[0] for pt in border_pts], [pt[1] for pt in border_pts], color='blue', s=1)
+    plt.scatter([pt[0] for pt in border_pts_gaps_filled], [pt[1] for pt in border_pts_gaps_filled], color='blue', s=1)
     #plt.plot([pt[0] for pt in border_pts_gaps_filled], [pt[1] for pt in border_pts_gaps_filled], 'b')
 
     plt.plot([pt[1] for pt in ordered_points], [pt[0] for pt in ordered_points], 'w')
-    plt.plot([border_pts[0,0], border_pts[-1,0]], [border_pts[0,1], border_pts[-1,1]], 'r')
+    # plt.plot([border_pts[0,0], border_pts[-1,0]], [border_pts[0,1], border_pts[-1,1]], 'r')
     plt.show()
     
-    print(fill_gaps(border_pts))
+    # print(fill_gaps(border_pts))
     
-    return ordered_points, numpydata, border_pts
+    return ordered_points, numpydata, border_pts_gaps_filled
 
 def line_to_spline(line, img_path, mm_per_pixel, viz=False):
 
