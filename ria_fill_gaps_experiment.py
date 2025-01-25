@@ -12,7 +12,7 @@ from SAM import create_mask
 from largestCC import keep_largest_connected_component
 from fillHoles import fillHoles
 from matplotlib import colormaps
-from utils import click_points_simple
+from utils2 import click_points_simple
 import os
 
 matplotlib.use('TkAgg')

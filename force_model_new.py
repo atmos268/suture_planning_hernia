@@ -8,7 +8,7 @@ import random
 import networkx as nx
 from heapq import heappop, heappush
 from itertools import count
-from utils import euclidean_dist
+from utils2 import euclidean_dist
 
 class ForceModel:
     def __init__(self, mesh, ellipse_eccentricity: float, force_decay: float, neighbors_to_sample: int, dist_limit_factor = 2.0):

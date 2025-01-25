@@ -86,7 +86,7 @@ def project3d_to_2d(left_image, points):
 if __name__ == "__main__":
     box_method = True
     save_figs = True
-    chicken_number = 2
+    chicken_number = 9
 
     left_file = f'left_exp_00{chicken_number}.png'
     left_img_path = 'chicken_images/' + left_file
@@ -261,8 +261,6 @@ if __name__ == "__main__":
         optim3d = Optimizer3d(mesh, spline3d, suture_width, hyperparams, force_model_parameters, spline3d_smoothed, spacing, left_image, synthetic=True)
 
         if mode == "3d":
-            print("hello here")
-
             # display mesh as with spline
             mesh.plot_mesh(shortest_path_xyz)
 
@@ -584,7 +582,20 @@ if __name__ == "__main__":
         surrounding_pts = get_transformed_points(left_img_path, disp, dilated_mask)
         np.save('surrounding_pts.npy', surrounding_pts)
 
-        img_width, img_height = Image.open(left_img_path).size
+        left_img = Image.open(left_img_path)
+        img_width, img_height = left_img.size
+        all = np.ones((img_height, img_width))
+        point_cloud_data = get_transformed_points(left_img_path, disp, all)
+        np.save(f'point_cloud_data/point_cloud{chicken_number}.npy', point_cloud_data)
+
+        color_left = cv2.cvtColor(cv2.imread(left_img_path),cv2.COLOR_RGB2BGR)
+        rgb_cloud_data = color_left.reshape(-1, 3)
+        non_zero_indices = np.all(point_cloud_data != [0, 0, 0], axis=-1)
+        rgb_cloud_data = rgb_cloud_data[non_zero_indices]
+        point_cloud_data = point_cloud_data[non_zero_indices]
+
+        np.save(f'point_cloud_data/rgb_cloud{chicken_number}.npy', rgb_cloud_data)
+    
 
         order_matrix = np.zeros((img_height, img_width), int) - 1
         line_mask = np.zeros((img_height, img_width))
@@ -856,7 +867,7 @@ if __name__ == "__main__":
         #     fig.colorbar(p)
         #     plt.show()
 
-        start_range = 3
+        start_range = 6
         end_range = 8
 
         # start_range = int(spline_length / 0.0075)
@@ -946,6 +957,11 @@ if __name__ == "__main__":
         # p = ax.scatter3D(x_pts, y_pts, z_pts, c=final_shear)
         # fig.colorbar(p)
         # plt.show()
+
+        np.save(f'insertion_extraction_pts/insertion_pts{chicken_number}.npy', np.array(best_opt_insertion))
+        np.save(f'insertion_extraction_pts/extraction_pts{chicken_number}.npy', np.array(best_opt_extraction))
+
+        # visualize_pointcloud_node = VisualizePointcloudNode(np.array(best_opt_insertion), np.array(best_opt_extraction))
         
         left_image = cv2.imread(left_img_path, cv2.IMREAD_COLOR)
         center_spline = project3d_to_2d(left_image, line_pts_3d)
@@ -964,8 +980,8 @@ if __name__ == "__main__":
         center_pts = project3d_to_2d(left_image, best_opt_center)
         extraction_pts = project3d_to_2d(left_image, best_opt_extraction)
 
-        suture_display_adjust_optim = SutureDisplayAdjust(insertion_pts, center_pts, extraction_pts, left_image, center_spline)
-        suture_display_adjust_optim.user_display_pnts(f"opt{chicken_number}")
+        # suture_display_adjust_optim = SutureDisplayAdjust(insertion_pts, center_pts, extraction_pts, left_image, center_spline)
+        # suture_display_adjust_optim.user_display_pnts(f"opt{chicken_number}")
 
         # dragging codeeee
         # print(“Overhead center points”, np.array(suturePlacement3d.center_pts.shape))
