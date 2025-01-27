@@ -62,25 +62,44 @@ def get_dilated_mask(img_path, dilation):
     img_dilated = new_edge_detector.dilate_to_line(mask, dilation)
     cv2.imwrite("dilated_mask.jpg", img_dilated)
 
-def get_transformed_points(image_path, disp, sam_mask, viz=False, maintain_order=False, order_matrix=None):
+def get_transformed_points(image_path, depth_image, sam_mask, viz=False, maintain_order=False, order_matrix=None):
     # disparity_map from raft (for testing used google colab)
+
 
     #mask from SAM
     sam_mask = sam_mask.astype('uint8')
 
-    #calibaration
-    f = 1688.10117
-    cx = 657.660185
-    cy = 411.400296
-    Tx = -0.045530
+    # #calibaration
+    # f = 1688.10117
+    # cx = 657.660185
+    # cy = 411.400296
+    # Tx = -0.045530
+    # cx_diff = 671.318549 - cx
+
+    f = 2072.7670967549093
+    cx = 563.9893989562988
+    cy = 464.33528900146484
+    Tx = -0.04637584164697386
     cx_diff = 671.318549 - cx
 
+
     # get depth map from disparity map
-    depth_image = (f * Tx) / abs(disp + cx_diff)
+    # depth_image = (f * Tx) / abs(disp + cx_diff)
     fx, fy, cx, cy = f, f, cx, cy
     rows, cols = depth_image.shape
     y, x = np.meshgrid(range(rows), range(cols), indexing="ij")
     depth_image_wound = cv2.bitwise_and(depth_image, depth_image, mask=sam_mask)
+
+    if viz:
+        # Normalize the depth image for visualization
+        depth_image_normalized = cv2.normalize(depth_image_wound, None, 0, 255, cv2.NORM_MINMAX)
+
+        # Apply a colormap to the depth image
+        depth_colormap = cv2.applyColorMap(depth_image_normalized.astype(np.uint8), cv2.COLORMAP_MAGMA)
+        # Display the depth image
+        cv2.imshow('Depth Image', depth_colormap)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
     #get point cloud
 
@@ -127,44 +146,44 @@ def get_transformed_points(image_path, disp, sam_mask, viz=False, maintain_order
         
 
 
-    if viz:
-        fig = plt.figure()
-        ax = plt.axes(projection='3d')
+    # if viz:
+    #     fig = plt.figure()
+    #     ax = plt.axes(projection='3d')
     # ax.scatter3D(X_wound.flatten(), Y_wound.flatten(), Z_wound.flatten())
     # plt.title("Allied Points")
     # plt.show()
 
     # Visualizing the projection onto the left image
-    if viz:
-        left_image = cv2.imread(image_path)
-        left_image = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB).astype(np.uint8)
-        image_height, image_width, _ = left_image.shape
-        left_camera_matrix = np.array(
-            [[1688.10117, 0, 657.660185], [0, 1688.10117, 411.400296], [0, 0, 1]],
-            dtype=np.float64,
-        )
-        left_dist_coeffs = np.array(
-            [-0.13969738, 0.28183828, -0.00836148, -0.00180531, -1.65874481], dtype=np.float64
-        )
-        if not wound_points.shape[0] == 0:
-            projected_points_wound, _ = cv2.projectPoints(
-                wound_points,
-                np.zeros(3),
-                np.zeros(3),
-                left_camera_matrix,
-                distCoeffs=left_dist_coeffs,
-            )
-            image_points_wound = np.squeeze(projected_points_wound, axis=1).astype(int)
-            for i in range(image_points_wound.shape[0]):
-                x = int(image_points_wound[i, 0])
-                y = int(image_points_wound[i, 1])
-                if 0 <= x < image_width and 0 <= y < image_height:
-                    left_image[y, x] = 255
-        cv2.namedWindow('Projected Points', cv2.WINDOW_NORMAL)  # Create a resizable window
-        cv2.imshow('Projected Points', left_image)  # Show the modified image
+    # if viz:
+    #     left_image = cv2.imread(image_path)
+    #     left_image = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB).astype(np.uint8)
+    #     image_height, image_width, _ = left_image.shape
+    #     left_camera_matrix = np.array(
+    #         [[1688.10117, 0, 657.660185], [0, 1688.10117, 411.400296], [0, 0, 1]],
+    #         dtype=np.float64,
+    #     )
+    #     left_dist_coeffs = np.array(
+    #         [-0.13969738, 0.28183828, -0.00836148, -0.00180531, -1.65874481], dtype=np.float64
+    #     )
+    #     if not wound_points.shape[0] == 0:
+    #         projected_points_wound, _ = cv2.projectPoints(
+    #             wound_points,
+    #             np.zeros(3),
+    #             np.zeros(3),
+    #             left_camera_matrix,
+    #             distCoeffs=left_dist_coeffs,
+    #         )
+    #         image_points_wound = np.squeeze(projected_points_wound, axis=1).astype(int)
+    #         for i in range(image_points_wound.shape[0]):
+    #             x = int(image_points_wound[i, 0])
+    #             y = int(image_points_wound[i, 1])
+    #             if 0 <= x < image_width and 0 <= y < image_height:
+    #                 left_image[y, x] = 255
+    #     cv2.namedWindow('Projected Points', cv2.WINDOW_NORMAL)  # Create a resizable window
+    #     cv2.imshow('Projected Points', left_image)  # Show the modified image
 
-        cv2.waitKey(0)  # Wait for any key press
-        cv2.destroyAllWindows()  # Close all OpenCV windows
+    #     cv2.waitKey(0)  # Wait for any key press
+    #     cv2.destroyAllWindows()  # Close all OpenCV windows
 
 
     #convert point cloud to overhead coordinates
@@ -175,11 +194,11 @@ def get_transformed_points(image_path, disp, sam_mask, viz=False, maintain_order
     overhead_wound_points = np.array(overhead_wound_points)
     overhead_wound_points_transpose = overhead_wound_points.T
     
-    if viz:
-        ax.scatter3D(overhead_wound_points_transpose[0], overhead_wound_points_transpose[1], overhead_wound_points_transpose[2])
-        plt.title("overhead points")
-        plt.show()
-        print("selected points: ", overhead_wound_points.shape)
+    # if viz:
+    #     ax.scatter3D(overhead_wound_points_transpose[0], overhead_wound_points_transpose[1], overhead_wound_points_transpose[2])
+    #     plt.title("overhead points")
+    #     plt.show()
+    #     print("selected points: ", overhead_wound_points.shape)
 
     return overhead_wound_points
     

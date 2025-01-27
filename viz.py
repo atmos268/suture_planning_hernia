@@ -9,7 +9,7 @@ DEVICE = 'cuda'
 class VisualizePointcloudNode:
 
     def __init__(self):
-        self.chicken_number = 4
+        self.chicken_number = 0
         self.server_ = viser.ViserServer()
 
         self.image_callback()
@@ -20,14 +20,14 @@ class VisualizePointcloudNode:
         return img[None].to(DEVICE)
     
     def image_callback(self):
-        self.left_img = cv2.imread(f'chicken_images/left_exp_00{self.chicken_number}.png')
-        self.right_img = cv2.imread(f'chicken_images/right_exp_00{self.chicken_number}.png')
-        point_cloud_data = np.load(f'point_cloud_data/point_cloud{self.chicken_number}.npy')
-        rgb_cloud_data = np.load(f'point_cloud_data/rgb_cloud{self.chicken_number}.npy')
+        self.left_img = cv2.imread(f'dan_chicken/left_exp_00{self.chicken_number}.png')
+        self.right_img = cv2.imread(f'dan_chicken/right_exp_00{self.chicken_number}.png')
+        point_cloud_data = np.load(f'dan_point_cloud_data/point_cloud{self.chicken_number}.npy')
+        rgb_cloud_data = np.load(f'dan_point_cloud_data/rgb_cloud{self.chicken_number}.npy')
         
         kdtree = cKDTree(point_cloud_data)
-        self.insertion = np.load(f'insertion_extraction_pts/insertion_pts{self.chicken_number}.npy')
-        self.extraction = np.load(f'insertion_extraction_pts/extraction_pts{self.chicken_number}.npy')
+        self.insertion = np.load(f'dan_insertion_extraction_pts/insertion_pts{self.chicken_number}.npy')
+        self.extraction = np.load(f'dan_insertion_extraction_pts/extraction_pts{self.chicken_number}.npy')
         
         insertion_pts_point_cloud = []
         for insertion_pt in self.insertion:

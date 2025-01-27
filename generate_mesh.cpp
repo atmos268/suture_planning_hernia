@@ -18,7 +18,7 @@
 #include <iostream>
 #include <fstream>
 using namespace std;
-
+ 
 // types
 typedef CGAL::Exact_predicates_inexact_constructions_kernel Kernel;
 typedef Kernel::FT FT;
@@ -123,7 +123,7 @@ int main(int argc, char*argv[])
     }
     adj_matrix_file.close();
     vertex_lookup_file.close();
-
+ 
     f << output_mesh;
     f.close ();
   }

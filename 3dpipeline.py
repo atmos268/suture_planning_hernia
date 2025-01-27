@@ -60,7 +60,7 @@ def project3d_to_2d(left_image, points):
     # projecting onto left image
     image_height, image_width, _ = left_image.shape
     left_camera_matrix = np.array(
-        [[1688.10117, 0, 657.660185], [0, 1688.10117, 411.400296], [0, 0, 1]],
+        [[2072.7670967549093, 0, 563.9893989562988], [0, 2072.7670967549093, 464.33528900146484], [0, 0, 1]],
         dtype=np.float64,
     )
     left_dist_coeffs = np.array(
@@ -86,11 +86,11 @@ def project3d_to_2d(left_image, points):
 if __name__ == "__main__":
     box_method = True
     save_figs = True
-    chicken_number = 9
+    chicken_number = 0
 
     left_file = f'left_exp_00{chicken_number}.png'
-    left_img_path = 'chicken_images/' + left_file
-    left_img_path_enhanced = 'chicken_images/enhanced/' + left_file
+    left_img_path = 'dan_chicken/' + left_file
+    # left_img_path_enhanced = 'chicken_images/enhanced/' + left_file
 
     right_file = f'right_exp_00{chicken_number}.png'
     right_img_path = 'chicken_images/' + right_file
@@ -147,6 +147,8 @@ if __name__ == "__main__":
         print("using data to make mesh")
         # Create the graph
         mesh.generate_mesh()
+
+
 
         print("calculating shortest path")
         # Previous example
@@ -227,13 +229,13 @@ if __name__ == "__main__":
 
         curvature_arr = np.array(curvature_arr)
         scaled_curvature = curvature_arr / max(curvature_arr)
-        L = 1/0.5 - 1  # The range of the spacing values
+        L = 1/0.5 - 0.77  # The range of the spacing values
         # more curve means 1/0.5 ellipse whereas less curve means greater
         k = 10  # The steepness of the curve
         x0 = 0.5  # The midpoint of the sigmoid
 
         # Calculate the spacing using the sigmoid function
-        spacing = 1 + sigmoid(scaled_curvature, L, k, x0)
+        spacing = 0.77 + sigmoid(scaled_curvature, L, k, x0)
         print('SPACING', spacing)
         # get mesh from the surrounding points
 
@@ -534,18 +536,18 @@ if __name__ == "__main__":
     elif mode == '3d' and experiment_mode == "physical":
                 
         viz = False
-        use_prev = False
+        use_prev = True
         suture_width = 0.005
         
         # get the masks
         # save left and right masks
 
-        left_mask_path = f'masks/left_mask{chicken_number}.npy'
+        left_mask_path = f'dan_masks/left_mask{chicken_number}.npy'
         # right_mask_path = f'masks/right_mask{chicken_number}.npy'
-        left_line_path = f'masks/left_line{chicken_number}.npy'
-        border_pts_path = f'masks/border_pts{chicken_number}.npy'
+        left_line_path = f'dan_masks/left_line{chicken_number}.npy'
+        border_pts_path = f'dan_masks/border_pts{chicken_number}.npy'
         # right_line_path = f'masks/right_line{chicken_number}.npy'
-        left_dilated_mask_path = f'masks/left_dilated_mask{chicken_number}.jpg'
+        left_dilated_mask_path = f'dan_masks/left_dilated_mask{chicken_number}.jpg'
 
         if use_prev:
             left_line = np.load(left_line_path)
@@ -559,7 +561,7 @@ if __name__ == "__main__":
             # Right click is not on wound
             # img = Image.open(left_img_path)
             # enhanced = adjust_contrast_saturation(img, 3, 1)
-            left_line, left_mask, border_pts = img_to_line(left_img_path, box_method=False, viz=True, save_figs=save_figs)
+            left_line, left_mask, border_pts = img_to_line(left_img_path, box_method=False, save_figs=save_figs)
             np.save(left_mask_path, left_mask)
             np.save(left_line_path, left_line)
             np.save(border_pts_path, border_pts)
@@ -568,7 +570,7 @@ if __name__ == "__main__":
             # np.save(right_line_path, right_line)
         
         # do raft, no need to do rn, as we are using the existing RAFT output
-        disp_path = f"RAFT/disparity_00{chicken_number}.npy"
+        disp_path = f"dan_depth/depth_image_00{chicken_number}.npy"
         disp = np.load(disp_path)
 
         # dilate to get region
@@ -585,8 +587,8 @@ if __name__ == "__main__":
         left_img = Image.open(left_img_path)
         img_width, img_height = left_img.size
         all = np.ones((img_height, img_width))
-        point_cloud_data = get_transformed_points(left_img_path, disp, all)
-        np.save(f'point_cloud_data/point_cloud{chicken_number}.npy', point_cloud_data)
+        point_cloud_data = get_transformed_points(left_img_path, disp, all, viz=True)
+        np.save(f'dan_point_cloud_data/point_cloud{chicken_number}.npy', point_cloud_data)
 
         color_left = cv2.cvtColor(cv2.imread(left_img_path),cv2.COLOR_RGB2BGR)
         rgb_cloud_data = color_left.reshape(-1, 3)
@@ -594,7 +596,7 @@ if __name__ == "__main__":
         rgb_cloud_data = rgb_cloud_data[non_zero_indices]
         point_cloud_data = point_cloud_data[non_zero_indices]
 
-        np.save(f'point_cloud_data/rgb_cloud{chicken_number}.npy', rgb_cloud_data)
+        np.save(f'dan_point_cloud_data/rgb_cloud{chicken_number}.npy', rgb_cloud_data)
     
 
         order_matrix = np.zeros((img_height, img_width), int) - 1
@@ -621,8 +623,12 @@ if __name__ == "__main__":
         fig = plt.figure()
         ax = plt.axes(projection='3d')
 
+        ax.grid(False)
+        ax.set_xticklabels([])
+        ax.set_yticklabels([])
+        ax.set_zticklabels([])
         ax.scatter3D([point[0] for point in border_pts_3d], [point[1] for point in border_pts_3d], [point[2] for point in border_pts_3d])
-
+        plt.show()
         
         # convert the spline to 3d using raft
         # TODO: convert points to 3d one by one to preserve ordering
@@ -690,14 +696,17 @@ if __name__ == "__main__":
             # print(f"AT MIDPOINT T {midpt_t} the CURVATURE IS", curvature)
             curvature_arr.append(curvature)
 
-        bounds = [0, 50, 100, 150, 200]
-        norm = mcolors.BoundaryNorm(bounds, ncolors=256)
         fig = plt.figure()
         ax = plt.axes(projection='3d')
         plt.title("Spline curvature")
         print("max curve", max(curvature_arr))
-        p = ax.scatter3D(x_pts, y_pts, z_pts, c=curvature_arr, norm=norm)
+        p = ax.scatter3D(x_pts, y_pts, z_pts, c=curvature_arr)
         fig.colorbar(p)
+        ax.grid(False)
+        ax.set_xticklabels([])
+        ax.set_yticklabels([])
+        ax.set_zticklabels([])
+
         plt.show()
 
         def sigmoid(x, L, k, x0):
@@ -711,21 +720,25 @@ if __name__ == "__main__":
 
         curvature_arr = np.array(curvature_arr)
         scaled_curvature = curvature_arr / 100
-        L = 1/0.5 - 1  # The range of the spacing values
+        L = (1/0.4) - (1/0.60)  # The range of the spacing values
         # more curve means 1/0.5 ellipse whereas less curve means greater
         k = 10  # The steepness of the curve
         x0 = 0.5  # The midpoint of the sigmoid
 
         # Calculate the spacing using the sigmoid function
-        spacing = 1 + sigmoid(scaled_curvature, L, k, x0)
-        print('SPACING', spacing)
+        spacing = (1/0.60) + sigmoid(scaled_curvature, L, k, x0)
+        # print('SPACING', spacing)
         # get mesh from the surrounding points
 
         fig = plt.figure()
         ax = plt.axes(projection='3d')
-        plt.title("Sigmoid eccentricity")
+        # plt.title("Sigmoid eccentricity")
         p = ax.scatter3D(x_pts, y_pts, z_pts, c=spacing)
         fig.colorbar(p)
+        ax.grid(False)
+        ax.set_xticklabels([])
+        ax.set_yticklabels([])
+        ax.set_zticklabels([])
         plt.show()
 
         with open("pipeline_xyz_pts.xyz", "w") as f:
@@ -867,8 +880,8 @@ if __name__ == "__main__":
         #     fig.colorbar(p)
         #     plt.show()
 
-        start_range = 6
-        end_range = 8
+        start_range = 4
+        end_range = 7
 
         # start_range = int(spline_length / 0.0075)
         # end_range = int(spline_length / 0.004)
@@ -958,8 +971,8 @@ if __name__ == "__main__":
         # fig.colorbar(p)
         # plt.show()
 
-        np.save(f'insertion_extraction_pts/insertion_pts{chicken_number}.npy', np.array(best_opt_insertion))
-        np.save(f'insertion_extraction_pts/extraction_pts{chicken_number}.npy', np.array(best_opt_extraction))
+        np.save(f'dan_insertion_extraction_pts/insertion_pts{chicken_number}.npy', np.array(best_opt_insertion))
+        np.save(f'dan_insertion_extraction_pts/extraction_pts{chicken_number}.npy', np.array(best_opt_extraction))
 
         # visualize_pointcloud_node = VisualizePointcloudNode(np.array(best_opt_insertion), np.array(best_opt_extraction))
         
@@ -980,8 +993,8 @@ if __name__ == "__main__":
         center_pts = project3d_to_2d(left_image, best_opt_center)
         extraction_pts = project3d_to_2d(left_image, best_opt_extraction)
 
-        # suture_display_adjust_optim = SutureDisplayAdjust(insertion_pts, center_pts, extraction_pts, left_image, center_spline)
-        # suture_display_adjust_optim.user_display_pnts(f"opt{chicken_number}")
+        suture_display_adjust_optim = SutureDisplayAdjust(insertion_pts, center_pts, extraction_pts, left_image, center_spline)
+        suture_display_adjust_optim.user_display_pnts(f"opt{chicken_number}")
 
         # dragging codeeee
         # print(“Overhead center points”, np.array(suturePlacement3d.center_pts.shape))

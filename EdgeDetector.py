@@ -150,24 +150,13 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
                     for new_y in range(min(y1, y2)+1, max(y1, y2)):
                         new_contour = np.append(new_contour, [[int(linear_int_x(x1, y1, x2, y2, new_y)), new_y]], axis=0)
         return new_contour
-        # plt.imshow(img)
-        # plt.scatter(contour[:, 0], contour[:, 1], s=1, color='red')
-        # plt.show()
-        #plt.savefig(f"./ria_fill_gaps_results/unfilled_{chicken_number}.png")
-
-        # plt.imshow(img)
-        # plt.scatter(new_contour[:, 0], new_contour[:, 1], s=1, color='red')
-        # plt.show()
-        #plt.savefig(f"./ria_fill_gaps_results/filled_{chicken_number}.png")
-        
-        
+       
     border_pts_gaps_filled = fill_gaps(border_pts)
-
     
-    plt.scatter([pt[0] for pt in border_pts_gaps_filled], [pt[1] for pt in border_pts_gaps_filled], color='blue', s=1)
+    # plt.scatter([pt[0] for pt in border_pts_gaps_filled], [pt[1] for pt in border_pts_gaps_filled], color='blue', s=1)
     #plt.plot([pt[0] for pt in border_pts_gaps_filled], [pt[1] for pt in border_pts_gaps_filled], 'b')
 
-    plt.plot([pt[1] for pt in ordered_points], [pt[0] for pt in ordered_points], 'w')
+    # plt.plot([pt[1] for pt in ordered_points], [pt[0] for pt in ordered_points], 'w')
     # plt.plot([border_pts[0,0], border_pts[-1,0]], [border_pts[0,1], border_pts[-1,1]], 'r')
     plt.show()
     
