@@ -29,20 +29,6 @@ class SutureDisplayAdjust:
 
         # convert back to pixel, and round
 
-        # self.ZU = ZU('inclined')
-        self.which_camera = 'inclined'
-        self.which_arm = 'PSM1'
-        self.scale_found = False
-        
-        # self.Trc1 = np.load(
-        #     root + f'SurgicalSuturing/calibration_files/Trc_{self.which_camera}_{self.which_arm}.npy')  # robot to camera
-        # self.Tcr1 = np.linalg.inv(self.Trc1)
-        # Setting to tiny number (<<1) is undefined behavior.
-
-        # self.desired_compute_time = desired_compute_time
-
-        # needed to set above value. printed after any run.
-        # self.iters_per_second = 90000 # MacBook Pro (15-inch, 2018)
         self.iters_per_second = 75000  # dvrk
 
         self.use_multiprocessing = False  # super super buggy on dvrk, not sure why

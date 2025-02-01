@@ -8,6 +8,7 @@ from SutureDisplayAdjust import SutureDisplayAdjust
 import math
 import scipy.interpolate as inter
 import cv2
+import time
 import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
@@ -15,11 +16,9 @@ from enhance_image import adjust_contrast_saturation
 from image_transform import get_transformed_points
 from utils import get_mm_per_pixel
 import subprocess
-import random
 from SuturePlacement3d import SuturePlacement3d
 import json
 import os
-import matplotlib.colors as mcolors
 import copy
 
 def calculate_z(mesh, point, smallest_z, largest_z):
@@ -432,7 +431,6 @@ if __name__ == "__main__":
         
         mm_per_pixel = get_mm_per_pixel(left_pts[-2], left_pts[-1], mm_indicated)
         
-        print("REACHED HERE")
         line, mask = img_to_line(left_img_path, box_method, viz=True, save_figs=save_figs)
         
         # build a line that is scaled to mm size
@@ -534,6 +532,8 @@ if __name__ == "__main__":
         # suture_display_adj_pipeline(newSuturePlacer)
 
     elif mode == '3d' and experiment_mode == "physical":
+        # COMMAND F
+        start_time = time.time()
                 
         viz = False
         use_prev = True
@@ -554,20 +554,12 @@ if __name__ == "__main__":
             left_mask = np.load(left_mask_path)
             border_pts = np.load(border_pts_path)
 
-            # right_line = np.load(right_line_path)
-            # right_mask = np.load(right_mask_path)
-
         else:
             # Right click is not on wound
-            # img = Image.open(left_img_path)
-            # enhanced = adjust_contrast_saturation(img, 3, 1)
             left_line, left_mask, border_pts = img_to_line(left_img_path, box_method=False, save_figs=save_figs)
             np.save(left_mask_path, left_mask)
             np.save(left_line_path, left_line)
             np.save(border_pts_path, border_pts)
-            # right_line, right_mask = img_to_line(right_img_path, box_method=False, viz=True, save_figs=save_figs)
-            # np.save(right_mask_path, right_mask)
-            # np.save(right_line_path, right_line)
         
         # do raft, no need to do rn, as we are using the existing RAFT output
         disp_path = f"dan_depth/depth_image_00{chicken_number}.npy"
@@ -587,7 +579,7 @@ if __name__ == "__main__":
         left_img = Image.open(left_img_path)
         img_width, img_height = left_img.size
         all = np.ones((img_height, img_width))
-        point_cloud_data = get_transformed_points(left_img_path, disp, all, viz=True)
+        point_cloud_data = get_transformed_points(left_img_path, disp, all)
         np.save(f'dan_point_cloud_data/point_cloud{chicken_number}.npy', point_cloud_data)
 
         color_left = cv2.cvtColor(cv2.imread(left_img_path),cv2.COLOR_RGB2BGR)
@@ -595,10 +587,8 @@ if __name__ == "__main__":
         non_zero_indices = np.all(point_cloud_data != [0, 0, 0], axis=-1)
         rgb_cloud_data = rgb_cloud_data[non_zero_indices]
         point_cloud_data = point_cloud_data[non_zero_indices]
-
         np.save(f'dan_point_cloud_data/rgb_cloud{chicken_number}.npy', rgb_cloud_data)
     
-
         order_matrix = np.zeros((img_height, img_width), int) - 1
         line_mask = np.zeros((img_height, img_width))
 
@@ -618,38 +608,17 @@ if __name__ == "__main__":
         border_pts_3d = get_transformed_points(border_pts_path, disp, border_mask)
         # np.save('surrounding_pts.npy', border_pts_3d)
 
-        print("border pts", border_pts_3d)
+        # print("border pts", border_pts_3d)
 
-        fig = plt.figure()
-        ax = plt.axes(projection='3d')
+        # fig = plt.figure()
+        # ax = plt.axes(projection='3d')
 
-        ax.grid(False)
-        ax.set_xticklabels([])
-        ax.set_yticklabels([])
-        ax.set_zticklabels([])
-        ax.scatter3D([point[0] for point in border_pts_3d], [point[1] for point in border_pts_3d], [point[2] for point in border_pts_3d])
-        plt.show()
-        
-        # convert the spline to 3d using raft
-        # TODO: convert points to 3d one by one to preserve ordering
-        
-        # line_pts_3d = []
-        # print("Left line shape", len(left_line))
-        # for row, col in left_line[::10]:
-        #     # create mask with 1 point 
-        #     img_width, img_height = Image.open(left_img_path).size
-        #     line_mask = np.zeros((img_height, img_width))
-        #     line_mask[row, col] = 1
-        #     # redo get transformed points
-        #     pt_3d = get_transformed_points(left_img_path, disp_path, line_mask, viz=False)
-        #     line_pts_3d.append(pt_3d[0])
-        # line_pts_3d = np.array(line_pts_3d)
-        # print(line_pts_3d)
-
-
-        # make the order matrix and line mask
-
-        print("left line", left_line)
+        # ax.grid(False)
+        # ax.set_xticklabels([])
+        # ax.set_yticklabels([])
+        # ax.set_zticklabels([])
+        # ax.scatter3D([point[0] for point in border_pts_3d], [point[1] for point in border_pts_3d], [point[2] for point in border_pts_3d])
+        # plt.show()
 
         order_matrix = np.zeros((img_height, img_width), int) - 1
         line_mask = np.zeros((img_height, img_width))
@@ -696,18 +665,18 @@ if __name__ == "__main__":
             # print(f"AT MIDPOINT T {midpt_t} the CURVATURE IS", curvature)
             curvature_arr.append(curvature)
 
-        fig = plt.figure()
-        ax = plt.axes(projection='3d')
-        plt.title("Spline curvature")
-        print("max curve", max(curvature_arr))
-        p = ax.scatter3D(x_pts, y_pts, z_pts, c=curvature_arr)
-        fig.colorbar(p)
-        ax.grid(False)
-        ax.set_xticklabels([])
-        ax.set_yticklabels([])
-        ax.set_zticklabels([])
+        # fig = plt.figure()
+        # ax = plt.axes(projection='3d')
+        # plt.title("Spline curvature")
+        # print("max curve", max(curvature_arr))
+        # p = ax.scatter3D(x_pts, y_pts, z_pts, c=curvature_arr)
+        # fig.colorbar(p)
+        # ax.grid(False)
+        # ax.set_xticklabels([])
+        # ax.set_yticklabels([])
+        # ax.set_zticklabels([])
 
-        plt.show()
+        # plt.show()
 
         def sigmoid(x, L, k, x0):
             """
@@ -730,16 +699,16 @@ if __name__ == "__main__":
         # print('SPACING', spacing)
         # get mesh from the surrounding points
 
-        fig = plt.figure()
-        ax = plt.axes(projection='3d')
-        # plt.title("Sigmoid eccentricity")
-        p = ax.scatter3D(x_pts, y_pts, z_pts, c=spacing)
-        fig.colorbar(p)
-        ax.grid(False)
-        ax.set_xticklabels([])
-        ax.set_yticklabels([])
-        ax.set_zticklabels([])
-        plt.show()
+        # fig = plt.figure()
+        # ax = plt.axes(projection='3d')
+        # # plt.title("Sigmoid eccentricity")
+        # p = ax.scatter3D(x_pts, y_pts, z_pts, c=spacing)
+        # fig.colorbar(p)
+        # ax.grid(False)
+        # ax.set_xticklabels([])
+        # ax.set_yticklabels([])
+        # ax.set_zticklabels([])
+        # plt.show()
 
         with open("pipeline_xyz_pts.xyz", "w") as f:
             for point in surrounding_pts:
@@ -763,11 +732,6 @@ if __name__ == "__main__":
         c_var = 10 # variance between center points distances
         c_shear = 0 # shear loss
         c_closure = 0 # closure loss
-        # gamma = suture_width # ideal distance between each suture
-        # c_ideal = 1000 # variance from ideal
-        # c_var = 1000 # variance between center points distances
-        # c_shear = 0 # shear loss
-        # c_closure = 0 # closure loss
 
         hyperparams = [c_ideal, gamma, c_var, c_shear, c_closure]
 
@@ -777,9 +741,9 @@ if __name__ == "__main__":
         optim3d = Optimizer3d(mesh, left_spline, suture_width, hyperparams, force_model_parameters, left_spline_smoothed, spacing, left_image, border_pts_3d)
     
         spline_length = optim3d.calculate_spline_length(left_spline, mesh)
-        print("Spline length", spline_length)
-        num_sutures_initial = int(spline_length / (gamma)) #TODO: modify later 
-        print("Num sutures initial", num_sutures_initial)
+        # print("Spline length", spline_length)
+        # num_sutures_initial = int(spline_length / (gamma)) #TODO: modify later 
+        # print("Num sutures initial", num_sutures_initial)
 
         # TEST CLOSURE FORCE
 
@@ -881,10 +845,10 @@ if __name__ == "__main__":
         #     plt.show()
 
         start_range = 4
-        end_range = 7
+        end_range = 8
 
-        # start_range = int(spline_length / 0.0075)
-        # end_range = int(spline_length / 0.004)
+        # start_range = int(spline_length / 0.005)
+        # end_range = int(spline_length / 0.003)
 
         print("range:", start_range, end_range)
 
@@ -904,20 +868,16 @@ if __name__ == "__main__":
         final_shear = None
 
         for num_sutures in range(start_range, end_range + 1):
-            print("num sutures:", num_sutures)
+            print("Num sutures:", num_sutures)
 
             center_pts, insertion_pts, extraction_pts = optim3d.generate_inital_placement(mesh, left_spline, num_sutures=num_sutures)
             #print("Normal vector", normal_vectors)
             # optim3d.plot_mesh_path_and_spline(mesh, left_spline, viz=True, results_pth=baseline_pth)
             equally_spaced_losses[num_sutures] = optim3d.optimize(eval=True)
             print('Initial loss', equally_spaced_losses[num_sutures]["curr_loss"])
-            # if equally_spaced_losses[num_sutures]["curr_loss"] < best_baseline_loss:
-            #     best_baseline_loss = equally_spaced_losses[num_sutures]["curr_loss"]
-            #     best_baseline_placement = copy.deepcopy(optim3d.suture_placement)
-
             optim3d.optimize(eval=False)
+        
             # optim3d.plot_mesh_path_and_spline(mesh, left_spline, viz=True, results_pth=baseline_pth)
-
             # optim3d.plot_mesh_path_and_spline(mesh, left_spline, viz=viz, results_pth=opt_pth)
 
             post_algorithm_losses[num_sutures] = optim3d.optimize(eval=True)
@@ -925,7 +885,7 @@ if __name__ == "__main__":
 
             
             if post_algorithm_losses[num_sutures]["curr_loss"] < best_opt_loss:
-                print("num sutures", num_sutures, "best loss so far")
+                # print("Num sutures", num_sutures, "best loss so far")
                 best_opt_loss = post_algorithm_losses[num_sutures]["curr_loss"]
                 print("BEST LOSS", best_opt_loss)
                 best_opt_insertion = optim3d.insertion_pts
@@ -936,26 +896,27 @@ if __name__ == "__main__":
                 baseline_center = center_pts
                 _, _, final_closure, _, _, _, _ = optim3d.compute_closure_shear_loss(granularity=100)
 
-                # best_opt_placement = copy.deepcopy(optim3d.suture_placement)
+        end_time = time.time()
+        print(f"execution time: {end_time - start_time}")
 
-        print("equally_spaced_losses", equally_spaced_losses)
-        print("post_algorithm_losses", post_algorithm_losses)
+        # print("equally_spaced_losses", equally_spaced_losses)
+        # print("post_algorithm_losses", post_algorithm_losses)
                 
         # save data
                 
-        json_equal = json.dumps(equally_spaced_losses)
-        json_post = json.dumps(post_algorithm_losses)
+        # json_equal = json.dumps(equally_spaced_losses)
+        # json_post = json.dumps(post_algorithm_losses)
 
-        equal_losses_pth = baseline_pth + "losses.json"
-        opt_losses_pth = opt_pth + "losses.json"
+        # equal_losses_pth = baseline_pth + "losses.json"
+        # opt_losses_pth = opt_pth + "losses.json"
 
-        f = open(equal_losses_pth,"w")
-        f.write(json_equal)
-        f.close()
+        # f = open(equal_losses_pth,"w")
+        # f.write(json_equal)
+        # f.close()
 
-        f = open(opt_losses_pth,"w")
-        f.write(json_post)
-        f.close()
+        # f = open(opt_losses_pth,"w")
+        # f.write(json_post)
+        # f.close()
 
         fig = plt.figure()
         ax = plt.axes(projection='3d')
@@ -964,12 +925,12 @@ if __name__ == "__main__":
         fig.colorbar(p)
         plt.show()
 
-        # fig = plt.figure()
-        # ax = plt.axes(projection='3d')
-        # plt.title("SHEAR FORCES FINAL")
-        # p = ax.scatter3D(x_pts, y_pts, z_pts, c=final_shear)
-        # fig.colorbar(p)
-        # plt.show()
+        fig = plt.figure()
+        ax = plt.axes(projection='3d')
+        plt.title("SHEAR FORCES FINAL")
+        p = ax.scatter3D(x_pts, y_pts, z_pts, c=final_shear)
+        fig.colorbar(p)
+        plt.show()
 
         np.save(f'dan_insertion_extraction_pts/insertion_pts{chicken_number}.npy', np.array(best_opt_insertion))
         np.save(f'dan_insertion_extraction_pts/extraction_pts{chicken_number}.npy', np.array(best_opt_extraction))
@@ -995,15 +956,6 @@ if __name__ == "__main__":
 
         suture_display_adjust_optim = SutureDisplayAdjust(insertion_pts, center_pts, extraction_pts, left_image, center_spline)
         suture_display_adjust_optim.user_display_pnts(f"opt{chicken_number}")
-
-        # dragging codeeee
-        # print(“Overhead center points”, np.array(suturePlacement3d.center_pts.shape))
-        # print(“left center points”, left_center_points.shape)
-        # projecting onto left image
-        
-
-    # else:
-    #     print("invalid mode")
 
 
 

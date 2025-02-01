@@ -49,7 +49,7 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
     
     fig = plt.figure()
     plt.imshow(numpydata)
-    #plt.show()
+    plt.show()
     
     left_coords, right_coords = click_points_simple(fig)
     
@@ -81,8 +81,8 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
 
     # Choose the largest contour if there are multiple
     border_pts = max(contours, key=cv2.contourArea).squeeze()
-    print(border_pts)
-    print(type(border_pts))
+    # print(border_pts)
+    # print(type(border_pts))
 
     # mask post-processing    
     new_edge_detector = EdgeDetector()
@@ -158,7 +158,7 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
 
     # plt.plot([pt[1] for pt in ordered_points], [pt[0] for pt in ordered_points], 'w')
     # plt.plot([border_pts[0,0], border_pts[-1,0]], [border_pts[0,1], border_pts[-1,1]], 'r')
-    plt.show()
+    # plt.show()
     
     # print(fill_gaps(border_pts))
     
@@ -225,8 +225,6 @@ def line_to_spline_3d(line, sample_ratio=30, viz=False, s_factor=None):
 
     # Normalize t to range from 0 to 1
     t = cumulative_distance / cumulative_distance[-1]
-
-    print(t)
 
     # get spline in each dimension
     x_spline = inter.UnivariateSpline(t, x, s=s_factor)

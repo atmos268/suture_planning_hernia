@@ -105,17 +105,18 @@ int main(int argc, char*argv[])
     // build up an adjacency list
     adj_matrix_file.open ("adjacency_matrix.txt");
     vertex_lookup_file.open ("vertex_lookup.txt");
-    std::cout << num_vertices << std::endl;
+    // std::cout << num_vertices << std::endl;
 
     for(vertex_descriptor vd : output_mesh.vertices()){
       adj_matrix_file << vd << '\n';
       vertex_lookup_file << vd << ' ';
       vertex_lookup_file << output_mesh.point(vd);
-      std::cout << output_mesh.point(vd) << std::endl;
-      std::cout << "vertices around vertex " << vd << ": " << output_mesh.point(vd) << std::endl;
+      // std::cout << output_mesh.point(vd) << std::endl;
+      // std::cout << "vertices around vertex " << vd << ": " << output_mesh.point(vd) << std::endl;
       CGAL::Vertex_around_target_circulator<CGAL::Surface_mesh<Point_3>> vbegin(output_mesh.halfedge(vd),output_mesh), done(vbegin);
       do {
-        std::cout << *vbegin++ << ": " << output_mesh.point(*vbegin) << std::endl;
+        // std::cout << *vbegin++ << ": " << output_mesh.point(*vbegin) << std::endl;
+        *vbegin++;
         adj_matrix_file << *vbegin << '\n';
       } while(vbegin != done);
       adj_matrix_file << '\n';
