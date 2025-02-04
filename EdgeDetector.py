@@ -49,7 +49,6 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
     
     fig = plt.figure()
     plt.imshow(numpydata)
-    plt.show()
     
     left_coords, right_coords = click_points_simple(fig)
     

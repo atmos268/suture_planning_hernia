@@ -85,7 +85,7 @@ def project3d_to_2d(left_image, points):
 if __name__ == "__main__":
     box_method = True
     save_figs = True
-    chicken_number = 0
+    chicken_number = 1
 
     left_file = f'left_exp_00{chicken_number}.png'
     left_img_path = 'dan_chicken/' + left_file
@@ -536,8 +536,10 @@ if __name__ == "__main__":
         start_time = time.time()
                 
         viz = False
-        use_prev = True
+        use_prev = False
         suture_width = 0.005
+
+        print("HELLO")
         
         # get the masks
         # save left and right masks
@@ -556,6 +558,7 @@ if __name__ == "__main__":
 
         else:
             # Right click is not on wound
+            print("NOW HERE")
             left_line, left_mask, border_pts = img_to_line(left_img_path, box_method=False, save_figs=save_figs)
             np.save(left_mask_path, left_mask)
             np.save(left_line_path, left_line)
