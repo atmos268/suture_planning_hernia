@@ -97,9 +97,9 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
 
     np.save('temp_images/binary_skeleton.npy', skeleton)
 
-    plt.imshow(img)
-    plt.imshow(skeleton)
-    plt.show()
+    # plt.imshow(img)
+    # plt.imshow(skeleton)
+    # plt.show()
 
     plt.imsave('temp_images/skeleton_sam.jpg', skeleton)
 
@@ -118,6 +118,7 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
     left_img = np.asarray(img)
     plt.imshow(left_img)
     show_mask(display_mask)
+    plt.show()
     # print(len(contours))
     
     # RIA'S FUNCTION:

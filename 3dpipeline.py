@@ -536,7 +536,7 @@ if __name__ == "__main__":
         start_time = time.time()
                 
         viz = False
-        use_prev = True
+        use_prev = False
         suture_width = 0.005
 
         print("HELLO")
@@ -847,8 +847,8 @@ if __name__ == "__main__":
         #     fig.colorbar(p)
         #     plt.show()
 
-        start_range = 10
-        end_range = 15
+        start_range = 9
+        end_range = 14
 
         # start_range = int(spline_length / 0.005)
         # end_range = int(spline_length / 0.003)
