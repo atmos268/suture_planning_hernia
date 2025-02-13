@@ -85,7 +85,7 @@ def project3d_to_2d(left_image, points):
 if __name__ == "__main__":
     box_method = True
     save_figs = True
-    chicken_number = 2
+    chicken_number = 3
 
     left_file = f'left_exp_00{chicken_number}.png'
     left_img_path = 'dan_chicken/' + left_file
@@ -536,7 +536,7 @@ if __name__ == "__main__":
         start_time = time.time()
                 
         viz = False
-        use_prev = False
+        use_prev = True
         suture_width = 0.005
 
         print("HELLO")
@@ -847,8 +847,8 @@ if __name__ == "__main__":
         #     fig.colorbar(p)
         #     plt.show()
 
-        start_range = 6
-        end_range = 10
+        start_range = 10
+        end_range = 15
 
         # start_range = int(spline_length / 0.005)
         # end_range = int(spline_length / 0.003)

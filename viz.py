@@ -9,7 +9,7 @@ DEVICE = 'cuda'
 class VisualizePointcloudNode:
 
     def __init__(self):
-        self.chicken_number = 2
+        self.chicken_number = 3
         self.server_ = viser.ViserServer()
 
         self.image_callback()

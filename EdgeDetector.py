@@ -108,11 +108,6 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
 
     filled_holes = Image.open("temp_images/sam_mask.jpg")
     numpydata = np.asarray(filled_holes)
-
-    ax2.imshow(numpydata)
-    ax2.title.set_text("SAM Mask")
-    fig.tight_layout()
-
     # plot the image, dilation, skeleton
     if save_figs:
         plt.savefig('experimentation/point_results/chicken_result_left1.jpg', dpi=1200)
