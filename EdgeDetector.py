@@ -97,9 +97,9 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
 
     np.save('temp_images/binary_skeleton.npy', skeleton)
 
-    # plt.imshow(img)
-    # plt.imshow(skeleton)
-    # plt.show()
+    plt.imshow(img)
+    plt.imshow(skeleton)
+    plt.show()
 
     plt.imsave('temp_images/skeleton_sam.jpg', skeleton)
 
@@ -109,9 +109,9 @@ def img_to_line(img_path, box_method, viz=False, save_figs=False):
     filled_holes = Image.open("temp_images/sam_mask.jpg")
     numpydata = np.asarray(filled_holes)
 
-    # ax2.imshow(numpydata)
-    # ax2.title.set_text("SAM Mask")
-    # fig.tight_layout()
+    ax2.imshow(numpydata)
+    ax2.title.set_text("SAM Mask")
+    fig.tight_layout()
 
     # plot the image, dilation, skeleton
     if save_figs:
