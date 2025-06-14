@@ -44,6 +44,7 @@ class Optimizer3d:
         self.border_pts_3d = border_pts_3d
         self.border_kdtree = cKDTree(self.border_pts_3d)
 
+        self.suture_point_to_boundary = 0.01
         granularity = 100
 
         spline_x, spline_y, spline_z = self.spline[0], self.spline[1], self.spline[2]
@@ -262,7 +263,10 @@ class Optimizer3d:
             # ellipse_ecc = self.force_model['ellipse_ecc']
             ellipse_ecc = self.spacing[int(self.points_t[i] * 99)]
             # force_decay = self.force_model['force_decay']
-            force_decay = 0.5 / (0.005 + self.wound_widths[int(self.points_t[i] * 99)])
+            # force_decay = 0.5 / (0.005 + self.wound_widths[int(self.points_t[i] * 99)])
+
+            force_decay = 0.5 / (self.suture_point_to_boundary + self.wound_widths[int(self.points_t[i] * 99)])
+
             verbose = self.force_model['verbose']
 
             in_ex_plane = get_plane_estimation(mesh, in_ex_pt, num_nearest, trimesh=self.trimesh)
@@ -470,6 +474,8 @@ class Optimizer3d:
 
         returns a self object with spline and points
         """
+
+        # print("run here")
         num_points = len(points_t)
 
         spline_x, spline_y, spline_z = self.spline[0], self.spline[1], self.spline[2]
@@ -501,13 +507,14 @@ class Optimizer3d:
         # print("WOUND WIDTHS", wound_widths)
         # Insertion points = cross product 
         # 0.005 + wound_widths[i]
-        insertion_points = [mesh.get_point_location(mesh.get_nearest_point(center_points[i] + (0.005 + wound_widths[i]) * (np.cross(normal_vectors[i], derivative_vectors[i])))[1]) for i in range(num_points)]
+        # print(" self.suture_point_to_boundary is: ",  self.suture_point_to_boundary)
+        insertion_points = [mesh.get_point_location(mesh.get_nearest_point(center_points[i] + (self.suture_point_to_boundary + wound_widths[i]) * (np.cross(normal_vectors[i], derivative_vectors[i])))[1]) for i in range(num_points)]
 
         # get the closest point on the mesh to that point
         # print("magnitude insertion points", [np.linalg.norm(insertion_points[i]) for i in range(num_points)])
 
         # Extraction points = - cross product
-        extraction_points = [mesh.get_point_location(mesh.get_nearest_point(center_points[i] + (0.005 + wound_widths[i]) * (-np.cross(normal_vectors[i], derivative_vectors[i])))[1]) for i in range(num_points)]
+        extraction_points = [mesh.get_point_location(mesh.get_nearest_point(center_points[i] + (self.suture_point_to_boundary + wound_widths[i]) * (-np.cross(normal_vectors[i], derivative_vectors[i])))[1]) for i in range(num_points)]
 
         # update suture placement 3d object
         self.center_pts = center_points
@@ -659,7 +666,8 @@ class Optimizer3d:
             # print("SHEAR COEF", self.c_shear)
             # print("CLOSURE COEF", self.c_closure)
 
-            if min(self.get_all_dists(self.insertion_pts) + self.get_all_dists(self.extraction_pts)) < 0.0025:
+            if min(self.get_all_dists(self.insertion_pts) + self.get_all_dists(self.extraction_pts)) < self.suture_point_to_boundary / 2:
+            # if min(self.get_all_dists(self.insertion_pts) + self.get_all_dists(self.extraction_pts)) < 0.0025:
                 curr_loss = 1
             else:
                 curr_loss = closure_loss + shear_loss

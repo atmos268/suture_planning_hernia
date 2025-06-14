@@ -34,7 +34,9 @@ int main(int argc, char*argv[])
   Point_set points;
 
   // desired file
-  std::string fname = argc==1?CGAL::data_file_path("pipeline_xyz_pts.xyz") : argv[1];
+  // std::string fname = argc==1?CGAL::data_file_path("pipeline_xyz_pts.xyz") : argv[1];
+  std::string fname = argc == 1 ? "pipeline_xyz_pts.xyz" : argv[1];
+
 
   if (argc < 2)
   {
@@ -57,10 +59,24 @@ int main(int argc, char*argv[])
   if (points.empty())
     return EXIT_FAILURE;
 
-  typename Point_set::iterator rout_it = CGAL::remove_outliers<CGAL::Sequential_tag>
-    (points,
-     24, // Number of neighbors considered for evaluation
-     points.parameters().threshold_percent (5.0)); // Percentage of points to remove
+  // typename Point_set::iterator rout_it = CGAL::remove_outliers<CGAL::Sequential_tag>
+  //   (points,
+  //    24, // Number of neighbors considered for evaluation
+  //    points.parameters().threshold_percent (5.0)); // Percentage of points to remove
+
+  // Remove outliers: Use Point_set as the point range type
+  // typename Point_set::iterator rout_it = CGAL::remove_outliers(
+  //     points,
+  //     24,  // Number of neighbors considered for evaluation
+  //     CGAL::parameters::threshold_percent(5.0)  // Percentage of points to remove
+  // );
+  auto rout_it = CGAL::remove_outliers(
+    points,
+    24,
+    CGAL::parameters::point_map(points.point_map())
+                          .threshold_percent(5.0)
+  );
+  
   points.remove(rout_it, points.end());
   std::cout << points.number_of_removed_points()
             << " point(s) are outliers." << std::endl;

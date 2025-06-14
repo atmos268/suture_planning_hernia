@@ -1,0 +1,18 @@
+f_px is:  None
+./hernia_3/3.png
+Estimated focal length is:  878.539794921875
+depth estimation time per img is:  0.3073253631591797
+point cloud time per img is:  0.3099815845489502
+ 33%|███████████████                              | 1/3 [00:00<00:00,  2.94it/s]image shape is:  (580, 1040, 3)
+f_px is:  None
+./hernia_3/1.png
+Estimated focal length is:  821.169677734375
+depth estimation time per img is:  0.16991925239562988
+point cloud time per img is:  0.17560863494873047
+ 67%|██████████████████████████████               | 2/3 [00:00<00:00,  3.58it/s]image shape is:  (746, 1382, 3)
+f_px is:  None
+./hernia_3/2.png
+Estimated focal length is:  1140.134521484375
+depth estimation time per img is:  0.17040324211120605
+point cloud time per img is:  0.17931866645812988
+100%|█████████████████████████████████████████████| 3/3 [00:00<00:00,  3.43it/s]

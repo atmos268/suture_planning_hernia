@@ -69,19 +69,28 @@ def get_transformed_points(image_path, depth_image, sam_mask, viz=False, maintai
     #mask from SAM
     sam_mask = sam_mask.astype('uint8')
 
-    # #calibaration
-    # f = 1688.10117
-    # cx = 657.660185
-    # cy = 411.400296
-    # Tx = -0.045530
-    # cx_diff = 671.318549 - cx
+    # ## for chicken
+    # f = 2072.7670967549093
+    # cx = 563.9893989562988
+    # cy = 464.33528900146484
+    # Tx = -0.04637584164697386
 
-    f = 2072.7670967549093
-    cx = 563.9893989562988
-    cy = 464.33528900146484
-    Tx = -0.04637584164697386
-    cx_diff = 671.318549 - cx
 
+    ### for hernia
+    # f = 1016.929931640625  # 1
+    # f = 847.9979248046875  # 2
+    # f = 1112.2060546875   # 3
+
+    ### for youtubu
+    # f = 821.169677734375   #1
+    # f = 1140.134521484375  #2
+    f = 878.539794921875   #3
+
+    height, width = np.shape(depth_image)
+    print("depth image shape", depth_image.shape)
+    cx = width / 2
+    cy = height / 2
+    ###
 
     # get depth map from disparity map
     # depth_image = (f * Tx) / abs(disp + cx_diff)
@@ -186,13 +195,18 @@ def get_transformed_points(image_path, depth_image, sam_mask, viz=False, maintai
     #     cv2.destroyAllWindows()  # Close all OpenCV windows
 
 
-    #convert point cloud to overhead coordinates
-    R, t = transformation_matrix[1:], transformation_matrix[0]
-    overhead_wound_points = []
-    for pt in wound_points:
-        overhead_wound_points.append(R @ pt + t) 
-    overhead_wound_points = np.array(overhead_wound_points)
-    overhead_wound_points_transpose = overhead_wound_points.T
+    ### chicken
+    # #convert point cloud to overhead coordinates
+    # R, t = transformation_matrix[1:], transformation_matrix[0]
+    # overhead_wound_points = []
+    # for pt in wound_points:
+    #     overhead_wound_points.append(R @ pt + t) 
+    # overhead_wound_points = np.array(overhead_wound_points)
+    # overhead_wound_points_transpose = overhead_wound_points.T
+
+    overhead_wound_points = np.array(wound_points)
+
+
     
     # if viz:
     #     ax.scatter3D(overhead_wound_points_transpose[0], overhead_wound_points_transpose[1], overhead_wound_points_transpose[2])

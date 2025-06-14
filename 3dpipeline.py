@@ -50,12 +50,16 @@ def getTransformationMatrix():
 def project3d_to_2d(left_image, points):
     lst = []
     # blue, red, green = (255, 0, 0), (0, 0, 255), (0, 255, 0)
-    transformation_matrix = getTransformationMatrix()
-    R, t = transformation_matrix[1:], transformation_matrix[0]
-    left_points = []
-    for pt in points:
-        left_points.append(np.linalg.inv(R) @ (pt - t))
-    left_points = np.array(left_points)
+
+    # transformation_matrix = getTransformationMatrix()
+    # R, t = transformation_matrix[1:], transformation_matrix[0]
+    # left_points = []
+    # for pt in points:
+    #     left_points.append(np.linalg.inv(R) @ (pt - t))
+    # left_points = np.array(left_points)
+
+    left_points = np.array(points)
+
     # projecting onto left image
     image_height, image_width, _ = left_image.shape
     left_camera_matrix = np.array(
@@ -538,6 +542,7 @@ if __name__ == "__main__":
         viz = False
         use_prev = False
         suture_width = 0.005
+        # suture_width = 0.05
 
         print("HELLO")
         
